@@ -1,3 +1,9 @@
+-- Таблица ролей
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) UNIQUE
+);
+
 -- Таблица пользователей
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -7,12 +13,6 @@ CREATE TABLE users (
     role INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role) REFERENCES roles(id)
-);
-
--- Таблица ролей
-CREATE TABLE roles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) UNIQUE
 );
 
 -- Таблица заказов
