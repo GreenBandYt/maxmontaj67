@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Обновить статус заказа - МаксМонтаж67</title>
+</head>
+<body>
+    <h1>Обновить статус заказа</h1>
+    <form action="/api/orders/update_status" method="POST">
+        <label for="order_id">ID заказа:</label>
+        <input type="number" id="order_id" name="order_id" required><br><br>
+
+        <label for="status">Новый статус:</label>
+        <select id="status" name="status">
+            <option value="new">Новый</option>
+            <option value="in_progress">В процессе</option>
+            <option value="completed">Завершен</option>
+        </select><br><br>
+
+        <button type="submit">Обновить статус</button>
+    </form>
+</body>
+</html>

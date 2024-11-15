@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Панель монтажника - МаксМонтаж67</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="/installer_dashboard">Доступные заказы</a></li>
+                <li><a href="/my_orders">Мои заказы</a></li>
+                <li><a href="/logout">Выход</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <h1>Доступные заказы</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Заказа</th>
+                <th>Тип Работы</th>
+                <th>Адрес</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in available_orders %}
+            <tr>
+                <td>{{ order[0] }}</td>
+                <td>{{ order[1] }}</td>
+                <td>{{ order[2] }}</td>
+                <td><a href="/take_order/{{ order[0] }}">Взять в работу</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <footer>
+        <p>МаксМонтаж67 © 2024</p>
+    </footer>
+</body>
+</html>

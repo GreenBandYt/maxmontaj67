@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Доступные заказы - МаксМонтаж67</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="/installer_dashboard">Доступные заказы</a></li>
+                <li><a href="/my_orders">Мои заказы</a></li>
+                <li><a href="/logout">Выход</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <h1>Доступные заказы</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Заказа</th>
+                <th>Тип Работы</th>
+                <th>Адрес</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Здесь будет динамически генерируемый список доступных заказов -->
+            <tr>
+                <td>1</td>
+                <td>Монтаж кондиционера</td>
+                <td>Улица Примерная, дом 1</td>
+                <td><a href="/assign_order/1" class="button">Взять в работу</a></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <footer>
+        <p>МаксМонтаж67 © 2024</p>
+    </footer>
+</body>
+</html>
