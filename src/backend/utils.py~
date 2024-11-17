@@ -1,0 +1,25 @@
+import mysql.connector
+import bcrypt
+from config import DATABASE_CONFIG
+
+def db_connect():
+    """
+    Устанавливает соединение с базой данных.
+    """
+    return mysql.connector.connect(
+        **DATABASE_CONFIG,
+        charset='utf8mb4',
+        collation='utf8mb4_general_ci'
+    )
+
+def hash_password(password):
+    """
+    Генерирует bcrypt-хэш из пароля.
+    """
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password, hashed_password):
+    """
+    Проверяет пароль с использованием bcrypt.
+    """
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))

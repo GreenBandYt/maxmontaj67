@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Регистрация</title>
+</head>
+<body>
+    <h1>Регистрация нового пользователя</h1>
+    <form method="post">
+        <input type="text" name="name" placeholder="Имя" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <select name="role">
+            <option value="customer">Заказчик</option>
+            <option value="executor">Исполнитель</option>
+            <option value="dispatcher">Диспетчер</option>
+        </select>
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+</body>
+</html>
