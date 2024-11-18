@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<h2>Ваши заказы, {{ user_name }}</h2>
+<ul>
+    {% for order in orders %}
+    <li>
+        Заказ №{{ order.id }}: {{ order.description }} ({{ order.status }})
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

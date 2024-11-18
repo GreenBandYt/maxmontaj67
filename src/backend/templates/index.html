@@ -1,33 +1,15 @@
-<!doctype html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Вход в систему</title>
-    <style>
-        form {
-            display: flex;
-            flex-direction: column;
-            width: 300px;
-            margin: 20px auto;
-        }
-        input, button {
-            margin-bottom: 10px;
-            padding: 5px;
-        }
-        .register-link {
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <h1>Вход в систему</h1>
-    <form action="/login" method="post">
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Пароль" required>
-        <button type="submit">Войти</button>
-    </form>
-    <div class="register-link">
-        <a href="/register">Регистрация нового пользователя</a>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Вход в систему{% endblock %}
+
+{% block content %}
+<h1>Вход в систему</h1>
+<form action="/" method="post">
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Пароль" required>
+    <button type="submit">Войти</button>
+</form>
+<div class="register-link">
+    <a href="/register">Регистрация нового пользователя</a>
+</div>
+{% endblock %}

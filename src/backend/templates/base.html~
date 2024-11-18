@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Default Title{% endblock %}</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <h1>CRM Управление заказами MaxMontaj67</h1>
 </head>
 <body>
-    <h1>CRM Управление заказами MaxMontaj67</h1>
+
 
     <main>
         {% block content %}
