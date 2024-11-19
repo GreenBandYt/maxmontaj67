@@ -10,7 +10,7 @@
             </ul>
         </nav>
         </header>
-<h1>Управление заказами</h1>
+<h1>Управление заказами для Диспетчера</h1>
 
 <table>
     <thead>
@@ -41,6 +41,7 @@
                 <a href="/delete_order/{{ order.order_id }}">Удалить</a>
             {% endif %}
         </td>
+
 
     </tr>
     {% endfor %}

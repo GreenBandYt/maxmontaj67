@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Панель специалиста - МаксМонтаж67{% endblock %}
+{% block title %}Панель монтажника - МаксМонтаж67{% endblock %}
 
 {% block content %}
 <header>
@@ -11,7 +11,7 @@
     </nav>
 </header>
 
-<h1>Управление заказами</h1>
+<h1>Управление заказами Монтажника </h1>
 
 <table>
     <thead>
@@ -33,10 +33,13 @@
             <td>{{ order.status }}</td>
             <td>{{ order.created_at }}</td>
             <td>{{ order.updated_at }}</td>
-            <td>{{ order.installer_name }}</td>
+            <td>{{ order.executor_name if order.executor_name != "Не назначен" else "Не назначен" }}</td>
             <td>
-                {% if order.installer_name == "Не назначен" %}
-                    <a href="/Specialist_dashboard?action=assign&order_id={{ order.order_id }}">Взять в работу</a>
+                {% if order.executor_name == "Не назначен" %}
+                    <form action="/executor_dashboard/assign" method="post" style="display:inline;">
+                        <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                        <button type="submit">Взять в работу</button>
+                    </form>
                 {% else %}
                     Назначено
                 {% endif %}
