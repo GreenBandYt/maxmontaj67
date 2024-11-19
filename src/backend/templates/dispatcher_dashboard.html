@@ -3,6 +3,13 @@
 {% block title %}Панель диспетчера - МаксМонтаж67{% endblock %}
 
 {% block content %}
+        <header>
+        <nav>
+            <ul>
+                <li><a href="/logout">Выход</a></li>
+            </ul>
+        </nav>
+        </header>
 <h1>Управление заказами</h1>
 
 <table>
@@ -10,8 +17,9 @@
         <tr>
             <th>ID Заказа</th>
             <th>Тип Работы</th>
-            <th>Адрес</th>
             <th>Статус</th>
+            <th>Создан</th>
+            <th>Обновлен</th>
             <th>Исполнитель</th>
             <th>Действия</th>
         </tr>
@@ -19,14 +27,22 @@
     <tbody>
     {% for order in orders %}
     <tr>
-        <td>{{ order.id }}</td>
-        <td>{{ order.work_type }}</td>
-        <td>{{ order.address }}</td>
+        <td>{{ order.order_id }}</td>
+        <td>{{ order.description }}</td>
         <td>{{ order.status }}</td>
-        <td>{{ order.installer if order.installer else "Не назначен" }}</td>
+        <td>{{ order.created_at }}</td>
+        <td>{{ order.updated_at }}</td>
+        <td>{{ order.installer_name if order.installer_name else "Не назначен" }}</td>
         <td>
-            <a href="/assign_installer/{{ order.id }}">Назначить монтажника</a>
+            {% if order.installer_name == "Не назначен" %}
+                <a href="/assign_installer/{{ order.order_id }}">Назначить монтажника</a>
+            {% else %}
+                <a href="/edit_order/{{ order.order_id }}">Редактировать</a> |
+                <a href="/delete_order/{{ order.order_id }}">Удалить</a>
+            {% endif %}
         </td>
+
+
     </tr>
     {% endfor %}
     </tbody>

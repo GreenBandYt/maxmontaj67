@@ -156,32 +156,96 @@ def admin_dashboard():
 
 @app.route('/dispatcher_dashboard')
 def dispatcher_dashboard():
-    # Проверка авторизации
-    if not session.get('user_id') or session.get('role') != 'Dispatcher':
+    if session.get('role') != 'Dispatcher':
+        return redirect(url_for('home'))
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT
+                    o.id AS order_id,
+                    o.description,
+                    o.status,
+                    o.created_at,
+                    o.updated_at,
+                    COALESCE(u.name, "Не назначен") AS installer_name
+                FROM orders o
+                LEFT JOIN order_assignments oa ON o.id = oa.order_id
+                LEFT JOIN users u ON oa.executor_id = u.id
+            """)
+            orders = cursor.fetchall()
+
+        print(f"[DEBUG] Orders for dispatcher: {orders}")
+        return render_template('dispatcher_dashboard.html', orders=orders, role=session.get('role'))
+
+    except Exception as e:
+        print(f"[ERROR] Dispatcher dashboard error: {e}")
+        return "Ошибка загрузки данных", 500
+
+
+@app.route('/orders')
+def orders_dashboard():
+    role = session.get('role')
+    if not session.get('user_id') or role not in ['Dispatcher', 'Administrator']:
         return redirect(url_for('login'))
 
     orders = []
     try:
-        # Подключение к базе данных
         with db_connect() as conn:
             cursor = conn.cursor(dictionary=True)
             cursor.execute("""
-                SELECT id, description , status
-                FROM orders
+                SELECT 
+                    o.id AS order_id,
+                    o.description,
+                    o.status,
+                    o.created_at,
+                    o.updated_at,
+                    COALESCE(u.name, "Не назначен") AS installer_name
+                FROM orders o
+                LEFT JOIN order_assignments oa ON o.id = oa.order_id
+                LEFT JOIN users u ON oa.executor_id = u.id;
             """)
             orders = cursor.fetchall()
     except Exception as e:
         print(f"[ERROR] Ошибка при выполнении SQL-запроса: {e}")
         return "Ошибка при загрузке данных", 500
 
-    # Передача данных в шаблон
-    return render_template('dispatcher_dashboard.html', orders=orders)
-
+    return render_template('dispatcher_dashboard.html', orders=orders, role=role)
 
 @app.route('/specialist_dashboard')
-@role_protected_view('Specialist')
 def specialist_dashboard():
-    return render_template('specialist_dashboard.html', user_name=session.get('name'))
+    if session.get('role') != 'Specialist':
+        return redirect(url_for('home'))
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT
+                    o.id AS order_id,
+                    o.description,
+                    o.status,
+                    o.created_at,
+                    o.updated_at,
+                    COALESCE(u.name, "Не назначен") AS installer_name
+                FROM orders o
+                LEFT JOIN order_assignments oa ON o.id = oa.order_id
+                LEFT JOIN users u ON oa.executor_id = u.id
+            """)
+            orders = cursor.fetchall()
+
+        print(f"[DEBUG] Orders for specialist: {orders}")
+        return render_template(
+            'specialist_dashboard.html',
+            orders=orders,
+            role=session.get('role')
+        )
+
+    except Exception as e:
+        print(f"[ERROR] Specialist dashboard error: {e}")
+        return "Ошибка загрузки данных", 500
+
 
 
 @app.route('/executor_dashboard')
