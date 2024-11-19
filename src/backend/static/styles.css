@@ -11,8 +11,8 @@ body {
 h1 {
     text-align: center;
     color: #4CAF50; /* Цвет заголовка */
-    margin-top: 20px;
-    font-size: 2.2rem;
+    margin-top: 10px;
+    font-size: 1.8rem;
 }
 
 /* Основной контейнер */
@@ -29,7 +29,7 @@ main {
 footer {
     background: #333; /* Тёмный фон */
     color: #fff; /* Белый текст */
-    padding: 15px 20px;
+    padding: 10px 20px;
     text-align: center;
     font-size: 0.9rem;
     position: fixed;

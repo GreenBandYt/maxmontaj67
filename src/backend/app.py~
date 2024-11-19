@@ -184,6 +184,8 @@ def dispatcher_dashboard():
         return "Ошибка загрузки данных", 500
 
 
+
+
 @app.route('/orders')
 def orders_dashboard():
     role = session.get('role')
@@ -270,7 +272,7 @@ def executor_dashboard():
             """)
             orders = cursor.fetchall()
 
-        print(f"[DEBUG] Orders for specialist: {orders}")
+        print(f"[DEBUG] Orders for executor: {orders}")
         return render_template(
             'executor_dashboard.html',
             orders=orders,

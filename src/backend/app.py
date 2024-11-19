@@ -184,6 +184,50 @@ def dispatcher_dashboard():
         return "Ошибка загрузки данных", 500
 
 
+@app.route('/assign_installer/<int:order_id>', methods=['GET', 'POST'])
+def assign_installer(order_id):
+    # Проверка роли пользователя
+    if session.get('role') not in ['Administrator', 'Dispatcher']:
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        installer_id = request.form.get('installer_id')  # ID выбранного монтажника
+        try:
+            with db_connect() as conn:
+                cursor = conn.cursor()
+                # Проверяем, существует ли заказ
+                cursor.execute("SELECT id FROM orders WHERE id = %s", (order_id,))
+                order = cursor.fetchone()
+                if not order:
+                    return "Заказ не найден", 404
+
+                # Обновляем назначение монтажника
+                cursor.execute("""
+                    INSERT INTO order_assignments (order_id, executor_id)
+                    VALUES (%s, %s)
+                    ON DUPLICATE KEY UPDATE executor_id = VALUES(executor_id)
+                """, (order_id, installer_id))
+                conn.commit()
+                return redirect(url_for('orders_dashboard'))  # Возврат к списку заказов
+
+        except Exception as e:
+            print(f"[ERROR] Ошибка назначения монтажника: {e}")
+            return "Ошибка сервера. Попробуйте позже.", 500
+
+    # Если GET-запрос, отображаем список доступных монтажников
+    installers = []
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT id, name FROM users WHERE role = 'Specialist'")
+            installers = cursor.fetchall()
+    except Exception as e:
+        print(f"[ERROR] Ошибка загрузки монтажников: {e}")
+        return "Ошибка загрузки данных", 500
+
+    return render_template('assign_installer.html', order_id=order_id, installers=installers)
+
+
 @app.route('/orders')
 def orders_dashboard():
     role = session.get('role')

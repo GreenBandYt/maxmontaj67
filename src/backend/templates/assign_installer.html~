@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Назначить монтажника - МаксМонтаж67</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Главная</a></li>
+                <li><a href="/dispatcher_dashboard">Назад к управлению заказами</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <h1>Назначить монтажника</h1>
+
+    <form action="/api/orders/{{ order_id }}/assign" method="post">
+        <label for="order_id">ID заказа:</label>
+        <input type="text" id="order_id" name="order_id" value="{{ order_id }}" readonly>
+        <br><br>
+
+        <label for="installer_id">Выберите монтажника:</label>
+        <select id="installer_id" name="installer_id">
+            <!-- Здесь будет динамически сгенерированный список монтажников -->
+            <option value="1">Иван Петров</option>
+            <option value="2">Алексей Сидоров</option>
+        </select>
+        <br><br>
+
+        <button type="submit">Назначить монтажника</button>
+    </form>
+
+    <footer>
+        <p>МаксМонтаж67 © 2024</p>
+    </footer>
+</body>
+</html>
