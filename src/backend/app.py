@@ -116,8 +116,17 @@ def register():
 
 @app.route('/logout')
 def logout():
+    # Получаем роль перед очисткой сессии
+    role = session.get('role')
+
+    # Очищаем сессию
     session.clear()
-    return redirect(url_for('home'))
+
+    # Логика перенаправления по роли
+    if role == 'Administrator':
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('home'))
 
 
 def role_protected_view(role):
@@ -171,8 +180,7 @@ def dispatcher_dashboard():
                     o.updated_at,
                     COALESCE(u.name, "Не назначен") AS installer_name
                 FROM orders o
-                LEFT JOIN order_assignments oa ON o.id = oa.order_id
-                LEFT JOIN users u ON oa.executor_id = u.id
+                LEFT JOIN users u ON o.installer_id = u.id
             """)
             orders = cursor.fetchall()
 
@@ -247,8 +255,7 @@ def orders_dashboard():
                     o.updated_at,
                     COALESCE(u.name, "Не назначен") AS installer_name
                 FROM orders o
-                LEFT JOIN order_assignments oa ON o.id = oa.order_id
-                LEFT JOIN users u ON oa.executor_id = u.id;
+                LEFT JOIN users u ON o.installer_id = u.id;
             """)
             orders = cursor.fetchall()
     except Exception as e:

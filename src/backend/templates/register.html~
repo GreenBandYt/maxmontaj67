@@ -3,6 +3,13 @@
 {% block title %}Регистрация{% endblock %}
 
 {% block content %}
+<header>
+    <nav>
+        <ul>
+            <li><a href="/logout">Выход</a></li>
+        </ul>
+    </nav>
+</header>
 <h2>Регистрация нового пользователя</h2>
 <form action="/register" method="post" autocomplete="off">
     <label for="role">Выберите роль</label>
@@ -29,8 +36,16 @@
 </form>
 
 <script>
-    function setRole(roleId) {
-        document.getElementById('role').value = roleId;
-    }
+    // Функция для проверки совпадения паролей
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+
+        // Если пароли не совпадают, отменяем отправку формы и показываем сообщение
+        if (password !== passwordConfirm) {
+            e.preventDefault(); // Отмена отправки формы
+            alert('Пароли не совпадают!'); // Отображение предупреждения
+        }
+    });
 </script>
 {% endblock %}
