@@ -1,0 +1,18 @@
+from flask import Blueprint, render_template, redirect, url_for, request, session
+
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+@admin_bp.route('/orders', methods=['GET'])
+def orders():
+    # Проверка роли пользователя
+    if session.get('role') != 'Administrator':
+        return redirect(url_for('home'))
+
+    # Логика загрузки заказов
+    orders = [
+        {"id": 1, "description": "Установка оборудования", "status": "Ожидает"},
+        {"id": 2, "description": "Ремонт оборудования", "status": "Выполняется"}
+    ]
+    return render_template('admin/admin_orders.html', orders=orders)
+

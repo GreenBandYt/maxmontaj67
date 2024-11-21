@@ -7,11 +7,16 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>CRM Управление заказами MaxMontaj67</h1>
-
-    {% if session.get('user_id') %}
-    <a href="{{ url_for('logout') }}" class="logout-button">Выход</a>
-    {% endif %}
+    <header>
+        <h1>CRM Управление заказами MaxMontaj67</h1>
+        <nav>
+            <ul class="nav-right">
+                {% if session.get('user_id') %}
+                <li><a href="/logout" class="logout-button">Выход</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
 
     <main>
         {% block content %}
@@ -21,7 +26,7 @@
 
     <footer>
         <p>&copy; 2024 MaxMontaj67. Все права защищены.</p>
-        <p>Разработано GreenBandYt (GBt)</p>
+        <p>&copy; Разработано GreenBandYt (GBt)</p>
     </footer>
 </body>
 </html>
