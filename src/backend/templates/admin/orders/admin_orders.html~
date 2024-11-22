@@ -3,11 +3,9 @@
 {% block title %}Админ: Заказы{% endblock %}
 
 {% block content %}
-<a href="{{ url_for('admin.users') }}">
-    <button>Пользователи</button>
-</a>
-<div class="navigation">
-    <a href="{{ url_for('admin.customers') }}" class="button">Перейти к заказчикам</a>
+<div class="navigation-panel">
+    <a href="{{ url_for('admin.customers') }}" class="button">Заказчики</a>
+    <a href="{{ url_for('admin.users') }}" class="button">Пользователи</a>
 </div>
 
 <h2>Список заказов</h2>
@@ -35,8 +33,15 @@
             <td>{{ order.assigned_at }}</td>
             <td>{{ order.customer_name }}</td>
             <td>{{ order.installer_name }}</td>
-        </tr>
-        {% endfor %}
+            {% if order.status == "Ожидает" %}
+            <td>
+                <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Назначить исполнителя</a>
+            </td>
+            {% else %}
+            <td>—</td>
+            {% endif %}
+            </tr>
+            {% endfor %}
     </tbody>
 </table>
 {% endblock %}

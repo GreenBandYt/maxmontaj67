@@ -3,12 +3,16 @@
 {% block title %}Админ: Заказы{% endblock %}
 
 {% block content %}
+<!-- Панель навигации -->
 <div class="navigation-panel">
     <a href="{{ url_for('admin.customers') }}" class="button">Заказчики</a>
     <a href="{{ url_for('admin.users') }}" class="button">Пользователи</a>
 </div>
 
+<!-- Заголовок страницы -->
 <h2>Список заказов</h2>
+
+<!-- Таблица заказов -->
 <table>
     <thead>
         <tr>
@@ -20,6 +24,7 @@
             <th>Дата назначения</th>
             <th>Клиент</th>
             <th>Исполнитель</th>
+            <th>Действие</th>
         </tr>
     </thead>
     <tbody>
@@ -30,9 +35,18 @@
             <td>{{ order.status }}</td>
             <td>{{ order.created_at }}</td>
             <td>{{ order.updated_at }}</td>
-            <td>{{ order.assigned_at }}</td>
+            <td>{{ order.assigned_at or "Не назначено" }}</td>
             <td>{{ order.customer_name }}</td>
-            <td>{{ order.installer_name }}</td>
+            <td>{{ order.installer_name or "Не назначен" }}</td>
+            <td>
+                {% if order.status == "Ожидает" %}
+                <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Назначить</a>
+                {% elif order.status == "Выполняется" %}
+                <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Сменить</a>
+                {% else %}
+                —
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

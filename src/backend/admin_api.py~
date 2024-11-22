@@ -86,3 +86,54 @@ def customers():
     # Передача данных в шаблон
     return render_template('admin/users/admin_customers.html', customers=customers)
 
+
+@admin_bp.route('/assign_executor/<int:order_id>', methods=['GET', 'POST'])
+def assign_executor(order_id):
+    """
+    Назначить исполнителя для заказа.
+    """
+    if request.method == 'POST':
+        executor_id = request.form.get('executor_id')  # ID выбранного исполнителя
+        try:
+            with db_connect() as conn:
+                cursor = conn.cursor()
+
+                # Проверяем, существует ли заказ
+                cursor.execute("SELECT id FROM orders WHERE id = %s", (order_id,))
+                order = cursor.fetchone()
+                if not order:
+                    return "Заказ не найден", 404
+
+                # Назначаем исполнителя
+                cursor.execute("""
+                    UPDATE orders
+                    SET installer_id = %s, status = 'Выполняется', assigned_at = NOW()
+                    WHERE id = %s
+                """, (executor_id, order_id))
+                conn.commit()
+                print("[DEBUG] Исполнитель успешно назначен.")
+                return redirect(url_for('admin.orders'))  # Возврат к списку заказов
+
+        except Exception as e:
+            print(f"[ERROR] Ошибка назначения исполнителя: {e}")
+            return "Ошибка сервера. Попробуйте позже.", 500
+
+    # Если GET-запрос, отображаем список доступных исполнителей
+    executors = []
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id, name 
+                FROM users 
+                WHERE role IN (
+                    SELECT id FROM roles WHERE name IN ('Executor', 'Specialist')
+                )
+            """)
+            executors = cursor.fetchall()
+    except Exception as e:
+        print(f"[ERROR] Ошибка загрузки списка исполнителей: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
+
+    return render_template('admin/orders/assign_executor.html', order_id=order_id, executors=executors)
+

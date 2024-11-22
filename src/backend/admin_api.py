@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, session
 from utils import db_connect
+from flask import request
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
