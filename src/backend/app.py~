@@ -3,9 +3,15 @@ from flask_session import Session
 from config import SESSION_CONFIG
 from utils import db_connect, verify_password
 from werkzeug.security import generate_password_hash
+from utils import db_connect, verify_password, hash_password
+
 
 # Импортируем Blueprints
 from admin_api import admin_bp
+from dispatcher_api import dispatcher_bp
+from specialist_api import specialist_bp
+from executor_api import executor_bp
+from customer_api import customer_bp
 
 app = Flask(__name__)
 
@@ -17,7 +23,10 @@ Session(app)
 
 # Регистрация Blueprints
 app.register_blueprint(admin_bp)
-
+app.register_blueprint(dispatcher_bp)
+app.register_blueprint(specialist_bp)
+app.register_blueprint(executor_bp)
+app.register_blueprint(customer_bp)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -49,6 +58,14 @@ def home():
                 # Перенаправление на страницу роли
                 if user['role'] == 'Administrator':
                     return redirect(url_for('admin.orders'))
+                elif user['role'] == 'Dispatcher':
+                    return redirect(url_for('dispatcher.orders'))
+                elif user['role'] == 'Specialist':
+                    return redirect(url_for('specialist.orders'))
+                elif user['role'] == 'Executor':
+                    return redirect(url_for('executor.orders'))
+                elif user['role'] == 'Customer':
+                    return redirect(url_for('customer.orders'))
                 else:
                     return redirect(url_for('home'))
             else:
@@ -85,8 +102,11 @@ def register():
                 if cursor.fetchone():
                     return render_template('register.html', error="Email уже зарегистрирован")
 
-                # Хеширование пароля и добавление пользователя
-                hashed_password = generate_password_hash(password)
+                # Генерация bcrypt-хэша с помощью hash_password
+                hashed_password = hash_password(password)
+                print(f"[DEBUG] Создан хэш пароля: {hashed_password}")
+
+                # Вставка нового пользователя
                 cursor.execute("""
                     INSERT INTO users (name, email, password_hash, role)
                     VALUES (%s, %s, %s, %s)
@@ -103,6 +123,14 @@ def register():
                 # Перенаправить пользователя в зависимости от его роли
                 if role == '1':  # Administrator
                     return redirect(url_for('admin.orders'))
+                elif role == '2':  # Dispatcher
+                    return redirect(url_for('dispatcher.orders'))
+                elif role == '3':  # Specialist
+                    return redirect(url_for('specialist.orders'))
+                elif role == '4':  # Executor
+                    return redirect(url_for('executor.orders'))
+                elif role == '5':  # Customer
+                    return redirect(url_for('customer.orders'))
                 else:
                     return redirect(url_for('home'))
 
@@ -121,9 +149,19 @@ def logout():
     role = session.get('role')
     session.clear()
 
+    # Логика перенаправления по роли
     if role == 'Administrator':
         return redirect(url_for('admin.orders'))
-    return redirect(url_for('home'))
+    elif role == 'Dispatcher':
+        return redirect(url_for('dispatcher.orders'))
+    elif role == 'Specialist':
+        return redirect(url_for('specialist.orders'))
+    elif role == 'Executor':
+        return redirect(url_for('executor.orders'))
+    elif role == 'Customer':
+        return redirect(url_for('customer.orders'))
+    else:
+        return redirect(url_for('home'))
 
 
 if __name__ == '__main__':

@@ -3,9 +3,11 @@
 {% block title %}Админ: Заказы{% endblock %}
 
 {% block content %}
-<div class="navigation-panel">
-    <a href="{{ url_for('admin.customers') }}" class="button">Заказчики</a>
-    <a href="{{ url_for('admin.users') }}" class="button">Пользователи</a>
+<a href="{{ url_for('admin.users') }}">
+    <button>Пользователи</button>
+</a>
+<div class="navigation">
+    <a href="{{ url_for('admin.customers') }}" class="button">Перейти к заказчикам</a>
 </div>
 
 <h2>Список заказов</h2>

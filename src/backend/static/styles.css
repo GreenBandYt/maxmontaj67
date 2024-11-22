@@ -1,138 +1,159 @@
 /* Общие стили */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #b2babb;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    line-height: 1.6;
+    font-family: Arial, sans-serif; /* Используем шрифт Arial как основной */
+    background-color: #b2babb; /* Светло-серый фон */
+    color: #333; /* Цвет текста - тёмно-серый */
+    margin: 0; /* Убираем отступы по умолчанию */
+    padding: 0; /* Убираем внутренние отступы по умолчанию */
+    line-height: 1.6; /* Увеличиваем высоту строки для удобства чтения */
 }
 
 h1 {
-    text-align: center;
-    color: #4CAF50; /* Цвет заголовка */
-    margin-top: 10px;
-    font-size: 1.8rem;
+    text-align: center; /* Выравнивание заголовка по центру */
+    color: #4CAF50; /* Зелёный цвет текста */
+    margin-top: 10px; /* Отступ сверху */
+    font-size: 1.8rem; /* Размер текста в единицах rem */
 }
 
 /* Основной контейнер */
 main {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
+    max-width: 1200px; /* Ограничиваем ширину страницы */
+    margin: 20px auto; /* Центрируем и добавляем отступы сверху и снизу */
+    padding: 20px; /* Внутренние отступы */
+    background-color: #fff; /* Белый фон */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
-    border-radius: 5px;
+    border-radius: 5px; /* Скругление углов */
 }
 
 /* Футер */
 footer {
-    background: #333; /* Тёмный фон */
+    background: #333; /* Тёмно-серый фон */
     color: #fff; /* Белый текст */
-    padding: 10px 20px;
-    text-align: center;
-    font-size: 0.9rem;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
+    padding: 10px 20px; /* Внутренние отступы */
+    text-align: center; /* Выравнивание текста по центру */
+    font-size: 0.9rem; /* Небольшой размер текста */
+    position: fixed; /* Фиксируем футер внизу */
+    bottom: 0; /* Располагаем внизу страницы */
+    width: 100%; /* Футер занимает всю ширину */
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Тень над футером */
 }
 
 footer p {
-    margin: 5px 0;
+    margin: 5px 0; /* Отступы сверху и снизу для текста в футере */
 }
 
 /* Ссылки */
 a {
-    color: #4CAF50;
-    text-decoration: none;
-    font-weight: bold;
+    color: #4CAF50; /* Зелёный цвет текста */
+    text-decoration: none; /* Убираем подчёркивание */
+    font-weight: bold; /* Жирное начертание */
 }
 
 a:hover {
-    text-decoration: underline;
-    color: #45a049; /* Тёмно-зелёный при наведении */
+    text-decoration: underline; /* Подчёркивание при наведении */
+    color: #45a049; /* Тёмно-зелёный цвет при наведении */
 }
 
 /* Кнопки */
 button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    text-transform: uppercase;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    border: none; /* Убираем обводку */
+    padding: 10px 15px; /* Внутренние отступы */
+    text-transform: uppercase; /* Верхний регистр текста */
+    font-size: 16px; /* Размер текста */
+    border-radius: 5px; /* Скругление углов */
+    cursor: pointer; /* Указатель мыши меняется на "руку" */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
 }
 
 /* Кнопка выхода */
 .logout-button {
-    background-color: #f44336;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-    position: absolute;
-    right: 20px;
-    top: 20px;
+    background-color: #f44336; /* Красный фон */
+    color: white; /* Белый текст */
+    padding: 10px 20px; /* Внутренние отступы */
+    text-decoration: none; /* Убираем подчёркивание */
+    border-radius: 5px; /* Скругление углов */
+    font-weight: bold; /* Жирный текст */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+    position: absolute; /* Абсолютное позиционирование */
+    right: 20px; /* Отступ от правого края */
+    top: 20px; /* Отступ от верхнего края */
 }
 
 .logout-button:hover {
-    background-color: #d32f2f;
+    background-color: #d32f2f; /* Более тёмный красный при наведении */
 }
 
 /* Таблицы */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 1rem;
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse; /* Убираем промежутки между ячейками */
+    margin: 20px 0; /* Отступы сверху и снизу */
+    font-size: 1rem; /* Размер текста */
 }
 
 table th,
 table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
+    border: 1px solid #ddd; /* Светлая рамка ячеек */
+    padding: 10px; /* Внутренние отступы */
+    text-align: left; /* Текст по левому краю */
 }
 
 table th {
-    background: linear-gradient(to bottom, #4CAF50, #45a049);
-    color: white;
-    text-transform: uppercase;
+    background: linear-gradient(to bottom, #4CAF50, #45a049); /* Градиентный фон */
+    color: white; /* Белый текст */
+    text-transform: uppercase; /* Верхний регистр текста */
 }
 
 table tr:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: #f9f9f9; /* Светло-серый фон для чётных строк */
 }
 
 table tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f1f1; /* Более светлый фон при наведении */
 }
 
 /* Мобильная адаптивность */
 @media (max-width: 768px) {
     main {
-        padding: 10px;
+        padding: 10px; /* Уменьшаем отступы */
     }
 
     table th,
     table td {
-        font-size: 0.9rem;
-        padding: 8px;
+        font-size: 0.9rem; /* Уменьшаем размер текста в таблицах */
+        padding: 8px; /* Уменьшаем внутренние отступы */
     }
 
     button,
     .logout-button {
-        font-size: 14px;
-        padding: 8px 10px;
+        font-size: 14px; /* Уменьшаем размер текста для кнопок */
+        padding: 8px 10px; /* Уменьшаем внутренние отступы */
     }
+}
+
+/* Панель навигации */
+.navigation-panel {
+    display: flex; /* Горизонтальное расположение элементов */
+    justify-content: space-around; /* Равномерное распределение кнопок */
+    margin-bottom: 20px; /* Отступ снизу */
+}
+
+.navigation-panel .button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    text-decoration: none; /* Убираем подчёркивание */
+    padding: 10px 15px; /* Внутренние отступы */
+    border-radius: 5px; /* Скругление углов */
+    font-size: 16px; /* Размер текста */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+.navigation-panel .button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
 }

@@ -3,6 +3,8 @@ from flask_session import Session
 from config import SESSION_CONFIG
 from utils import db_connect, verify_password
 from werkzeug.security import generate_password_hash
+from utils import db_connect, verify_password, hash_password
+
 
 # Импортируем Blueprints
 from admin_api import admin_bp
@@ -77,6 +79,7 @@ def home():
 
 
 @app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     """
     Страница регистрации нового пользователя.
@@ -96,38 +99,44 @@ def register():
                 cursor = conn.cursor()
 
                 # Проверка уникальности email
-                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+                cursor.execute("SELECT id FROM users WHERE email = %s UNION SELECT id FROM customers WHERE email = %s", (email, email))
                 if cursor.fetchone():
                     return render_template('register.html', error="Email уже зарегистрирован")
 
-                # Хеширование пароля и добавление пользователя
-                hashed_password = generate_password_hash(password)
-                cursor.execute("""
-                    INSERT INTO users (name, email, password_hash, role)
-                    VALUES (%s, %s, %s, %s)
-                """, (name, email, hashed_password, role))
-                conn.commit()
+                # Хеширование пароля
+                hashed_password = hash_password(password)
+                print(f"[DEBUG] Создан хэш пароля: {hashed_password}")
 
-                print(f"[DEBUG] Пользователь {name} успешно зарегистрирован")
+                # Логика добавления в зависимости от роли
+                if role == '5':  # Если роль Customer
+                    cursor.execute("""
+                        INSERT INTO customers (name, email, password_hash, created_at)
+                        VALUES (%s, %s, %s, NOW())
+                    """, (name, email, hashed_password))
+                    conn.commit()
 
-                # Установить данные сессии после регистрации
-                session['user_id'] = cursor.lastrowid
-                session['role'] = role
-                session['name'] = name
+                    # Установить данные сессии
+                    session['user_id'] = cursor.lastrowid
+                    session['role'] = 'Customer'
+                    session['name'] = name
 
-                # Перенаправить пользователя в зависимости от его роли
-                if role == '1':  # Administrator
-                    return redirect(url_for('admin.orders'))
-                elif role == '2':  # Dispatcher
-                    return redirect(url_for('dispatcher.orders'))
-                elif role == '3':  # Specialist
-                    return redirect(url_for('specialist.orders'))
-                elif role == '4':  # Executor
-                    return redirect(url_for('executor.orders'))
-                elif role == '5':  # Customer
+                    print(f"[DEBUG] Пользователь {name} добавлен в таблицу customers")
                     return redirect(url_for('customer.orders'))
-                else:
-                    return redirect(url_for('home'))
+
+                else:  # Для остальных ролей
+                    cursor.execute("""
+                        INSERT INTO users (name, email, password_hash, role, created_at)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    """, (name, email, hashed_password, role))
+                    conn.commit()
+
+                    # Установить данные сессии
+                    session['user_id'] = cursor.lastrowid
+                    session['role'] = role
+                    session['name'] = name
+
+                    print(f"[DEBUG] Пользователь {name} добавлен в таблицу users")
+                    return redirect(url_for('home'))  # Перенаправление после регистрации
 
         except Exception as e:
             print(f"[ERROR] Ошибка регистрации: {e}")
