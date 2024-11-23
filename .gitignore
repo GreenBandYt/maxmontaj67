@@ -54,3 +54,9 @@ media/
 *.tmp
 *.bak
 *.swp
+
+# Protected data
+protected/
+
+# Ignore test files
+src/backend/test_*.py

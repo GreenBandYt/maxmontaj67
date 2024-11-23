@@ -1,21 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Назначить исполнителя{% endblock %}
+{% block title %}Назначение исполнителя{% endblock %}
 
 {% block content %}
-<h2>Назначить исполнителя для заказа ID: {{ order.id }}</h2>
-<p><strong>Описание:</strong> {{ order.description }}</p>
-<p><strong>Клиент:</strong> {{ order.customer_name }}</p>
+<h2>Назначение исполнителя для заказа #{{ order_id }}</h2>
 
 <form method="POST">
-    <label for="executor_id">Выберите исполнителя:</label>
-    <select name="executor_id" id="executor_id" required>
+    <label for="executor">Выберите исполнителя:</label>
+    <select name="executor" id="executor">
         {% for executor in executors %}
-        <option value="{{ executor.id }}">{{ executor.name }}</option>
+        <option value="{{ executor.id }}">{{ executor.name }} ({{ executor.role }})</option>
         {% endfor %}
     </select>
     <button type="submit" class="button">Назначить</button>
 </form>
-<a href="{{ url_for('admin.orders') }}" class="button">Отмена</a>
-{% endblock %}
 
+<!-- Кнопка снятия исполнителя -->
+<form method="POST" action="{{ url_for('admin.remove_executor', order_id=order_id) }}">
+    <button type="submit" class="button danger">Снять исполнителя</button>
+</form>
+
+<!-- Кнопка возврата -->
+<a href="{{ url_for('admin.orders') }}" class="button">Вернуться к заказам</a>
+{% endblock %}
