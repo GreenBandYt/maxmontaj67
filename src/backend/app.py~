@@ -1,168 +1,87 @@
 from flask import Flask, render_template, request, session, redirect, url_for
 from flask_session import Session
 from config import SESSION_CONFIG
-from utils import db_connect, verify_password
-from werkzeug.security import generate_password_hash
 from utils import db_connect, verify_password, hash_password
 
-
-# Импортируем Blueprints
-from admin_api import admin_bp
-from dispatcher_api import dispatcher_bp
-from specialist_api import specialist_bp
-from executor_api import executor_bp
-from customer_api import customer_bp
-
+# Настройка приложения Flask
 app = Flask(__name__)
 
-# Настройка сессий из config.py
-app.config['SESSION_TYPE'] = SESSION_CONFIG['type']
-app.config['SESSION_PERMANENT'] = SESSION_CONFIG['permanent']
-app.config['SESSION_FILE_DIR'] = SESSION_CONFIG['file_dir']
-Session(app)
-
-# Регистрация Blueprints
-app.register_blueprint(admin_bp)
-app.register_blueprint(dispatcher_bp)
-app.register_blueprint(specialist_bp)
-app.register_blueprint(executor_bp)
-app.register_blueprint(customer_bp)
+# Конфигурация сессий из файла config.py
+app.config['SESSION_TYPE'] = SESSION_CONFIG['type']  # Тип сессий (например, файловый)
+app.config['SESSION_PERMANENT'] = SESSION_CONFIG['permanent']  # Должны ли сессии быть постоянными
+app.config['SESSION_FILE_DIR'] = SESSION_CONFIG['file_dir']  # Директория для хранения сессий
+Session(app)  # Инициализация сессий
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
     """
     Главная страница входа в систему.
+    Обрабатывает вход пользователя и перенаправляет его в зависимости от роли.
     """
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+    if request.method == 'POST':  # Если метод POST, обрабатываем данные формы
+        email = request.form.get('email')  # Получаем email из формы
+        password = request.form.get('password')  # Получаем пароль из формы
+
+        # Логируем полученные данные (пароль отображается как звёздочки)
+        app.logger.debug(f"Полученные данные: email={email}, password={'*' * len(password) if password else None}")
 
         try:
-            # Подключение к базе данных и проверка пользователя
+            # Подключение к базе данных
             with db_connect() as conn:
-                cursor = conn.cursor(dictionary=True)
-                cursor.execute("""
+                cursor = conn.cursor()
+                query = """
                     SELECT u.id, u.password_hash, r.name AS role, u.name
                     FROM users u
                     JOIN roles r ON u.role = r.id
                     WHERE u.email = %s
-                """, (email,))
-                user = cursor.fetchone()
+                """
+                # Логируем SQL-запрос и параметры
+                app.logger.debug(f"Выполнение SQL-запроса: {query} с параметром: {email}")
+                cursor.execute(query, (email,))
+                user = cursor.fetchone()  # Получаем данные пользователя
 
-            if user and verify_password(password, user['password_hash']):
-                session['user_id'] = user['id']
-                session['role'] = user['role']
-                session['name'] = user['name']
-                print(f"[DEBUG] Успешный вход: role={user['role']}, name={user['name']}")
-
-                # Перенаправление на страницу роли
-                if user['role'] == 'Administrator':
-                    return redirect(url_for('admin.orders'))
-                elif user['role'] == 'Dispatcher':
-                    return redirect(url_for('dispatcher.orders'))
-                elif user['role'] == 'Specialist':
-                    return redirect(url_for('specialist.orders'))
-                elif user['role'] == 'Executor':
-                    return redirect(url_for('executor.orders'))
-                elif user['role'] == 'Customer':
-                    return redirect(url_for('customer.orders'))
+                if user:
+                    # Логируем успешный запрос
+                    app.logger.debug(f"Найден пользователь: {user}")
                 else:
-                    return redirect(url_for('home'))
+                    # Если пользователь не найден, логируем это
+                    app.logger.warning(f"Пользователь с email {email} не найден.")
+                    return render_template('index.html', error="Неверный логин или пароль")
+
+            # Логируем попытку проверки пароля
+            app.logger.debug(f"[DEBUG] Попытка проверки пароля для хэша: {user['password_hash']}")
+            if verify_password(password, user['password_hash']):
+                # Успешный вход
+                app.logger.info(f"Успешный вход: role={user['role']}, name={user['name']}")
+
+                # Сохраняем данные пользователя в сессии
+                session['user_id'] = user['id']  # ID пользователя
+                session['role'] = user['role']  # Роль пользователя
+                session['name'] = user['name']  # Имя пользователя
+
+                # Перенаправление пользователя в зависимости от роли
+                role_redirects = {
+                    'Administrator': 'admin.orders',  # Администратор
+                    'Dispatcher': 'dispatcher.orders',  # Диспетчер
+                    'Specialist': 'specialist.orders',  # Специалист
+                    'Executor': 'executor.orders',  # Исполнитель
+                    'Customer': 'customer.orders',  # Заказчик
+                }
+                return redirect(url_for(role_redirects.get(user['role'], 'home')))  # Перенаправление
+
             else:
+                # Если пароль неверный, логируем это
+                app.logger.warning("Ошибка проверки пароля: пароль не совпадает")
                 return render_template('index.html', error="Неверный логин или пароль")
 
         except Exception as e:
-            print(f"[ERROR] Ошибка подключения к базе данных: {e}")
+            # Логируем любую неожиданную ошибку
+            app.logger.error(f"Неожиданная ошибка: {e}")
             return render_template('index.html', error="Ошибка сервера. Попробуйте позже.")
 
+    # Если метод GET, отображаем форму входа
     return render_template('index.html')
 
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    """
-    Страница регистрации нового пользователя.
-    """
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        password_confirm = request.form['password_confirm']
-        role = request.form['role']
-
-        if password != password_confirm:
-            return render_template('register.html', error="Пароли не совпадают")
-
-        try:
-            with db_connect() as conn:
-                cursor = conn.cursor()
-
-                # Проверка уникальности email
-                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-                if cursor.fetchone():
-                    return render_template('register.html', error="Email уже зарегистрирован")
-
-                # Генерация bcrypt-хэша с помощью hash_password
-                hashed_password = hash_password(password)
-                print(f"[DEBUG] Создан хэш пароля: {hashed_password}")
-
-                # Вставка нового пользователя
-                cursor.execute("""
-                    INSERT INTO users (name, email, password_hash, role)
-                    VALUES (%s, %s, %s, %s)
-                """, (name, email, hashed_password, role))
-                conn.commit()
-
-                print(f"[DEBUG] Пользователь {name} успешно зарегистрирован")
-
-                # Установить данные сессии после регистрации
-                session['user_id'] = cursor.lastrowid
-                session['role'] = role
-                session['name'] = name
-
-                # Перенаправить пользователя в зависимости от его роли
-                if role == '1':  # Administrator
-                    return redirect(url_for('admin.orders'))
-                elif role == '2':  # Dispatcher
-                    return redirect(url_for('dispatcher.orders'))
-                elif role == '3':  # Specialist
-                    return redirect(url_for('specialist.orders'))
-                elif role == '4':  # Executor
-                    return redirect(url_for('executor.orders'))
-                elif role == '5':  # Customer
-                    return redirect(url_for('customer.orders'))
-                else:
-                    return redirect(url_for('home'))
-
-        except Exception as e:
-            print(f"[ERROR] Ошибка регистрации: {e}")
-            return render_template('register.html', error="Ошибка сервера. Попробуйте позже.")
-
-    return render_template('register.html')
-
-
-@app.route('/logout')
-def logout():
-    """
-    Выход из системы.
-    """
-    role = session.get('role')
-    session.clear()
-
-    # Логика перенаправления по роли
-    if role == 'Administrator':
-        return redirect(url_for('admin.orders'))
-    elif role == 'Dispatcher':
-        return redirect(url_for('dispatcher.orders'))
-    elif role == 'Specialist':
-        return redirect(url_for('specialist.orders'))
-    elif role == 'Executor':
-        return redirect(url_for('executor.orders'))
-    elif role == 'Customer':
-        return redirect(url_for('customer.orders'))
-    else:
-        return redirect(url_for('home'))
-
-
 if __name__ == '__main__':
+    # Запускаем сервер
     app.run(debug=True, host='0.0.0.0')

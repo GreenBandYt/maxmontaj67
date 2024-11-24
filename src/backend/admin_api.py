@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request
 from utils import db_connect
 from utils.validators import is_user_data_complete
+import logging
 
+# Логирование
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Создание Blueprint для маршрутов администратора
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -12,15 +15,14 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_bp.route('/orders', methods=['GET'])
 def orders():
     """
-    Маршрут для отображения всех заказов с полным набором данных.
+    Маршрут для отображения всех заказов.
     """
     if session.get('role') != 'Administrator':  # Проверка прав доступа
         return redirect(url_for('home'))  # Перенаправление на главную страницу, если роль не админ
 
     try:
         with db_connect() as conn:
-            cursor = conn.cursor(dictionary=True)
-            # SQL-запрос для получения всех данных из таблицы заказов
+            cursor = conn.cursor()
             cursor.execute("""
                 SELECT 
                     o.id,
@@ -37,42 +39,11 @@ def orders():
             """)
             orders = cursor.fetchall()
 
-        # Передача данных в шаблон
+        logging.debug(f"[DEBUG] Загружено заказов: {orders}")
         return render_template('admin/orders/admin_orders.html', orders=orders)
 
     except Exception as e:
-        print(f"[ERROR] Ошибка при загрузке заказов: {e}")
-        return "Ошибка сервера. Попробуйте позже.", 500
-
-
-# ----------------------------------------
-# Маршрут: Отображение всех пользователей
-# ----------------------------------------
-@admin_bp.route('/users', methods=['GET'])
-def users():
-    """
-    Маршрут для отображения списка пользователей.
-    """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
-        return redirect(url_for('home'))
-
-    try:
-        with db_connect() as conn:
-            cursor = conn.cursor(dictionary=True)
-            # SQL-запрос для получения данных о пользователях
-            cursor.execute("""
-                SELECT u.id, u.name, u.email, r.name AS role, u.created_at
-                FROM users u
-                JOIN roles r ON u.role = r.id
-            """)
-            users = cursor.fetchall()
-            print(f"[DEBUG] Загружено пользователей: {users}")
-
-        # Передача данных в шаблон
-        return render_template('admin/users/admin_users.html', users=users)
-
-    except Exception as e:
-        print(f"[ERROR] Ошибка при загрузке пользователей: {e}")
+        logging.error(f"[ERROR] Ошибка загрузки заказов: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
 
 
@@ -89,20 +60,49 @@ def customers():
 
     try:
         with db_connect() as conn:
-            cursor = conn.cursor(dictionary=True)
-            # SQL-запрос для получения данных о заказчиках
+            cursor = conn.cursor()
             cursor.execute("""
                 SELECT id, name, email, phone, address, created_at
                 FROM customers
             """)
             customers = cursor.fetchall()
 
-        # Передача данных в шаблон
+        logging.debug(f"[DEBUG] Загружено заказчиков: {customers}")
         return render_template('admin/users/admin_customers.html', customers=customers)
 
     except Exception as e:
-        print(f"[ERROR] Ошибка при загрузке заказчиков: {e}")
+        logging.error(f"[ERROR] Ошибка загрузки заказчиков: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
+
+
+# ----------------------------------------
+# Маршрут: Отображение всех пользователей
+# ----------------------------------------
+@admin_bp.route('/users', methods=['GET'])
+def users():
+    """
+    Маршрут для отображения списка пользователей.
+    """
+    if session.get('role') != 'Administrator':  # Проверка прав доступа
+        return redirect(url_for('home'))
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT u.id, u.name, u.email, r.name AS role, u.created_at
+                FROM users u
+                JOIN roles r ON u.role = r.id
+            """)
+            users = cursor.fetchall()
+
+        logging.debug(f"[DEBUG] Загружено пользователей: {users}")
+        return render_template('admin/users/admin_users.html', users=users)
+
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка загрузки пользователей: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
+
 
 
 # ----------------------------------------
@@ -117,36 +117,42 @@ def assign_executor(order_id):
         return redirect(url_for('home'))
 
     try:
+        logging.debug(f"[DEBUG] Открыт маршрут назначения исполнителя для заказа ID: {order_id}")
+
         with db_connect() as conn:
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor()
 
             # SQL-запрос для получения списка исполнителей
             cursor.execute("""
-                SELECT u.id, u.name, r.name AS role, u.phone, u.address, u.passport_data, u.passport_issued_by, 
-                       u.passport_issue_date, u.is_complete
+                SELECT u.id, u.name, r.name AS role
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE r.name IN ('Executor', 'Specialist')
             """)
             executors = cursor.fetchall()
+            logging.debug(f"[DEBUG] Найдены исполнители: {executors}")
 
             # Проверка существования заказа
             cursor.execute("SELECT * FROM orders WHERE id = %s", (order_id,))
             order = cursor.fetchone()
             if not order:
+                logging.error(f"[ERROR] Заказ с ID {order_id} не найден.")
                 return "Заказ не найден", 404
 
             if request.method == 'POST':  # Обработка назначения исполнителя
                 executor_id = request.form['executor']
+                logging.debug(f"[DEBUG] Назначение исполнителя ID: {executor_id} для заказа ID: {order_id}")
 
                 # Проверяем, существует ли выбранный исполнитель
                 cursor.execute("SELECT * FROM users WHERE id = %s", (executor_id,))
                 executor = cursor.fetchone()
                 if not executor:
+                    logging.error(f"[ERROR] Исполнитель с ID {executor_id} не найден.")
                     return "Исполнитель не найден", 404
 
                 # Проверяем, заполнены ли все данные исполнителя
                 if not is_user_data_complete(executor):
+                    logging.warning(f"[WARNING] У исполнителя с ID {executor_id} неполные данные.")
                     return "Исполнитель не может быть назначен: неполные данные.", 400
 
                 # Обновляем заказ с назначением исполнителя
@@ -156,14 +162,17 @@ def assign_executor(order_id):
                     WHERE id = %s
                 """, (executor_id, order_id))
                 conn.commit()
+                logging.info(f"[INFO] Исполнитель с ID {executor_id} назначен на заказ ID {order_id}.")
                 return redirect(url_for('admin.orders'))
 
             # Передача данных в шаблон
             return render_template('admin/orders/assign_executor.html', order_id=order_id, executors=executors)
 
     except Exception as e:
-        print(f"[ERROR] Ошибка при назначении исполнителя: {e}")
+        logging.error(f"[ERROR] Ошибка при назначении исполнителя: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
+
+
 # ----------------------------------------
 # Маршрут: Снятие исполнителя с заказа
 # ----------------------------------------
@@ -176,6 +185,8 @@ def remove_executor(order_id):
         return redirect(url_for('home'))
 
     try:
+        logging.debug(f"[DEBUG] Снятие исполнителя с заказа ID: {order_id}")
+
         with db_connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -184,72 +195,10 @@ def remove_executor(order_id):
                 WHERE id = %s
             """, (order_id,))
             conn.commit()
+            logging.info(f"[INFO] Исполнитель снят с заказа ID {order_id}.")
 
         return redirect(url_for('admin.orders'))
 
     except Exception as e:
-        print(f"[ERROR] Ошибка при снятии исполнителя: {e}")
-        return "Ошибка сервера. Попробуйте позже.", 500
-
-
-@admin_bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
-def user_details(user_id):
-    """
-    Маршрут для просмотра и редактирования данных конкретного исполнителя.
-    """
-    # Проверяем, является ли пользователь администратором
-    if session.get('role') != 'Administrator':
-        return redirect(url_for('home'))
-
-    try:
-        with db_connect() as conn:
-            cursor = conn.cursor(dictionary=True)
-
-            # Проверяем, существует ли пользователь с указанным user_id
-            cursor.execute("""
-                SELECT u.id, u.name, u.email, u.phone, u.address, u.passport_data,
-                       u.passport_issued_by, u.passport_issue_date, u.rating, u.is_fully_filled,
-                       r.name AS role
-                FROM users u
-                JOIN roles r ON u.role = r.id
-                WHERE u.id = %s
-            """, (user_id,))
-            user = cursor.fetchone()
-
-            if not user:
-                return "Пользователь не найден", 404
-
-            # Если метод POST, обрабатываем обновление данных
-            if request.method == 'POST':
-                # Получаем данные из формы
-                name = request.form.get('name')
-                phone = request.form.get('phone')
-                address = request.form.get('address')
-                passport_data = request.form.get('passport_data')  # Шифруется перед сохранением
-                passport_issued_by = request.form.get('passport_issued_by')
-                passport_issue_date = request.form.get('passport_issue_date')
-                rating = request.form.get('rating')
-
-                # Проверяем, заполнены ли все поля
-                is_fully_filled = all([name, phone, address, passport_data, passport_issued_by, passport_issue_date])
-
-                # Шифрование паспортных данных
-                encrypted_passport_data = encrypt_data(passport_data)
-
-                # Обновляем данные в базе
-                cursor.execute("""
-                    UPDATE users
-                    SET name = %s, phone = %s, address = %s, passport_data = %s,
-                        passport_issued_by = %s, passport_issue_date = %s, rating = %s, is_fully_filled = %s
-                    WHERE id = %s
-                """, (name, phone, address, encrypted_passport_data, passport_issued_by, passport_issue_date, rating, is_fully_filled, user_id))
-                conn.commit()
-
-                return redirect(url_for('admin.user_details', user_id=user_id))
-
-            # Данные пользователя передаются в шаблон
-            return render_template('admin/users/user_details.html', user=user)
-
-    except Exception as e:
-        print(f"[ERROR] Ошибка при загрузке или обновлении пользователя: {e}")
+        logging.error(f"[ERROR] Ошибка при снятии исполнителя: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500

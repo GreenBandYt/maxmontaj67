@@ -1,40 +1,25 @@
-from cryptography.fernet import Fernet
-from werkzeug.security import check_password_hash
+import bcrypt
 
-# Функция для загрузки ключа из файла
-def load_key():
+def hash_password(password):
     """
-    Загружает ключ шифрования из файла `secret.key`.
+    Генерирует bcrypt-хэш из пароля.
     """
     try:
-        with open('/media/sf_ShareFolder/maxmontaj67/protected/secret.key', 'rb') as key_file:
-            return key_file.read()
-    except FileNotFoundError:
-        raise Exception("Файл с ключом шифрования не найден! Убедитесь, что 'secret.key' находится в защищённой папке.")
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        print(f"[DEBUG] Пароль успешно хэширован: {hashed}")
+        return hashed
+    except Exception as e:
+        print(f"[ERROR] Ошибка при хэшировании пароля: {e}")
+        raise Exception("Ошибка при хэшировании пароля. Проверьте входные данные.")
 
-# Функции для шифрования и дешифрования
-def encrypt_data(data):
+def verify_password(password, hashed_password):
     """
-    Шифрует данные с использованием ключа.
-    """
-    key = load_key()
-    fernet = Fernet(key)
-    return fernet.encrypt(data.encode()).decode()
-
-def decrypt_data(encrypted_data):
-    """
-    Дешифрует данные с использованием ключа.
-    """
-    key = load_key()
-    fernet = Fernet(key)
-    return fernet.decrypt(encrypted_data.encode()).decode()
-
-def verify_password(password, password_hash):
-    """
-    Проверяет соответствие пароля (в открытом виде) и его хэшированного значения.
+    Проверяет пароль с использованием bcrypt.
     """
     try:
-        return check_password_hash(password_hash, password)
+        result = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+        print(f"[DEBUG] Результат проверки пароля: {result}")
+        return result
     except Exception as e:
         print(f"[ERROR] Ошибка при проверке пароля: {e}")
-        return False
+        raise Exception("Ошибка при проверке пароля. Проверьте входные данные.")

@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 
 # Функция для загрузки ключа из файла
 def load_key():
@@ -11,23 +11,34 @@ def load_key():
             return key_file.read()
     except FileNotFoundError:
         raise Exception("Файл с ключом шифрования не найден! Убедитесь, что 'secret.key' находится в защищённой папке.")
+    except Exception as e:
+        print(f"[ERROR] Ошибка при загрузке ключа: {e}")
+        raise
 
 # Функции для шифрования и дешифрования данных
 def encrypt_data(data):
     """
     Шифрует данные с использованием ключа.
     """
-    key = load_key()
-    fernet = Fernet(key)
-    return fernet.encrypt(data.encode()).decode()
+    try:
+        key = load_key()
+        fernet = Fernet(key)
+        return fernet.encrypt(data.encode()).decode()
+    except Exception as e:
+        print(f"[ERROR] Ошибка шифрования данных: {e}")
+        raise Exception("Ошибка при шифровании данных. Проверьте ключ и исходные данные.")
 
 def decrypt_data(encrypted_data):
     """
     Дешифрует данные с использованием ключа.
     """
-    key = load_key()
-    fernet = Fernet(key)
-    return fernet.decrypt(encrypted_data.encode()).decode()
+    try:
+        key = load_key()
+        fernet = Fernet(key)
+        return fernet.decrypt(encrypted_data.encode()).decode()
+    except Exception as e:
+        print(f"[ERROR] Ошибка дешифрования данных: {e}")
+        raise Exception("Ошибка при дешифровании данных. Проверьте зашифрованные данные и ключ.")
 
 # Функции для работы с паролями
 def hash_password(password):
@@ -35,19 +46,21 @@ def hash_password(password):
     Генерирует bcrypt-хэш из пароля.
     """
     try:
-        hashed = generate_password_hash(password)
-        print(f"[DEBUG] Пароль успешно хэширован.")
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        print(f"[DEBUG] Пароль успешно хэширован: {hashed}")
         return hashed
     except Exception as e:
         print(f"[ERROR] Ошибка при хэшировании пароля: {e}")
-        raise
+        raise Exception("Ошибка при хэшировании пароля. Проверьте входные данные.")
 
-def verify_password(password, password_hash):
+def verify_password(password, hashed_password):
     """
-    Проверяет соответствие пароля (в открытом виде) и его хэшированного значения.
+    Проверяет пароль с использованием bcrypt.
     """
     try:
-        return check_password_hash(password_hash, password)
+        result = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+        print(f"[DEBUG] Результат проверки пароля: {result}")
+        return result
     except Exception as e:
         print(f"[ERROR] Ошибка при проверке пароля: {e}")
-        return False
+        raise Exception("Ошибка при проверке пароля. Проверьте входные данные.")

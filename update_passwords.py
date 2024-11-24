@@ -1,40 +1,127 @@
+import pymysql.cursors
 import bcrypt
-import mysql.connector
+from datetime import datetime
 
 # Соединение с базой данных
-db = mysql.connector.connect(
-    host="localhost",  # Адрес сервера базы данных
-    user="greenbandyt",  # Имя пользователя для подключения
-    password="byv",  # Пароль для подключения
-    database="maxmontaj67_db",  # Название базы данных
-    charset="utf8mb4",  # Указываем кодировку
-    collation="utf8mb4_general_ci"  # Указываем совместимую коллацию для MariaDB
+db = pymysql.connect(
+    host="localhost",
+    user="greenbandyt",
+    password="byv",
+    database="maxmontaj67_db",
+    charset="utf8mb4",
+    cursorclass=pymysql.cursors.DictCursor
 )
 
 cursor = db.cursor()
 
-# Удаляем старые записи из таблицы
+# Устанавливаем корректное сопоставление
+cursor.execute("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'")
+cursor.execute("SET collation_connection = 'utf8mb4_general_ci'")
+
+# Удаляем зависимости из таблицы `orders`, где `installer_id` ссылается на `users`
+cursor.execute("UPDATE orders SET installer_id = NULL")
+
+# Удаляем все записи из таблицы `users`
 cursor.execute("DELETE FROM users")
 
 # Данные для вставки в таблицу
 users_data = [
-    (1, 'greenbandyt', 'bandurayv@yandex.ru', 'byv5054byv', 1),
-    (2, 'Dispatcher_1', 'dispatcher_user@example.com', 'Dispatcher_1', 2),
-    (3, 'Specialist_1', 'specialist_user@example.com', 'Specialist_1', 3),
-    (4, 'Executor_1', 'executor_user@example.com', 'Executor_1', 4),
-    (5, 'Customer_1', 'customer_user@example.com', 'Customer_1', 5),
+    {
+        "id": 1,
+        "name": "greenbandyt",
+        "email": "bandurayv@yandex.ru",
+        "password": "byv5054byv",
+        "role": 1,
+        "created_at": datetime.now(),
+        "phone": None,
+        "address": None,
+        "passport_data": None,
+        "passport_issued_by": None,
+        "passport_issue_date": None,
+        "photo_path": None,
+        "rating": 0.0,
+        "is_profile_complete": 0,
+    },
+    {
+        "id": 2,
+        "name": "Dispatcher_1",
+        "email": "dispatcher_user@example.com",
+        "password": "Dispatcher_1",
+        "role": 2,
+        "created_at": datetime.now(),
+        "phone": None,
+        "address": None,
+        "passport_data": None,
+        "passport_issued_by": None,
+        "passport_issue_date": None,
+        "photo_path": None,
+        "rating": 0.0,
+        "is_profile_complete": 0,
+    },
+    {
+        "id": 3,
+        "name": "Specialist_1",
+        "email": "specialist_user@example.com",
+        "password": "Specialist_1",
+        "role": 3,
+        "created_at": datetime.now(),
+        "phone": None,
+        "address": None,
+        "passport_data": None,
+        "passport_issued_by": None,
+        "passport_issue_date": None,
+        "photo_path": None,
+        "rating": 0.0,
+        "is_profile_complete": 0,
+    },
+    {
+        "id": 4,
+        "name": "Executor_1",
+        "email": "executor_user@example.com",
+        "password": "Executor_1",
+        "role": 4,
+        "created_at": datetime.now(),
+        "phone": None,
+        "address": None,
+        "passport_data": None,
+        "passport_issued_by": None,
+        "passport_issue_date": None,
+        "photo_path": None,
+        "rating": 0.0,
+        "is_profile_complete": 0,
+    },
 ]
 
 # Хешируем пароли с использованием bcrypt
 hashed_users_data = []
 for user in users_data:
-    user_id, username, email, password, role = user
-    # Хешируем пароль с bcrypt
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    hashed_users_data.append((user_id, username, email, hashed_password, role))
+    hashed_password = bcrypt.hashpw(user["password"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hashed_users_data.append((
+        user["id"],
+        user["name"],
+        user["email"],
+        hashed_password,
+        user["role"],
+        user["created_at"],
+        user["phone"],
+        user["address"],
+        user["passport_data"],
+        user["passport_issued_by"],
+        user["passport_issue_date"],
+        user["photo_path"],
+        user["rating"],
+        user["is_profile_complete"],
+    ))
 
 # Вставляем новые записи с хешированными паролями
-cursor.executemany("INSERT INTO users (id, name, email, password_hash, role) VALUES (%s, %s, %s, %s, %s)", hashed_users_data)
+cursor.executemany("""
+    INSERT INTO users (
+        id, name, email, password_hash, role, created_at, phone, address,
+        passport_data, passport_issued_by, passport_issue_date, photo_path, rating, is_profile_complete
+    ) VALUES (
+        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+    )
+""", hashed_users_data)
 
 # Подтверждаем изменения в базе данных
 db.commit()
@@ -43,4 +130,4 @@ db.commit()
 cursor.close()
 db.close()
 
-print("Таблица 'users' успешно перезаписана с хешированием паролей.")
+print("Таблица 'users' успешно обновлена.")

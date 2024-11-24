@@ -1,0 +1,13 @@
+import bcrypt
+
+# Тестовые данные
+password = "byv"  # Пароль в открытом виде
+hash_from_db = "$2b$12$nAPq5rto7qbIjhZiAO/lNeuDC9ywQREMD2TJbV3iZCayMdf/H/BMa"  # Хэш из базы
+
+print("[DEBUG] Проверка пароля...")
+try:
+    # Проверка пароля
+    result = bcrypt.checkpw(password.encode('utf-8'), hash_from_db.encode('utf-8'))
+    print(f"[DEBUG] Результат проверки: {result}")  # Ожидается: True
+except Exception as e:
+    print(f"[ERROR] Ошибка при проверке: {e}")

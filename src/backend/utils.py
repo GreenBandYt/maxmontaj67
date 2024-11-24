@@ -1,21 +1,29 @@
-import mysql.connector
 import bcrypt
+import logging
+import pymysql.cursors
 from config import DATABASE_CONFIG
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def db_connect():
     """
-    Устанавливает соединение с базой данных.
+    Устанавливает соединение с базой данных с использованием PyMySQL.
     """
     try:
-        conn = mysql.connector.connect(
-            **DATABASE_CONFIG,
-            charset='utf8mb4',
-            collation='utf8mb4_general_ci'
+        logging.debug("Попытка подключения к базе данных с параметрами: %s", DATABASE_CONFIG)
+        conn = pymysql.connect(
+            host=DATABASE_CONFIG['host'],
+            user=DATABASE_CONFIG['user'],
+            password=DATABASE_CONFIG['password'],
+            database=DATABASE_CONFIG['database'],
+            charset=DATABASE_CONFIG['charset'],
+            cursorclass=pymysql.cursors.DictCursor  # Результаты в виде словаря
         )
-        print("[DEBUG] Успешное подключение к базе данных")
+        logging.debug("Успешное подключение к базе данных через PyMySQL")
         return conn
-    except mysql.connector.Error as e:
-        print(f"[ERROR] Ошибка подключения к базе данных: {e}")
+    except pymysql.MySQLError as e:
+        logging.error("Ошибка подключения к базе данных: %s", e)
         raise
 
 def hash_password(password):
@@ -24,10 +32,10 @@ def hash_password(password):
     """
     try:
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        print(f"[DEBUG] Пароль: {password}, Хэш: {hashed}")
+        logging.debug("Хэш пароля успешно создан: %s", hashed)
         return hashed
     except Exception as e:
-        print(f"[ERROR] Ошибка хэширования пароля: {e}")
+        logging.error("Ошибка хэширования пароля: %s", e)
         raise
 
 def verify_password(password, hashed_password):
@@ -36,10 +44,11 @@ def verify_password(password, hashed_password):
     """
     try:
         result = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
-        print(f"[DEBUG] Пароль (plain): {password}")
-        print(f"[DEBUG] Хэш из базы: {hashed_password}")
-        print(f"[DEBUG] Результат проверки: {result}")
+        logging.debug("Результат проверки пароля: %s", result)
         return result
+    except ValueError as ve:
+        logging.error("Ошибка проверки пароля: некорректный формат хэша. %s", ve)
+        raise
     except Exception as e:
-        print(f"[ERROR] Ошибка проверки пароля: {e}")
+        logging.error("Общая ошибка проверки пароля: %s", e)
         raise
