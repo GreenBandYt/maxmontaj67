@@ -1,47 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}Админ: Информация об исполнителе{% endblock %}
+{% block title %}Редактирование пользователя{% endblock %}
 
 {% block content %}
 <div class="navigation-panel">
-    <a href="{{ url_for('admin.users') }}" class="button">Назад к пользователям</a>
+    <a href="{{ url_for('admin.users') }}" class="button">Вернуться к списку</a>
 </div>
 
-<h2>Информация об исполнителе</h2>
+<h2>Редактирование пользователя</h2>
 
-<form method="POST" action="{{ url_for('admin.user_detail', user_id=user.id) }}">
-    <div>
-        <label for="name">Имя:</label>
+<form method="POST" class="form-container">
+    <!-- ID (только для чтения) -->
+    <div class="form-group">
+        <label for="user_id">ID:</label>
+        <input type="text" id="user_id" name="user_id" value="{{ user.id }}" readonly>
+    </div>
+
+    <!-- Имя -->
+    <div class="form-group">
+        <label for="name">Имя (обязательно):</label>
         <input type="text" id="name" name="name" value="{{ user.name }}" required>
     </div>
-    <div>
-        <label for="phone">Телефон:</label>
-        <input type="text" id="phone" name="phone" value="{{ user.phone }}">
+
+    <!-- Телефон -->
+    <div class="form-group">
+        <label for="phone">Телефон (обязательно):</label>
+        <input type="text" id="phone" name="phone" value="{{ user.phone }}" required>
     </div>
-    <div>
-        <label for="address">Адрес:</label>
-        <textarea id="address" name="address">{{ user.address }}</textarea>
+
+    <!-- Адрес -->
+    <div class="form-group">
+        <label for="address">Адрес (обязательно):</label>
+        <input type="text" id="address" name="address" value="{{ user.address }}" required>
     </div>
-    <div>
+
+    <!-- Рейтинг -->
+    <div class="form-group">
+        <label for="rating">Рейтинг (0-5):</label>
+        <input type="number" id="rating" name="rating" value="{{ user.rating }}" min="0" max="5" step="0.1" required>
+    </div>
+
+    <!-- Роль -->
+    <div class="form-group">
+        <label for="role">Роль:</label>
+        <select id="role" name="role">
+            {% for role in roles %}
+            <option value="{{ role.id }}" {% if role.id == user.role_id %}selected{% endif %}>{{ role.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Паспортные данные (readonly) -->
+    <div class="form-group">
         <label for="passport_data">Паспортные данные:</label>
-        <input type="text" id="passport_data" name="passport_data" placeholder="Серия и номер" value="{{ user.passport_data }}">
+        <input type="text" id="passport_data" name="passport_data" value="{{ user.passport_data }}" readonly>
     </div>
-    <div>
-        <label for="passport_issued_by">Кем выдан:</label>
-        <input type="text" id="passport_issued_by" name="passport_issued_by" value="{{ user.passport_issued_by }}">
+
+    <!-- Кнопка сохранения -->
+    <div class="form-group">
+        <button type="submit" class="button">Сохранить изменения</button>
     </div>
-    <div>
-        <label for="passport_issue_date">Дата выдачи:</label>
-        <input type="date" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date }}">
-    </div>
-    <div>
-        <label for="rating">Рейтинг:</label>
-        <input type="number" id="rating" name="rating" step="0.1" min="0" max="5" value="{{ user.rating }}">
-    </div>
-    <div>
-        <strong>Статус профиля:</strong>
-        {{ "Полный" if user.is_profile_complete else "Неполный" }}
-    </div>
-    <button type="submit" class="button">Сохранить изменения</button>
 </form>
 {% endblock %}

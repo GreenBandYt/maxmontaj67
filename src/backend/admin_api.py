@@ -202,3 +202,72 @@ def remove_executor(order_id):
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при снятии исполнителя: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
+
+# ----------------------------------------
+# Маршрут: Редактирование данных пользователя
+# ----------------------------------------
+@admin_bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
+def user_details(user_id):
+    """
+    Маршрут для просмотра и редактирования данных пользователя.
+    """
+    if session.get('role') != 'Administrator':  # Проверка прав доступа
+        return redirect(url_for('home'))  # Перенаправление, если пользователь не админ
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Проверяем существование пользователя
+            cursor.execute("""
+                SELECT u.id, u.name, u.email, u.phone, u.address, u.passport_data,
+                       u.rating, u.role AS role_id, r.name AS role_name
+                FROM users u
+                JOIN roles r ON u.role = r.id
+                WHERE u.id = %s
+            """, (user_id,))
+            user = cursor.fetchone()
+            if not user:
+                return "Пользователь не найден", 404
+
+            # Получаем список всех ролей для выбора
+            cursor.execute("SELECT id, name FROM roles")
+            roles = cursor.fetchall()
+
+            if request.method == 'POST':  # Обработка формы
+                # Считываем данные из формы
+                name = request.form.get('name')
+                phone = request.form.get('phone')
+                address = request.form.get('address')
+                rating = request.form.get('rating')
+                role_id = request.form.get('role')
+
+                # Валидация обязательных полей
+                if not all([name, phone, address, rating]):
+                    return "Все обязательные поля должны быть заполнены.", 400
+
+                # Проверка диапазона рейтинга
+                try:
+                    rating = float(rating)
+                    if not (0 <= rating <= 5):
+                        return "Рейтинг должен быть в диапазоне от 0 до 5.", 400
+                except ValueError:
+                    return "Рейтинг должен быть числом.", 400
+
+                # Обновление данных пользователя
+                cursor.execute("""
+                    UPDATE users
+                    SET name = %s, phone = %s, address = %s, rating = %s, role = %s
+                    WHERE id = %s
+                """, (name, phone, address, rating, role_id, user_id))
+                conn.commit()
+
+                return redirect(url_for('admin.users'))
+
+            # Передача данных в шаблон
+            return render_template('admin/users/admin_user_detail.html', user=user, roles=roles)
+
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка при редактировании пользователя: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
+
