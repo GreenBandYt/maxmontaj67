@@ -222,84 +222,47 @@ def remove_executor(order_id):
 @admin_bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
 def user_details(user_id):
     """
-    Маршрут для просмотра и редактирования данных пользователя.
+    Обработка страницы редактирования пользователя.
     """
-    from datetime import datetime  # Убедимся, что импортируем все нужные модули
-
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
-        return redirect(url_for('home'))  # Перенаправление, если пользователь не админ
+    if session.get('role') != 'Administrator':
+        return redirect(url_for('home'))
 
     try:
         with db_connect() as conn:
             cursor = conn.cursor()
-
-            # Получаем данные пользователя
             cursor.execute("""
-                SELECT u.id, u.name, u.email, u.phone, u.address, u.rating, 
-                       u.role AS role_id, r.name AS role_name, u.photo_path, 
-                       u.passport_issue_date, u.passport_series, u.passport_number, u.passport_issued_by
+                SELECT u.id, u.name, u.phone, u.address,
+                       u.rating, u.role AS role_id, r.name AS role_name,
+                       u.photo_path, u.passport_series, u.passport_number,
+                       u.passport_issued_by, u.passport_issue_date
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE u.id = %s
             """, (user_id,))
             user = cursor.fetchone()
+
             if not user:
+                logging.error(f"Пользователь с ID {user_id} не найден")
                 return "Пользователь не найден", 404
 
-            # Преобразование даты
-            if user.get('passport_issue_date'):
-                try:
-                    user['passport_issue_date'] = datetime.strptime(
-                        user['passport_issue_date'], '%Y-%m-%d'
-                    ).strftime('%d.%m.%Y')
-                except Exception as e:
-                    logging.warning(f"[WARNING] Неверный формат даты для пользователя ID {user_id}: {e}")
-                    user['passport_issue_date'] = ''
+            # Преобразование данных для шаблона
+            user = dict(user)
+            user['passport_issue_date'] = (
+                user['passport_issue_date'].strftime('%d.%m.%Y')
+                if user['passport_issue_date'] else ''
+            )
 
-            # Получаем список всех ролей
+            # Отладочный вывод
+            logging.debug(f"Данные для передачи в шаблон: {user}")
+
             cursor.execute("SELECT id, name FROM roles")
             roles = cursor.fetchall()
 
-            if request.method == 'POST':  # Обработка формы редактирования
-                name = request.form.get('name')
-                phone = request.form.get('phone')
-                address = request.form.get('address')
-                rating = request.form.get('rating')
-                role_id = request.form.get('role')
-
-                # Валидация обязательных полей
-                if not all([name, phone, address, rating]):
-                    flash('Все обязательные поля должны быть заполнены.', 'error')
-                    return redirect(url_for('admin.user_details', user_id=user_id))
-
-                # Проверка диапазона рейтинга
-                try:
-                    rating = float(rating)
-                    if not (0 <= rating <= 5):
-                        flash('Рейтинг должен быть в диапазоне от 0 до 5.', 'error')
-                        return redirect(url_for('admin.user_details', user_id=user_id))
-                except ValueError:
-                    flash('Рейтинг должен быть числом.', 'error')
-                    return redirect(url_for('admin.user_details', user_id=user_id))
-
-                # Обновление данных пользователя в базе
-                cursor.execute("""
-                    UPDATE users
-                    SET name = %s, phone = %s, address = %s, rating = %s, role = %s
-                    WHERE id = %s
-                """, (name, phone, address, rating, role_id, user_id))
-                conn.commit()
-
-                flash('Данные пользователя успешно обновлены.', 'success')
-                return redirect(url_for('admin.users'))
-
-            # Передача данных пользователя в шаблон
-            logging.debug(f"[DEBUG] Данные пользователя для шаблона: {user}")
-            return render_template('admin/users/admin_user_detail.html', user=user, roles=roles)
+            return render_template('admin/user_details.html', user=user, roles=roles)
 
     except Exception as e:
-        logging.error(f"[ERROR] Ошибка при редактировании пользователя ID {user_id}: {e}")
-        return "Ошибка сервера. Попробуйте позже.", 500
+        logging.error(f"[ERROR] Ошибка обработки пользователя {user_id}: {e}")
+        return "Ошибка сервера", 500
 
 
 # ----------------------------------------
