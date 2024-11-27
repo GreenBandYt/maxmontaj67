@@ -84,6 +84,59 @@ def home():
     # Если метод GET, отображаем страницу входа
     return render_template('index.html')
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """
+    Страница регистрации нового пользователя.
+    """
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        password_confirm = request.form['password_confirm']
+        role = request.form['role']
+        if password != password_confirm:
+            return render_template('register.html', error="Пароли не совпадают")
+        try:
+            with db_connect() as conn:
+                cursor = conn.cursor()
+                # Проверка уникальности email
+                cursor.execute("SELECT id FROM users WHERE email = %s UNION SELECT id FROM customers WHERE email = %s", (email, email))
+                if cursor.fetchone():
+                    return render_template('register.html', error="Email уже зарегистрирован")
+                # Хеширование пароля
+                hashed_password = hash_password(password)
+                print(f"[DEBUG] Создан хэш пароля: {hashed_password}")
+                # Логика добавления в зависимости от роли
+                if role == '5':  # Если роль Customer
+                    cursor.execute("""
+                        INSERT INTO customers (name, email, password_hash, created_at)
+                        VALUES (%s, %s, %s, NOW())
+                    """, (name, email, hashed_password))
+                    conn.commit()
+                    # Установить данные сессии
+                    session['user_id'] = cursor.lastrowid
+                    session['role'] = 'Customer'
+                    session['name'] = name
+                    print(f"[DEBUG] Пользователь {name} добавлен в таблицу customers")
+                    return redirect(url_for('customer.orders'))
+                else:  # Для остальных ролей
+                    cursor.execute("""
+                        INSERT INTO users (name, email, password_hash, role, created_at)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    """, (name, email, hashed_password, role))
+                    conn.commit()
+                    # Установить данные сессии
+                    session['user_id'] = cursor.lastrowid
+                    session['role'] = role
+                    session['name'] = name
+                    print(f"[DEBUG] Пользователь {name} добавлен в таблицу users")
+                    return redirect(url_for('home'))  # Перенаправление после регистрации
+        except Exception as e:
+            print(f"[ERROR] Ошибка регистрации: {e}")
+            return render_template('register.html', error="Ошибка сервера. Попробуйте позже.")
+    return render_template('register.html')
+
 
 @app.route('/logout')
 def logout():

@@ -3,15 +3,16 @@
 {% block title %}Регистрация{% endblock %}
 
 {% block content %}
-<header>
-    <nav>
-        <ul>
-            <li><a href="/logout">Выход</a></li>
-        </ul>
-    </nav>
-</header>
+<a href="{{ url_for('logout') }}" class="logout-button">Выход</a>
+<!--<header>-->
+<!--    <nav>-->
+<!--        <ul>-->
+<!--            <li><a href="/logout">Выход</a></li>-->
+<!--        </ul>-->
+<!--    </nav>-->
+<!--</header>-->
 <h2>Регистрация нового пользователя</h2>
-<form action="/register" method="post" autocomplete="off">
+<form action="/register" method="post" autocomplete="off" id="registrationForm">
     <label for="role">Выберите роль</label>
     <div class="role-selection">
         <button type="button" onclick="setRole('5')">Клиент</button>
@@ -36,12 +37,16 @@
 </form>
 
 <script>
+    // Функция для установки выбранной роли
+    function setRole(roleId) {
+        document.getElementById('role').value = roleId;
+    }
+
     // Функция для проверки совпадения паролей
-    document.querySelector('form').addEventListener('submit', function (e) {
+    document.getElementById('registrationForm').addEventListener('submit', function (e) {
         const password = document.getElementById('password').value;
         const passwordConfirm = document.getElementById('password_confirm').value;
 
-        // Если пароли не совпадают, отменяем отправку формы и показываем сообщение
         if (password !== passwordConfirm) {
             e.preventDefault(); // Отмена отправки формы
             alert('Пароли не совпадают!'); // Отображение предупреждения
