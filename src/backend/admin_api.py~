@@ -136,7 +136,7 @@ def assign_executor(order_id):
 
             # SQL-запрос для получения списка исполнителей
             cursor.execute("""
-                SELECT u.id, u.name, r.name AS role
+                SELECT u.id, u.name, u.is_profile_complete, r.name AS role
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE r.name IN ('Executor', 'Specialist')
@@ -153,6 +153,7 @@ def assign_executor(order_id):
 
             if request.method == 'POST':  # Обработка назначения исполнителя
                 executor_id = request.form['executor']
+
                 logging.debug(f"[DEBUG] Назначение исполнителя ID: {executor_id} для заказа ID: {order_id}")
 
                 # Проверяем, существует ли выбранный исполнитель
@@ -163,7 +164,7 @@ def assign_executor(order_id):
                     return "Исполнитель не найден", 404
 
                 # Проверяем, заполнены ли все данные исполнителя
-                if not is_user_data_complete(executor):
+                if not executor['is_profile_complete']:
                     logging.warning(f"[WARNING] У исполнителя с ID {executor_id} неполные данные.")
                     return "Исполнитель не может быть назначен: неполные данные.", 400
 
@@ -222,47 +223,81 @@ def remove_executor(order_id):
 @admin_bp.route('/users/<int:user_id>', methods=['GET', 'POST'])
 def user_details(user_id):
     """
-    Обработка страницы редактирования пользователя.
+    Маршрут для просмотра и редактирования данных пользователя.
     """
-    if session.get('role') != 'Administrator':
-        return redirect(url_for('home'))
+    if session.get('role') != 'Administrator':  # Проверка прав доступа
+        return redirect(url_for('home'))  # Перенаправление, если пользователь не админ
 
     try:
         with db_connect() as conn:
             cursor = conn.cursor()
+
+            # Получаем данные пользователя
             cursor.execute("""
-                SELECT u.id, u.name, u.phone, u.address,
-                       u.rating, u.role AS role_id, r.name AS role_name,
-                       u.photo_path, u.passport_series, u.passport_number,
-                       u.passport_issued_by, u.passport_issue_date
+                SELECT u.id, u.name, u.email, u.phone, u.address, u.rating, 
+                       u.role AS role_id, r.name AS role_name, u.photo_path, 
+                       u.passport_issue_date, u.passport_series, u.passport_number, u.passport_issued_by, 
+                       u.is_profile_complete, u.created_at, u.updated_at, u.deleted_at, 
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE u.id = %s
             """, (user_id,))
             user = cursor.fetchone()
-
             if not user:
-                logging.error(f"Пользователь с ID {user_id} не найден")
                 return "Пользователь не найден", 404
 
-            # Преобразование данных для шаблона
-            user = dict(user)
-            user['passport_issue_date'] = (
-                user['passport_issue_date'].strftime('%d.%m.%Y')
-                if user['passport_issue_date'] else ''
-            )
+            # Преобразование данных паспорта (если требуется)
+            user['passport_issue_date'] = user['passport_issue_date'] or ''
 
-            # Отладочный вывод
-            logging.debug(f"Данные для передачи в шаблон: {user}")
-
+            # Получаем список всех ролей
             cursor.execute("SELECT id, name FROM roles")
             roles = cursor.fetchall()
 
-            return render_template('admin/user_details.html', user=user, roles=roles)
+            if request.method == 'POST':  # Обработка формы редактирования
+                name = request.form.get('name')
+                phone = request.form.get('phone')
+                address = request.form.get('address')
+                rating = request.form.get('rating')
+                role_id = request.form.get('role')
+                passport_issue_date = request.form.get('passport_issue_date')
+                passport_series = request.form.get('passport_series')
+                passport_number = request.form.get('passport_number')
+                passport_issued_by = request.form.get('passport_issued_by')
+
+
+                # Валидация обязательных полей
+                if not all([name, phone, address, rating]):
+                    flash('Все обязательные поля должны быть заполнены.', 'error')
+                    return redirect(url_for('admin.user_details', user_id=user_id))
+
+                # Проверка диапазона рейтинга
+                try:
+                    rating = float(rating)
+                    if not (0 <= rating <= 5):
+                        flash('Рейтинг должен быть в диапазоне от 0 до 5.', 'error')
+                        return redirect(url_for('admin.user_details', user_id=user_id))
+                except ValueError:
+                    flash('Рейтинг должен быть числом.', 'error')
+                    return redirect(url_for('admin.user_details', user_id=user_id))
+
+                # Обновление данных пользователя в базе
+                cursor.execute("""
+                    UPDATE users
+                    SET name = %s, phone = %s, address = %s, rating = %s, role = %s
+                    WHERE id = %s
+                """, (name, phone, address, rating, role_id, user_id))
+                conn.commit()
+
+                flash('Данные пользователя успешно обновлены.', 'success')
+                return redirect(url_for('admin.users'))
+
+            # Передача данных пользователя в шаблон
+            logging.debug(f"[DEBUG] Данные пользователя для шаблона: {user}")
+            return render_template('admin/users/admin_user_detail.html', user=user, roles=roles)
 
     except Exception as e:
-        logging.error(f"[ERROR] Ошибка обработки пользователя {user_id}: {e}")
-        return "Ошибка сервера", 500
+        logging.error(f"[ERROR] Ошибка при редактировании пользователя ID {user_id}: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
 
 
 # ----------------------------------------
@@ -419,7 +454,7 @@ def update_passport_details(user_id):
 
             # Проверка и преобразование формата даты
             try:
-                formatted_date = datetime.strptime(passport_issue_date, '%d.%m.%Y').strftime('%Y-%m-%d')
+                formatted_date = datetime.strptime(passport_issue_date, '%d.%m.%Y').strftime('%d.%m.%Y')
             except ValueError:
                 flash('Дата выдачи паспорта должна быть в формате ДД.ММ.ГГГГ.', 'error')
                 return redirect(url_for('admin.user_details', user_id=user_id))

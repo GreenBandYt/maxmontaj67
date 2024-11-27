@@ -51,7 +51,7 @@
                 <input type="text" id="passport_number" name="passport_number" value="{{ user.passport_number or '' }}" maxlength="6" required>
 
                 <label for="passport_issue_date">Дата выдачи:</label>
-                <input type="text" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date }}" placeholder="дд.мм.гггг" required>
+                <input type="text" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date or '' }}" placeholder="дд.мм.гггг" required>
 
                 <label for="passport_issued_by">Кем выдан:</label>
                 <input type="text" id="passport_issued_by" name="passport_issued_by" value="{{ user.passport_issued_by or '' }}" required>

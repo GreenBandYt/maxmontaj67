@@ -8,6 +8,6 @@ def is_user_data_complete(user_data):
     Возвращает:
         bool: True, если все обязательные поля заполнены, иначе False.
     """
-    required_fields = ['phone', 'address', 'passport_data', 'passport_issued_by', 'passport_issue_date', 'is_user_data_complete']
+    required_fields = ['phone', 'address', 'passport_data', 'passport_issued_by', 'passport_issue_date']
     # Проверяем, что все поля заполнены (не None и не пустая строка)
     return all(user_data.get(field) for field in required_fields)

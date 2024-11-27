@@ -11,12 +11,14 @@
 
 <!-- Форма для назначения исполнителя -->
 <form method="POST" style="margin-bottom: 20px;">
-    <label for="executor">Выберите исполнителя:</label>
+    <label for="executor">Выберите исполнителя:</label><br>
+
+
     <select name="executor" id="executor">
         {% for executor in executors %}
         <option value="{{ executor.id }}">{{ executor.name }} ({{ executor.role }})</option>
         {% endfor %}
-    </select>
+    </select><br><br>
     <button type="submit" class="button">Назначить</button>
 </form>
 

@@ -136,7 +136,7 @@ def assign_executor(order_id):
 
             # SQL-запрос для получения списка исполнителей
             cursor.execute("""
-                SELECT u.id, u.name, r.name AS role
+                SELECT u.id, u.name, u.is_profile_complete, r.name AS role
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE r.name IN ('Executor', 'Specialist')
@@ -153,6 +153,7 @@ def assign_executor(order_id):
 
             if request.method == 'POST':  # Обработка назначения исполнителя
                 executor_id = request.form['executor']
+
                 logging.debug(f"[DEBUG] Назначение исполнителя ID: {executor_id} для заказа ID: {order_id}")
 
                 # Проверяем, существует ли выбранный исполнитель
@@ -163,7 +164,7 @@ def assign_executor(order_id):
                     return "Исполнитель не найден", 404
 
                 # Проверяем, заполнены ли все данные исполнителя
-                if not is_user_data_complete(executor):
+                if not executor['is_profile_complete']:
                     logging.warning(f"[WARNING] У исполнителя с ID {executor_id} неполные данные.")
                     return "Исполнитель не может быть назначен: неполные данные.", 400
 
@@ -224,8 +225,6 @@ def user_details(user_id):
     """
     Маршрут для просмотра и редактирования данных пользователя.
     """
-    from datetime import datetime  # Убедимся, что импортируем все нужные модули
-
     if session.get('role') != 'Administrator':  # Проверка прав доступа
         return redirect(url_for('home'))  # Перенаправление, если пользователь не админ
 
@@ -237,7 +236,8 @@ def user_details(user_id):
             cursor.execute("""
                 SELECT u.id, u.name, u.email, u.phone, u.address, u.rating, 
                        u.role AS role_id, r.name AS role_name, u.photo_path, 
-                       u.passport_issue_date, u.passport_series, u.passport_number, u.passport_issued_by
+                       u.passport_issue_date, u.passport_series, u.passport_number, u.passport_issued_by, 
+                       u.is_profile_complete 
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE u.id = %s
@@ -246,15 +246,8 @@ def user_details(user_id):
             if not user:
                 return "Пользователь не найден", 404
 
-            # Преобразование даты
-            if user.get('passport_issue_date'):
-                try:
-                    user['passport_issue_date'] = datetime.strptime(
-                        user['passport_issue_date'], '%Y-%m-%d'
-                    ).strftime('%d.%m.%Y')
-                except Exception as e:
-                    logging.warning(f"[WARNING] Неверный формат даты для пользователя ID {user_id}: {e}")
-                    user['passport_issue_date'] = ''
+            # Преобразование данных паспорта (если требуется)
+            user['passport_issue_date'] = user['passport_issue_date'] or ''
 
             # Получаем список всех ролей
             cursor.execute("SELECT id, name FROM roles")
@@ -266,9 +259,14 @@ def user_details(user_id):
                 address = request.form.get('address')
                 rating = request.form.get('rating')
                 role_id = request.form.get('role')
+                passport_issue_date = request.form.get('passport_issue_date')
+                passport_series = request.form.get('passport_series')
+                passport_number = request.form.get('passport_number')
+                passport_issued_by = request.form.get('passport_issued_by')
+
 
                 # Валидация обязательных полей
-                if not all([name, phone, address, rating]):
+                if not all([name, phone, address, rating, role_id, passport_issue_date, passport_series, passport_number, passport_issued_by]):
                     flash('Все обязательные поля должны быть заполнены.', 'error')
                     return redirect(url_for('admin.user_details', user_id=user_id))
 
@@ -456,7 +454,7 @@ def update_passport_details(user_id):
 
             # Проверка и преобразование формата даты
             try:
-                formatted_date = datetime.strptime(passport_issue_date, '%d.%m.%Y').strftime('%Y-%m-%d')
+                formatted_date = datetime.strptime(passport_issue_date, '%d.%m.%Y').strftime('%d.%m.%Y')
             except ValueError:
                 flash('Дата выдачи паспорта должна быть в формате ДД.ММ.ГГГГ.', 'error')
                 return redirect(url_for('admin.user_details', user_id=user_id))
