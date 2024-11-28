@@ -214,3 +214,21 @@ table tr:hover {
 .right-column form input[type="file"] {
     margin-bottom: 10px;
 }
+
+.role-blocked {
+    color: red;
+    font-weight: bold;
+}
+
+.button.danger {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.button.danger:hover {
+    background-color: #c9302c;
+}

@@ -3,10 +3,15 @@
 {% block title %}Админ: Пользователи{% endblock %}
 
 {% block content %}
+<!-- Панель навигации -->
 <div class="navigation-panel">
-<a href="{{ url_for('admin.orders') }}" class = "button" > Назад к заказам </a>
+    <a href="{{ url_for('admin.orders') }}" class="button">Назад к заказам</a>
 </div>
+
+<!-- Заголовок страницы -->
 <h2>Список пользователей</h2>
+
+<!-- Таблица пользователей -->
 <table>
     <thead>
         <tr>
@@ -15,6 +20,7 @@
             <th>Email</th>
             <th>Роль</th>
             <th>Дата создания</th>
+            <th>Действие</th>
         </tr>
     </thead>
     <tbody>
@@ -25,9 +31,12 @@
             <td>{{ user.email }}</td>
             <td>{{ user.role }}</td>
             <td>{{ user.created_at }}</td>
+            <td>
+                <!-- Кнопка для редактирования пользователя -->
+                <a href="{{ url_for('admin.user_details', user_id=user.id) }}" class="button">Редактировать</a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
 {% endblock %}

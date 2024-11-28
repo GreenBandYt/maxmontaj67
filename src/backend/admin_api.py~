@@ -237,7 +237,7 @@ def user_details(user_id):
                 SELECT u.id, u.name, u.email, u.phone, u.address, u.rating, 
                        u.role AS role_id, r.name AS role_name, u.photo_path, 
                        u.passport_issue_date, u.passport_series, u.passport_number, u.passport_issued_by, 
-                       u.is_profile_complete, u.created_at, u.updated_at, u.deleted_at, 
+                       u.is_profile_complete 
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE u.id = %s
@@ -266,7 +266,7 @@ def user_details(user_id):
 
 
                 # Валидация обязательных полей
-                if not all([name, phone, address, rating]):
+                if not all([name, phone, address, rating, role_id, passport_issue_date, passport_series, passport_number, passport_issued_by]):
                     flash('Все обязательные поля должны быть заполнены.', 'error')
                     return redirect(url_for('admin.user_details', user_id=user_id))
 
@@ -354,67 +354,6 @@ def upload_photo(user_id):
         return "Ошибка сервера. Попробуйте позже.", 500
 
 
-# ----------------------------------------
-# Маршрут: Изменение паспортных данных
-# ----------------------------------------
-# @admin_bp.route('/users/<int:user_id>/update_passport', methods=['POST'])
-# def update_passport(user_id):
-#     """
-#     Маршрут для изменения паспортных данных пользователя.
-#     """
-#     if session.get('role') != 'Administrator':  # Проверка прав доступа
-#         return redirect(url_for('home'))
-#
-#     try:
-#         with db_connect() as conn:
-#             cursor = conn.cursor()
-#
-#             # Проверяем существование пользователя
-#             cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
-#             if not cursor.fetchone():
-#                 flash("Пользователь не найден.", "error")
-#                 return redirect(url_for('admin.users'))
-#
-#             # Получаем данные из формы
-#             passport_series = request.form.get('passport_series')
-#             passport_number = request.form.get('passport_number')
-#             passport_issue_date = request.form.get('passport_issue_date')
-#             passport_issued_by = request.form.get('passport_issued_by')
-#
-#             # Валидация обязательных полей
-#             if not all([passport_series, passport_number, passport_issue_date, passport_issued_by]):
-#                 flash("Все поля паспортных данных должны быть заполнены.", "error")
-#                 return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#             # Проверка форматов данных
-#             if not passport_series.isdigit() or len(passport_series) != 4:
-#                 flash("Серия паспорта должна состоять из 4 цифр.", "error")
-#                 return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#             if not passport_number.isdigit() or len(passport_number) != 6:
-#                 flash("Номер паспорта должен состоять из 6 цифр.", "error")
-#                 return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#             # Обновление данных в базе
-#             cursor.execute("""
-#                 UPDATE users
-#                 SET passport_series = %s,
-#                     passport_number = %s,
-#                     passport_issue_date = %s,
-#                     passport_issued_by = %s
-#                 WHERE id = %s
-#             """, (passport_series, passport_number, passport_issue_date, passport_issued_by, user_id))
-#             conn.commit()
-#
-#             flash("Паспортные данные успешно обновлены.", "success")
-#             return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#     except Exception as e:
-#         logging.error(f"[ERROR] Ошибка при обновлении паспортных данных для пользователя ID {user_id}: {e}")
-#         flash("Ошибка сервера. Попробуйте позже.", "error")
-#         return redirect(url_for('admin.user_details', user_id=user_id))
-
-
 @admin_bp.route('/users/<int:user_id>/update_passport', methods=['POST'])
 def update_passport_details(user_id):
     """
@@ -476,3 +415,42 @@ def update_passport_details(user_id):
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при обновлении паспортных данных для пользователя ID {user_id}: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
+
+
+# ----------------------------------------
+# Маршрут: Блокировка пользователя
+# ----------------------------------------
+@admin_bp.route('/users/<int:user_id>/block', methods=['POST'])
+def block_user(user_id):
+    """
+    Блокирует пользователя, устанавливая его роль в 'Blocked'.
+    """
+    if session.get('role') != 'Administrator':  # Проверка прав доступа
+        return redirect(url_for('home'))
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Проверяем, существует ли пользователь
+            cursor.execute("SELECT id, role FROM users WHERE id = %s", (user_id,))
+            user = cursor.fetchone()
+            if not user:
+                flash("Пользователь не найден.", "error")
+                return redirect(url_for('admin.users'))
+
+            # Обновляем роль пользователя на 'Blocked'
+            cursor.execute("""
+                UPDATE users
+                SET role = (SELECT id FROM roles WHERE name = 'Blocked')
+                WHERE id = %s
+            """, (user_id,))
+            conn.commit()
+
+            flash(f"Пользователь с ID {user_id} успешно заблокирован.", "success")
+            return redirect(url_for('admin.users'))
+
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка при блокировке пользователя ID {user_id}: {e}")
+        flash("Ошибка сервера. Попробуйте позже.", "error")
+        return redirect(url_for('admin.users'))

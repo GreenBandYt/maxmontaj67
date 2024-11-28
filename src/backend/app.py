@@ -33,7 +33,7 @@ def home():
             with db_connect() as conn:
                 cursor = conn.cursor()
                 query = """
-                    SELECT u.id, u.password_hash, r.name AS role, u.name
+                    SELECT u.id, u.email, u.password_hash, r.name AS role, u.name
                     FROM users u
                     JOIN roles r ON u.role = r.id
                     WHERE u.email = %s
@@ -45,6 +45,12 @@ def home():
 
                 if user:
                     # Логируем успешное выполнение запроса
+                    # Проверяем, является ли пользователь заблокированным
+                    if user['role'] == 'Blocked':
+                        app.logger.warning(f"Доступ заблокирован для пользователя: {user['email']}")
+                        return render_template('index.html',
+                                               error="Ваш доступ заблокирован. Обратитесь к администратору.")
+
                     app.logger.debug(f"Найден пользователь: {user}")
                 else:
                     # Логируем, если пользователь не найден

@@ -354,67 +354,6 @@ def upload_photo(user_id):
         return "Ошибка сервера. Попробуйте позже.", 500
 
 
-# ----------------------------------------
-# Маршрут: Изменение паспортных данных
-# ----------------------------------------
-# @admin_bp.route('/users/<int:user_id>/update_passport', methods=['POST'])
-# def update_passport(user_id):
-#     """
-#     Маршрут для изменения паспортных данных пользователя.
-#     """
-#     if session.get('role') != 'Administrator':  # Проверка прав доступа
-#         return redirect(url_for('home'))
-#
-#     try:
-#         with db_connect() as conn:
-#             cursor = conn.cursor()
-#
-#             # Проверяем существование пользователя
-#             cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
-#             if not cursor.fetchone():
-#                 flash("Пользователь не найден.", "error")
-#                 return redirect(url_for('admin.users'))
-#
-#             # Получаем данные из формы
-#             passport_series = request.form.get('passport_series')
-#             passport_number = request.form.get('passport_number')
-#             passport_issue_date = request.form.get('passport_issue_date')
-#             passport_issued_by = request.form.get('passport_issued_by')
-#
-#             # Валидация обязательных полей
-#             if not all([passport_series, passport_number, passport_issue_date, passport_issued_by]):
-#                 flash("Все поля паспортных данных должны быть заполнены.", "error")
-#                 return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#             # Проверка форматов данных
-#             if not passport_series.isdigit() or len(passport_series) != 4:
-#                 flash("Серия паспорта должна состоять из 4 цифр.", "error")
-#                 return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#             if not passport_number.isdigit() or len(passport_number) != 6:
-#                 flash("Номер паспорта должен состоять из 6 цифр.", "error")
-#                 return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#             # Обновление данных в базе
-#             cursor.execute("""
-#                 UPDATE users
-#                 SET passport_series = %s,
-#                     passport_number = %s,
-#                     passport_issue_date = %s,
-#                     passport_issued_by = %s
-#                 WHERE id = %s
-#             """, (passport_series, passport_number, passport_issue_date, passport_issued_by, user_id))
-#             conn.commit()
-#
-#             flash("Паспортные данные успешно обновлены.", "success")
-#             return redirect(url_for('admin.user_details', user_id=user_id))
-#
-#     except Exception as e:
-#         logging.error(f"[ERROR] Ошибка при обновлении паспортных данных для пользователя ID {user_id}: {e}")
-#         flash("Ошибка сервера. Попробуйте позже.", "error")
-#         return redirect(url_for('admin.user_details', user_id=user_id))
-
-
 @admin_bp.route('/users/<int:user_id>/update_passport', methods=['POST'])
 def update_passport_details(user_id):
     """
@@ -476,3 +415,5 @@ def update_passport_details(user_id):
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при обновлении паспортных данных для пользователя ID {user_id}: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
+
+

@@ -41,7 +41,6 @@
                 {% endfor %}
             </select>
             <br>
-            <hr>
 
             <!-- Кнопка для сохранения изменений -->
             <button type="submit" class="button">Сохранить изменения</button>

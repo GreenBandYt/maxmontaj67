@@ -4,6 +4,15 @@
 
 {% block content %}
 <h1>Вход в систему</h1>
+
+<!-- Блок для отображения ошибок -->
+{% if error %}
+<div class="error-message">
+    <p>{{ error }}</p>
+    <button onclick="this.parentElement.style.display='none';">Ок</button>
+</div>
+{% endif %}
+
 <form action="/" method="post">
     <input type="email" name="email" placeholder="Email" required>
     <input type="password" name="password" placeholder="Пароль" required>
