@@ -29,7 +29,13 @@
             <td>{{ user.id }}</td>
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
-            <td>{{ user.role }}</td>
+            <td>
+                {% if user.role == 'Blocked' %}
+                <span class="role-blocked">{{ user.role }}</span>
+                {% else %}
+                {{ user.role }}
+                {% endif %}
+            </td>
             <td>{{ user.created_at }}</td>
             <td>
                 <!-- Кнопка для редактирования пользователя -->

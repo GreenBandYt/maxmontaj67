@@ -27,7 +27,7 @@
         {% for user in users %}
         <tr>
             <td>{{ user.id }}</td>
-            <td>{{ user.name }}</td>
+            <td class="{% if not user.is_profile_complete %}incomplete-data{% endif %}">{{ user.name }}</td>
             <td>{{ user.email }}</td>
             <td>
                 {% if user.role == 'Blocked' %}

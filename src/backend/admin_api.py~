@@ -103,7 +103,7 @@ def users():
         with db_connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT u.id, u.name, u.email, r.name AS role, u.created_at
+                SELECT u.id, u.name, u.email, r.name AS role, u.created_at, u.is_profile_complete
                 FROM users u
                 JOIN roles r ON u.role = r.id
             """)
@@ -139,7 +139,7 @@ def assign_executor(order_id):
                 SELECT u.id, u.name, u.is_profile_complete, r.name AS role
                 FROM users u
                 JOIN roles r ON u.role = r.id
-                WHERE r.name IN ('Executor', 'Specialist')
+                WHERE r.name IN ('Executor', 'Specialist') AND u.is_profile_complete = TRUE
             """)
             executors = cursor.fetchall()
             logging.debug(f"[DEBUG] Найдены исполнители: {executors}")
@@ -259,14 +259,9 @@ def user_details(user_id):
                 address = request.form.get('address')
                 rating = request.form.get('rating')
                 role_id = request.form.get('role')
-                passport_issue_date = request.form.get('passport_issue_date')
-                passport_series = request.form.get('passport_series')
-                passport_number = request.form.get('passport_number')
-                passport_issued_by = request.form.get('passport_issued_by')
-
 
                 # Валидация обязательных полей
-                if not all([name, phone, address, rating, role_id, passport_issue_date, passport_series, passport_number, passport_issued_by]):
+                if not all([name, phone, address, rating, role_id]):
                     flash('Все обязательные поля должны быть заполнены.', 'error')
                     return redirect(url_for('admin.user_details', user_id=user_id))
 
@@ -286,6 +281,15 @@ def user_details(user_id):
                     SET name = %s, phone = %s, address = %s, rating = %s, role = %s
                     WHERE id = %s
                 """, (name, phone, address, rating, role_id, user_id))
+
+                # Проверка на полноту данных
+                is_profile_complete = all([name, phone, address])
+                cursor.execute("""
+                    UPDATE users
+                    SET is_profile_complete = %s
+                    WHERE id = %s
+                """, (is_profile_complete, user_id))
+
                 conn.commit()
 
                 flash('Данные пользователя успешно обновлены.', 'success')
@@ -298,7 +302,6 @@ def user_details(user_id):
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при редактировании пользователя ID {user_id}: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
-
 
 # ----------------------------------------
 # Маршрут: Загрузка фото пользователя
@@ -417,40 +420,3 @@ def update_passport_details(user_id):
         return "Ошибка сервера. Попробуйте позже.", 500
 
 
-# ----------------------------------------
-# Маршрут: Блокировка пользователя
-# ----------------------------------------
-@admin_bp.route('/users/<int:user_id>/block', methods=['POST'])
-def block_user(user_id):
-    """
-    Блокирует пользователя, устанавливая его роль в 'Blocked'.
-    """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
-        return redirect(url_for('home'))
-
-    try:
-        with db_connect() as conn:
-            cursor = conn.cursor()
-
-            # Проверяем, существует ли пользователь
-            cursor.execute("SELECT id, role FROM users WHERE id = %s", (user_id,))
-            user = cursor.fetchone()
-            if not user:
-                flash("Пользователь не найден.", "error")
-                return redirect(url_for('admin.users'))
-
-            # Обновляем роль пользователя на 'Blocked'
-            cursor.execute("""
-                UPDATE users
-                SET role = (SELECT id FROM roles WHERE name = 'Blocked')
-                WHERE id = %s
-            """, (user_id,))
-            conn.commit()
-
-            flash(f"Пользователь с ID {user_id} успешно заблокирован.", "success")
-            return redirect(url_for('admin.users'))
-
-    except Exception as e:
-        logging.error(f"[ERROR] Ошибка при блокировке пользователя ID {user_id}: {e}")
-        flash("Ошибка сервера. Попробуйте позже.", "error")
-        return redirect(url_for('admin.users'))

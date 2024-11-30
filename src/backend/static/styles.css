@@ -232,3 +232,7 @@ table tr:hover {
 .button.danger:hover {
     background-color: #c9302c;
 }
+.incomplete-data {
+    color: red;
+    font-weight: bold;
+}

@@ -25,7 +25,7 @@
             <br>
 
             <label for="address">Адрес (обязательно):</label>
-            <input type="text" id="address" name="address" value="{{ user.address }}" required>
+            <input type="text" id="address" name="address" value="{{ user.address }}" required style="width: 400px;">
             <br>
 
             <label for="rating">Рейтинг (0-5):</label>
@@ -41,6 +41,7 @@
                 {% endfor %}
             </select>
             <br>
+            <hr>
 
             <!-- Кнопка для сохранения изменений -->
             <button type="submit" class="button">Сохранить изменения</button>
@@ -49,18 +50,18 @@
         <div class="passport-data-container">
             <h3>Паспортные данные</h3>
             <form method="POST" action="{{ url_for('admin.update_passport_details', user_id=user.id) }}">
-                <label for="passport_series">Серия:</label>
-                <input type="text" id="passport_series" name="passport_series" value="{{ user.passport_series or '' }}" maxlength="4" required>
+                <label for="passport_series">Серия: </label>
+                <input type="text" id="passport_series" name="passport_series" value="{{ user.passport_series or '' }}" maxlength="4" required style="width: 40px;">
 
-                <label for="passport_number">Номер:</label>
-                <input type="text" id="passport_number" name="passport_number" value="{{ user.passport_number or '' }}" maxlength="6" required>
+                <label for="passport_number">  Номер:  </label>
+                <input type="text" id="passport_number" name="passport_number" value="{{ user.passport_number or '' }}" maxlength="6" required style="width: 60px;">
 
-                <label for="passport_issue_date">Дата выдачи:</label>
-                <input type="text" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date or '' }}" placeholder="дд.мм.гггг" required>
-
+                <label for="passport_issue_date"> Дата выдачи:  </label>
+                <input type="text" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date or '' }}" placeholder="дд.мм.гггг" required style="width: 100px;">
+                <br>
                 <label for="passport_issued_by">Кем выдан:</label>
-                <input type="text" id="passport_issued_by" name="passport_issued_by" value="{{ user.passport_issued_by or '' }}" required>
-
+                <input type="text" id="passport_issued_by" name="passport_issued_by" value="{{ user.passport_issued_by or '' }}" required style="width: 470px;">
+                <hr>
                 <!-- Кнопка для сохранения изменений -->
                 <button type="submit" class="button" onclick="return confirm('Вы уверены, что хотите изменить паспортные данные?')">Обновить паспортные данные</button>
             </form>

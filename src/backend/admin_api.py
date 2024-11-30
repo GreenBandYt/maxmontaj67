@@ -103,7 +103,7 @@ def users():
         with db_connect() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT u.id, u.name, u.email, r.name AS role, u.created_at
+                SELECT u.id, u.name, u.email, r.name AS role, u.created_at, u.is_profile_complete
                 FROM users u
                 JOIN roles r ON u.role = r.id
             """)
@@ -139,7 +139,7 @@ def assign_executor(order_id):
                 SELECT u.id, u.name, u.is_profile_complete, r.name AS role
                 FROM users u
                 JOIN roles r ON u.role = r.id
-                WHERE r.name IN ('Executor', 'Specialist')
+                WHERE r.name IN ('Executor', 'Specialist') AND u.is_profile_complete = TRUE
             """)
             executors = cursor.fetchall()
             logging.debug(f"[DEBUG] Найдены исполнители: {executors}")
@@ -259,14 +259,9 @@ def user_details(user_id):
                 address = request.form.get('address')
                 rating = request.form.get('rating')
                 role_id = request.form.get('role')
-                passport_issue_date = request.form.get('passport_issue_date')
-                passport_series = request.form.get('passport_series')
-                passport_number = request.form.get('passport_number')
-                passport_issued_by = request.form.get('passport_issued_by')
-
 
                 # Валидация обязательных полей
-                if not all([name, phone, address, rating, role_id, passport_issue_date, passport_series, passport_number, passport_issued_by]):
+                if not all([name, phone, address, rating, role_id]):
                     flash('Все обязательные поля должны быть заполнены.', 'error')
                     return redirect(url_for('admin.user_details', user_id=user_id))
 
@@ -286,6 +281,15 @@ def user_details(user_id):
                     SET name = %s, phone = %s, address = %s, rating = %s, role = %s
                     WHERE id = %s
                 """, (name, phone, address, rating, role_id, user_id))
+
+                # Проверка на полноту данных
+                is_profile_complete = all([name, phone, address])
+                cursor.execute("""
+                    UPDATE users
+                    SET is_profile_complete = %s
+                    WHERE id = %s
+                """, (is_profile_complete, user_id))
+
                 conn.commit()
 
                 flash('Данные пользователя успешно обновлены.', 'success')
@@ -298,7 +302,6 @@ def user_details(user_id):
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при редактировании пользователя ID {user_id}: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
-
 
 # ----------------------------------------
 # Маршрут: Загрузка фото пользователя
@@ -407,13 +410,27 @@ def update_passport_details(user_id):
                     passport_issued_by = %s
                 WHERE id = %s
             """, (passport_series, passport_number, formatted_date, passport_issued_by, user_id))
-            conn.commit()
 
+            # Проверка заполненности всех данных пользователя
+            cursor.execute("""
+                SELECT phone, address, passport_series, passport_number, passport_issue_date, passport_issued_by
+                FROM users
+                WHERE id = %s
+            """, (user_id,))
+            updated_user = cursor.fetchone()
+
+            is_complete = all(updated_user.values())  # Проверяем, что все данные заполнены
+            cursor.execute("""
+                UPDATE users
+                SET is_profile_complete = %s
+                WHERE id = %s
+            """, (is_complete, user_id))
+
+            conn.commit()
             flash('Паспортные данные успешно обновлены.', 'success')
             return redirect(url_for('admin.user_details', user_id=user_id))
 
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при обновлении паспортных данных для пользователя ID {user_id}: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
-
 
