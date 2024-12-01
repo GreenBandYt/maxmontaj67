@@ -11,15 +11,24 @@ body {
 h1 {
     text-align: center; /* Выравнивание заголовка по центру */
     color: #4CAF50; /* Зелёный цвет текста */
-    margin-top: 10px; /* Отступ сверху */
+    margin-top: 0px; /* Отступ сверху */
+    margin-bottom: 0px; /* Отступ снизу */
     font-size: 1.8rem; /* Размер текста в единицах rem */
+}
+
+h2 {
+    text-align: left; /* Центрируем текст */
+    color: #333; /* Тёмно-серый цвет */
+    margin: 0px 0; /* Отступы сверху и снизу */
+    font-size: 1.5rem; /* Размер текста */
+    font-weight: bold; /* Жирное начертание */
 }
 
 /* Основной контейнер */
 main {
     max-width: 1200px; /* Ограничиваем ширину страницы */
-    margin: 20px auto; /* Центрируем и добавляем отступы сверху и снизу */
-    padding: 20px; /* Внутренние отступы */
+    margin: 5px auto; /* Центрируем и добавляем отступы сверху и снизу */
+    padding: 5px; /* Внутренние отступы */
     background-color: #fff; /* Белый фон */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
     border-radius: 5px; /* Скругление углов */
@@ -29,7 +38,7 @@ main {
 footer {
     background: #333; /* Тёмно-серый фон */
     color: #fff; /* Белый текст */
-    padding: 10px 20px; /* Внутренние отступы */
+    padding: 5px 5px; /* Внутренние отступы */
     text-align: center; /* Выравнивание текста по центру */
     font-size: 0.9rem; /* Небольшой размер текста */
     position: fixed; /* Фиксируем футер внизу */
@@ -75,14 +84,14 @@ button:hover {
 .logout-button {
     background-color: #f44336; /* Красный фон */
     color: white; /* Белый текст */
-    padding: 10px 20px; /* Внутренние отступы */
+    padding: 1px 1px; /* Внутренние отступы */
     text-decoration: none; /* Убираем подчёркивание */
-    border-radius: 5px; /* Скругление углов */
+    border-radius: 3px; /* Скругление углов */
     font-weight: bold; /* Жирный текст */
     transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
     position: absolute; /* Абсолютное позиционирование */
-    right: 20px; /* Отступ от правого края */
-    top: 20px; /* Отступ от верхнего края */
+    right: 10px; /* Отступ от правого края */
+    top: 1px; /* Отступ от верхнего края */
 }
 
 .logout-button:hover {
@@ -93,14 +102,14 @@ button:hover {
 table {
     width: 100%; /* Таблица занимает всю ширину контейнера */
     border-collapse: collapse; /* Убираем промежутки между ячейками */
-    margin: 20px 0; /* Отступы сверху и снизу */
+    margin: 2px 0; /* Отступы сверху и снизу */
     font-size: 1rem; /* Размер текста */
 }
 
 table th,
 table td {
     border: 1px solid #ddd; /* Светлая рамка ячеек */
-    padding: 10px; /* Внутренние отступы */
+    padding: 3px; /* Внутренние отступы */
     text-align: left; /* Текст по левому краю */
 }
 
@@ -121,19 +130,19 @@ table tr:hover {
 /* Мобильная адаптивность */
 @media (max-width: 768px) {
     main {
-        padding: 10px; /* Уменьшаем отступы */
+        padding: 3px; /* Уменьшаем отступы */
     }
 
     table th,
     table td {
         font-size: 0.9rem; /* Уменьшаем размер текста в таблицах */
-        padding: 8px; /* Уменьшаем внутренние отступы */
+        padding: 4px; /* Уменьшаем внутренние отступы */
     }
 
     button,
     .logout-button {
-        font-size: 14px; /* Уменьшаем размер текста для кнопок */
-        padding: 8px 10px; /* Уменьшаем внутренние отступы */
+        font-size: 10px; /* Уменьшаем размер текста для кнопок */
+        padding: 2px 4px; /* Уменьшаем внутренние отступы */
     }
 }
 
@@ -141,14 +150,14 @@ table tr:hover {
 .navigation-panel {
     display: flex; /* Горизонтальное расположение элементов */
     justify-content: space-around; /* Равномерное распределение кнопок */
-    margin-bottom: 20px; /* Отступ снизу */
+    margin-bottom: 1px; /* Отступ снизу */
 }
 
 .navigation-panel .button {
     background-color: #4CAF50; /* Зелёный фон */
     color: white; /* Белый текст */
     text-decoration: none; /* Убираем подчёркивание */
-    padding: 10px 15px; /* Внутренние отступы */
+    padding: 2px 5px; /* Внутренние отступы */
     border-radius: 5px; /* Скругление углов */
     font-size: 16px; /* Размер текста */
     transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
@@ -163,7 +172,7 @@ table tr:hover {
     background-color: #f44336;
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 2px 5px;
     text-transform: uppercase;
     font-size: 16px;
     border-radius: 5px;
@@ -182,7 +191,7 @@ table tr:hover {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    margin-top: 20px;
+    margin-top: 2px;
 }
 
 /* Левая колонка */
@@ -201,9 +210,9 @@ table tr:hover {
     max-width: 100%;
     max-height: 300px;
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 2px;
     background: #f9f9f9;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 /* Кнопка загрузки нового фото */
@@ -231,4 +240,87 @@ table tr:hover {
 
 .button.danger:hover {
     background-color: #c9302c;
+}
+.incomplete-data {
+    color: red;
+    font-weight: bold;
+}
+
+/* Кнопка "Подробнее" */
+.button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    text-decoration: none; /* Убираем подчёркивание */
+    padding: 10px 15px; /* Внутренние отступы */
+    border-radius: 5px; /* Скругление углов */
+    font-size: 16px; /* Размер текста */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+.button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}
+
+/* Стиль для секции деталей заказа */
+.order-details {
+    margin: 5px 0;
+}
+
+.order-details table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2px 0;
+    font-size: 1rem;
+}
+
+.order-details th,
+.order-details td {
+    border: 1px solid #ddd;
+    padding: 5px;
+    text-align: left;
+}
+
+.order-details th {
+    background-color: #4CAF50;
+    color: white;
+    text-transform: uppercase;
+}
+
+.order-details tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.order-details tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Кнопка возврата */
+.back-button {
+    margin-top: 2px;
+    text-align: center;
+}
+
+.back-button .button {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button .button:hover {
+    background-color: #45a049;
+}
+
+/* Оптимизация высоты строк таблицы */
+table th,
+table td {
+    padding: 5px 10px; /* Уменьшаем внутренние отступы */
+    font-size: 0.9rem; /* Уменьшаем размер текста */
+}
+
+table tr {
+    line-height: 1.2; /* Уменьшаем высоту строки */
 }

@@ -424,7 +424,7 @@ def update_passport_details(user_id):
                 UPDATE users
                 SET is_profile_complete = %s
                 WHERE id = %s
-            """, (is_complete, user_id))
+            """, (is_complete, user_id)) 
 
             conn.commit()
             flash('Паспортные данные успешно обновлены.', 'success')
@@ -434,3 +434,39 @@ def update_passport_details(user_id):
         logging.error(f"[ERROR] Ошибка при обновлении паспортных данных для пользователя ID {user_id}: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
 
+
+# ----------------------------------------
+# Маршрут: Отображение деталей заказа
+# ----------------------------------------
+@admin_bp.route('/orders/<int:order_id>', methods=['GET'])
+def order_details(order_id):
+    """
+    Маршрут для отображения деталей заказа.
+    """
+    if session.get('role') != 'Administrator':  # Проверка прав доступа
+        return redirect(url_for('home'))  # Перенаправление, если пользователь не администратор
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Получение данных заказа
+            cursor.execute("""
+                SELECT o.id, o.description, o.status, o.created_at, o.updated_at,
+                       o.assigned_at, o.montage_date, o.deadline_at, o.completed_at,
+                       c.name AS customer_name, u.name AS installer_name
+                FROM orders o
+                LEFT JOIN customers c ON o.customer_id = c.id
+                LEFT JOIN users u ON o.installer_id = u.id
+                WHERE o.id = %s
+            """, (order_id,))
+            order = cursor.fetchone()
+
+            if not order:
+                return "Заказ не найден", 404
+
+        return render_template('admin/orders/admin_orders_detail.html', order=order)
+
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка при загрузке деталей заказа ID {order_id}: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500

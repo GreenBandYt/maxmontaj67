@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Детали заказа{% endblock %}
+
+{% block content %}
+    <!-- Кнопка возврата -->
+    <div class="navigation-panel">
+        <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к списку заказов</a>
+    </div>
+<main>
+    <h2>Детали заказа</h2>
+    <!-- Информация о заказе -->
+    <div class="order-details">
+        <table>
+            <tr>
+                <th>ID</th>
+                <td>{{ order['id'] }}</td>
+            </tr>
+            <tr>
+                <th>Описание</th>
+                <td>{{ order['description'] }}</td>
+            </tr>
+            <tr>
+                <th>Статус</th>
+                <td>{{ order['status'] }}</td>
+            </tr>
+            <tr>
+                <th>Дата создания</th>
+                <td>{{ order['created_at'] }}</td>
+            </tr>
+            <tr>
+                <th>Дата обновления</th>
+                <td>{{ order['updated_at'] }}</td>
+            </tr>
+            <tr>
+                <th>Дата назначения</th>
+                <td>{{ order['assigned_at'] or 'Не назначено' }}</td>
+            </tr>
+            <tr>
+                <th>Дата монтажа</th>
+                <td>{{ order['montage_date'] or 'Не назначено' }}</td>
+            </tr>
+            <tr>
+                <th>Крайний срок</th>
+                <td>{{ order['deadline_at'] or 'Не указано' }}</td>
+            </tr>
+            <tr>
+                <th>Дата завершения</th>
+                <td>{{ order['completed_at'] or 'Не завершено' }}</td>
+            </tr>
+            <tr>
+                <th>Клиент</th>
+                <td>{{ order['customer_name'] }}</td>
+            </tr>
+            <tr>
+                <th>Исполнитель</th>
+                <td>{{ order['installer_name'] or 'Не назначен' }}</td>
+            </tr>
+        </table>
+    </div>
+
+
+</main>
+{% endblock %}

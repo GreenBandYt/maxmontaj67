@@ -3,45 +3,59 @@
 {% block title %}Админ: Заказы{% endblock %}
 
 {% block content %}
+<!-- Панель навигации -->
 <div class="navigation-panel">
     <a href="{{ url_for('admin.customers') }}" class="button">Заказчики</a>
     <a href="{{ url_for('admin.users') }}" class="button">Пользователи</a>
 </div>
 
+<!-- Заголовок страницы -->
 <h2>Список заказов</h2>
+
+<!-- Таблица заказов -->
 <table>
     <thead>
         <tr>
             <th>ID</th>
+            <th>Клиент</th>
             <th>Описание</th>
             <th>Статус</th>
             <th>Дата создания</th>
-            <th>Дата обновления</th>
+            <th>Дата монтажа</th>
             <th>Дата назначения</th>
-            <th>Клиент</th>
+
             <th>Исполнитель</th>
+            <th>Действие</th>
+            <th>Подробнее</th>
         </tr>
     </thead>
     <tbody>
         {% for order in orders %}
         <tr>
             <td>{{ order.id }}</td>
+            <td>{{ order.customer_name }}</td>
             <td>{{ order.description }}</td>
             <td>{{ order.status }}</td>
             <td>{{ order.created_at }}</td>
-            <td>{{ order.updated_at }}</td>
-            <td>{{ order.assigned_at }}</td>
-            <td>{{ order.customer_name }}</td>
-            <td>{{ order.installer_name }}</td>
-            {% if order.status == "Ожидает" %}
+            <td>{{ order.montage_date }}</td>
+            <td>{{ order.assigned_at or "Не назначено" }}</td>
+
+            <td>{{ order.installer_name or "Не назначен" }}</td>
+
             <td>
-                <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Назначить исполнителя</a>
+                {% if order.status == "Ожидает" %}
+                <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Назначить</a>
+                {% elif order.status == "Выполняется" %}
+                <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Сменить</a>
+                {% else %}
+                —
+                {% endif %}
             </td>
-            {% else %}
-            <td>—</td>
-            {% endif %}
-            </tr>
-            {% endfor %}
+            <td>
+                <a href="{{ url_for('admin.order_details', order_id=order.id) }}">Подробнее</a>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 {% endblock %}
