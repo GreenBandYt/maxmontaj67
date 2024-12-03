@@ -4,7 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Default Title{% endblock %}</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/styles/styles.css">
+        {% if session.get('role') == 'Administrator' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin.css') }}">
+        {% elif session.get('role') == 'Dispatcher' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/dispatcher.css') }}">
+        {% elif session.get('role') == 'Specialist' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/specialist.css') }}">
+        {% elif session.get('role') == 'Executor' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/executor.css') }}">
+        {% elif session.get('role') == 'Customer' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/customer.css') }}">
+        {% endif %}
 </head>
 <body>
     <h1>CRM Управление заказами MaxMontaj67</h1>

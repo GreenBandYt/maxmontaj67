@@ -53,7 +53,7 @@ def orders():
             """)
             orders = cursor.fetchall()
 
-        logging.debug(f"[DEBUG] Загружено заказов: {orders}")
+        #logging.debug(f"[DEBUG] Загружено заказов: {orders}")
         return render_template('admin/orders/admin_orders.html', orders=orders)
 
     except Exception as e:

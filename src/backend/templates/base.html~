@@ -5,18 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Default Title{% endblock %}</title>
     <link rel="stylesheet" href="/static/styles.css">
+        {% if session.get('role') == 'Administrator' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='/admin.css') }}">
+        {% elif session.get('role') == 'Dispatcher' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/dispatcher.css') }}">
+        {% elif session.get('role') == 'Specialist' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/specialist.css') }}">
+        {% elif session.get('role') == 'Executor' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/executor.css') }}">
+        {% elif session.get('role') == 'Customer' %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/customer.css') }}">
+        {% endif %}
 </head>
 <body>
-    <header>
-        <h1>CRM Управление заказами MaxMontaj67</h1>
-        <nav>
-            <ul class="nav-right">
-                {% if session.get('user_id') %}
-                <li><a href="/logout" class="logout-button">Выход</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+    <h1>CRM Управление заказами MaxMontaj67</h1>
+
+    {% if session.get('user_id') %}
+    <a href="{{ url_for('logout') }}" class="logout-button">Выход</a>
+    {% endif %}
 
     <main>
         {% block content %}
@@ -26,7 +32,7 @@
 
     <footer>
         <p>&copy; 2024 MaxMontaj67. Все права защищены.</p>
-        <p>&copy; Разработано GreenBandYt (GBt)</p>
+        <p>Разработано GreenBandYt (GBt)</p>
     </footer>
 </body>
 </html>
