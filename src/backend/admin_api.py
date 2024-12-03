@@ -44,7 +44,7 @@ def orders():
                     o.created_at,
                     o.updated_at,
                     o.assigned_at,
-                    o.montage_date, -- Добавлено поле для даты монтажа
+                    o.montage_date,
                     c.name AS customer_name,
                     u.name AS installer_name
                 FROM orders o
@@ -533,7 +533,7 @@ def order_complete(order_id):
             order = cursor.fetchone()
             if not order:
                 flash('Заказ не найден.', 'error')
-                return redirect(url_for('admin.orders'))
+                return redirect(url_for('admin.order_details', order_id=order_id))
 
             # Обновление статуса и даты завершения
             cursor.execute("""
@@ -544,8 +544,8 @@ def order_complete(order_id):
             conn.commit()
 
         flash('Заказ успешно завершён.', 'success')
-        return redirect(url_for('admin.orders'))
+        return redirect(url_for('admin.order_details', order_id=order_id))  # Перенаправление на ту же страницу
     except Exception as e:
         logging.error(f"Ошибка завершения заказа ID {order_id}: {e}")
         flash('Ошибка при завершении заказа.', 'error')
-        return redirect(url_for('admin.orders'))
+        return redirect(url_for('admin.order_details', order_id=order_id))

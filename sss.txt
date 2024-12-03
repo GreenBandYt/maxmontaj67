@@ -1,0 +1,351 @@
+/* Общие стили */
+body {
+    font-family: Arial, sans-serif; /* Используем шрифт Arial как основной */
+    background-color: #b2babb; /* Светло-серый фон */
+    color: #333; /* Цвет текста - тёмно-серый */
+    margin: 0; /* Убираем отступы по умолчанию */
+    padding: 0; /* Убираем внутренние отступы по умолчанию */
+    line-height: 1.6; /* Увеличиваем высоту строки для удобства чтения */
+}
+
+h1 {
+    text-align: center; /* Выравнивание заголовка по центру */
+    color: #4CAF50; /* Зелёный цвет текста */
+    margin-top: 0px; /* Отступ сверху */
+    margin-bottom: 0px; /* Отступ снизу */
+    font-size: 1.8rem; /* Размер текста в единицах rem */
+}
+
+h2 {
+    text-align: left; /* Центрируем текст */
+    color: #333; /* Тёмно-серый цвет */
+    margin: 0px 0; /* Отступы сверху и снизу */
+    font-size: 1.5rem; /* Размер текста */
+    font-weight: bold; /* Жирное начертание */
+}
+
+/* Основной контейнер */
+main {
+    max-width: 1200px; /* Ограничиваем ширину страницы */
+    margin: 5px auto; /* Центрируем и добавляем отступы сверху и снизу */
+    padding: 5px; /* Внутренние отступы */
+    background-color: #fff; /* Белый фон */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
+    border-radius: 5px; /* Скругление углов */
+}
+
+/* Футер */
+footer {
+    background: #333; /* Тёмно-серый фон */
+    color: #fff; /* Белый текст */
+    padding: 5px 5px; /* Внутренние отступы */
+    text-align: center; /* Выравнивание текста по центру */
+    font-size: 0.9rem; /* Небольшой размер текста */
+    position: fixed; /* Фиксируем футер внизу */
+    bottom: 0; /* Располагаем внизу страницы */
+    width: 100%; /* Футер занимает всю ширину */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Тень над футером */
+}
+
+footer p {
+    margin: 5px 0; /* Отступы сверху и снизу для текста в футере */
+}
+
+/* Ссылки */
+a {
+    color: #4CAF50; /* Зелёный цвет текста */
+    text-decoration: none; /* Убираем подчёркивание */
+    font-weight: bold; /* Жирное начертание */
+}
+
+a:hover {
+    text-decoration: underline; /* Подчёркивание при наведении */
+    color: #45a049; /* Тёмно-зелёный цвет при наведении */
+}
+
+/* Кнопки */
+button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    border: none; /* Убираем обводку */
+    padding: 10px 15px; /* Внутренние отступы */
+    text-transform: uppercase; /* Верхний регистр текста */
+    font-size: 16px; /* Размер текста */
+    border-radius: 5px; /* Скругление углов */
+    cursor: pointer; /* Указатель мыши меняется на "руку" */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}
+
+/* Кнопка выхода */
+.logout-button {
+    background-color: #f44336; /* Красный фон */
+    color: white; /* Белый текст */
+    padding: 1px 1px; /* Внутренние отступы */
+    text-decoration: none; /* Убираем подчёркивание */
+    border-radius: 3px; /* Скругление углов */
+    font-weight: bold; /* Жирный текст */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+    position: absolute; /* Абсолютное позиционирование */
+    right: 10px; /* Отступ от правого края */
+    top: 1px; /* Отступ от верхнего края */
+}
+
+.logout-button:hover {
+    background-color: #d32f2f; /* Более тёмный красный при наведении */
+}
+
+/* Таблицы */
+table {
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse; /* Убираем промежутки между ячейками */
+    margin: 2px 0; /* Отступы сверху и снизу */
+    font-size: 1rem; /* Размер текста */
+}
+
+table th,
+table td {
+    border: 1px solid #ddd; /* Светлая рамка ячеек */
+    padding: 3px; /* Внутренние отступы */
+    text-align: left; /* Текст по левому краю */
+}
+
+table th {
+    background: linear-gradient(to bottom, #4CAF50, #45a049); /* Градиентный фон */
+    color: white; /* Белый текст */
+    text-transform: uppercase; /* Верхний регистр текста */
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Светло-серый фон для чётных строк */
+}
+
+table tr:hover {
+    background-color: #f1f1f1; /* Более светлый фон при наведении */
+}
+
+/* Мобильная адаптивность */
+@media (max-width: 768px) {
+    main {
+        padding: 3px; /* Уменьшаем отступы */
+    }
+
+    table th,
+    table td {
+        font-size: 0.9rem; /* Уменьшаем размер текста в таблицах */
+        padding: 4px; /* Уменьшаем внутренние отступы */
+    }
+
+    button,
+    .logout-button {
+        font-size: 10px; /* Уменьшаем размер текста для кнопок */
+        padding: 2px 4px; /* Уменьшаем внутренние отступы */
+    }
+}
+
+/* Панель навигации */
+.navigation-panel {
+    display: flex; /* Горизонтальное расположение элементов */
+    justify-content: space-around; /* Равномерное распределение кнопок */
+    margin-bottom: 1px; /* Отступ снизу */
+}
+
+.navigation-panel .button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    text-decoration: none; /* Убираем подчёркивание */
+    padding: 2px 5px; /* Внутренние отступы */
+    border-radius: 5px; /* Скругление углов */
+    font-size: 16px; /* Размер текста */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+.navigation-panel .button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}
+
+
+.danger-button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 2px 5px;
+    text-transform: uppercase;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.danger-button:hover {
+    background-color: #d32f2f;
+}
+
+
+/* Общий контейнер для страницы редактирования пользователя */
+.user-details-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 2px;
+}
+
+/* Левая колонка */
+.user-details-container .left-column {
+    width: 48%;
+}
+
+/* Правая колонка */
+.user-details-container .right-column {
+    width: 48%;
+    text-align: center;
+}
+
+/* Стиль для фото пользователя */
+.user-photo {
+    max-width: 100%;
+    max-height: 300px;
+    border: 1px solid #ccc;
+    padding: 2px;
+    background: #f9f9f9;
+    margin-bottom: 5px;
+}
+
+/* Кнопка загрузки нового фото */
+.right-column form {
+    margin-top: 15px;
+}
+
+.right-column form input[type="file"] {
+    margin-bottom: 10px;
+}
+
+.role-blocked {
+    color: red;
+    font-weight: bold;
+}
+
+.button.danger {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.button.danger:hover {
+    background-color: #c9302c;
+}
+.incomplete-data {
+    color: red;
+    font-weight: bold;
+}
+
+/* Кнопка "Подробнее" */
+.button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    text-decoration: none; /* Убираем подчёркивание */
+    padding: 10px 15px; /* Внутренние отступы */
+    border-radius: 5px; /* Скругление углов */
+    font-size: 16px; /* Размер текста */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+.button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}
+
+/* Стиль для секции деталей заказа */
+.order-details {
+    margin: 5px 0;
+}
+
+.order-details table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2px 0;
+    font-size: 1rem;
+}
+
+.order-details th,
+.order-details td {
+    border: 1px solid #ddd;
+    padding: 5px;
+    text-align: left;
+}
+
+.order-details th {
+    background-color: #4CAF50;
+    color: white;
+    text-transform: uppercase;
+}
+
+.order-details tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.order-details tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Кнопка возврата */
+.back-button {
+    margin-top: 2px;
+    text-align: center;
+}
+
+.back-button .button {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.back-button .button:hover {
+    background-color: #45a049;
+}
+
+/* Оптимизация высоты строк таблицы */
+table th,
+table td {
+    padding: 5px 10px; /* Уменьшаем внутренние отступы */
+    font-size: 0.9rem; /* Уменьшаем размер текста */
+}
+
+table tr {
+    line-height: 1.2; /* Уменьшаем высоту строки */
+}
+/* Оптимизация ширины строк таблицы */
+.order-details th {
+    width: 30%; /* Устанавливаем ширину левой колонки */
+}
+
+.order-details td {
+    width: 70%; /* Устанавливаем ширину правой колонки */
+}
+
+
+/* Стиль для опасных действий */
+.danger-button {
+    background-color: #f44336; /* Красный фон */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.danger-button:hover {
+    background-color: #d32f2f; /* Более тёмный оттенок красного */
+}

@@ -1,0 +1,64 @@
+/* Панель навигации */
+.navigation-panel {
+    display: flex; /* Горизонтальное расположение элементов */
+    justify-content: space-around; /* Равномерное распределение кнопок */
+    margin-bottom: 10px; /* Отступ снизу */
+}
+
+.navigation-panel .button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    text-decoration: none; /* Убираем подчёркивание */
+    padding: 10px 15px; /* Внутренние отступы */
+    border-radius: 5px; /* Скругление углов */
+    font-size: 16px; /* Размер текста */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+.navigation-panel .button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}
+
+/* Таблица заказов */
+table {
+    width: 100%; /* Таблица занимает всю ширину контейнера */
+    border-collapse: collapse; /* Убираем промежутки между ячейками */
+    margin: 10px 0; /* Отступы сверху и снизу */
+    font-size: 1rem; /* Размер текста */
+}
+
+table th,
+table td {
+    border: 1px solid #ddd; /* Светлая рамка ячеек */
+    padding: 8px; /* Внутренние отступы */
+    text-align: left; /* Текст по левому краю */
+}
+
+table th {
+    background: linear-gradient(to bottom, #4CAF50, #45a049); /* Градиентный фон */
+    color: white; /* Белый текст */
+    text-transform: uppercase; /* Верхний регистр текста */
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Светло-серый фон для чётных строк */
+}
+
+table tr:hover {
+    background-color: #f1f1f1; /* Более светлый фон при наведении */
+}
+
+/* Кнопки в таблице */
+table a.button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    text-decoration: none; /* Убираем подчёркивание */
+    padding: 5px 10px; /* Внутренние отступы */
+    border-radius: 5px; /* Скругление углов */
+    font-size: 14px; /* Размер текста */
+    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+}
+
+table a.button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}

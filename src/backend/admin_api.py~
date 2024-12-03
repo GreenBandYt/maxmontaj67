@@ -44,6 +44,7 @@ def orders():
                     o.created_at,
                     o.updated_at,
                     o.assigned_at,
+                    o.montage_date,
                     c.name AS customer_name,
                     u.name AS installer_name
                 FROM orders o
@@ -58,6 +59,7 @@ def orders():
     except Exception as e:
         logging.error(f"[ERROR] Ошибка загрузки заказов: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
+
 
 
 # ----------------------------------------
