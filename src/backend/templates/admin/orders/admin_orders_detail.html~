@@ -3,62 +3,80 @@
 {% block title %}Детали заказа{% endblock %}
 
 {% block content %}
+<div class="navigation-panel">
+    <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к списку заказов</a>
+</div>
+
 <main>
     <h2>Детали заказа</h2>
-
-    <!-- Информация о заказе -->
-    <div class="order-details">
-        <table>
+    <!-- Форма для редактирования данных заказа -->
+    <form method="post" action="{{ url_for('admin.order_details', order_id=order['id']) }}">
+        <table style="width: 100%; border-collapse: collapse;">
+            <colgroup>
+                <col style="width: 30%;">
+                <col style="width: 70%;">
+            </colgroup>
+            <tr>
+                <th style="text-align: left; padding: 10px; background-color: #4CAF50; color: white;">Поле</th>
+                <th style="text-align: left; padding: 10px; background-color: #4CAF50; color: white;">Значение</th>
+            </tr>
             <tr>
                 <th>ID</th>
                 <td>{{ order['id'] }}</td>
             </tr>
             <tr>
                 <th>Описание</th>
-                <td>{{ order['description'] }}</td>
+                <td><input type="text" name="description" value="{{ order['description'] }}" style="width: 100%;"></td>
             </tr>
             <tr>
                 <th>Статус</th>
-                <td>{{ order['status'] }}</td>
-            </tr>
-            <tr>
-                <th>Дата создания</th>
-                <td>{{ order['created_at'] }}</td>
-            </tr>
-            <tr>
-                <th>Дата обновления</th>
-                <td>{{ order['updated_at'] }}</td>
-            </tr>
-            <tr>
-                <th>Дата назначения</th>
-                <td>{{ order['assigned_at'] or 'Не назначено' }}</td>
+                <td>
+                    <select name="status" style="width: 100%;">
+                        <option value="Ожидает" {% if order['status'] == 'Ожидает' %}selected{% endif %}>Ожидает</option>
+                        <option value="Выполняется" {% if order['status'] == 'Выполняется' %}selected{% endif %}>Выполняется</option>
+                        <option value="Завершён" {% if order['status'] == 'Завершён' %}selected{% endif %}>Завершён</option>
+                    </select>
+                </td>
             </tr>
             <tr>
                 <th>Дата монтажа</th>
-                <td>{{ order['montage_date'] or 'Не назначено' }}</td>
+                <td><input type="date" name="montage_date" value="{{ order['montage_date'] }}" style="width: 100%;"></td>
             </tr>
             <tr>
                 <th>Крайний срок</th>
-                <td>{{ order['deadline_at'] or 'Не указано' }}</td>
+                <td><input type="date" name="deadline_at" value="{{ order['deadline_at'] }}" style="width: 100%;"></td>
             </tr>
             <tr>
                 <th>Дата завершения</th>
-                <td>{{ order['completed_at'] or 'Не завершено' }}</td>
+                <td><input type="date" name="completed_at" value="{{ order['completed_at'] }}" style="width: 100%;"></td>
             </tr>
             <tr>
-                <th>Клиент</th>
+                <th>Имя заказчика</th>
                 <td>{{ order['customer_name'] }}</td>
+            </tr>
+            <tr>
+                <th>Телефон заказчика</th>
+                <td>{{ order['customer_phone'] }}</td>
+            </tr>
+            <tr>
+                <th>Адрес заказчика</th>
+                <td>{{ order['customer_address'] }}</td>
             </tr>
             <tr>
                 <th>Исполнитель</th>
                 <td>{{ order['installer_name'] or 'Не назначен' }}</td>
             </tr>
         </table>
-    </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button type="submit" class="button">Сохранить изменения</button>
+        </div>
+    </form>
+        <!-- Кнопка завершения заказа -->
+    <div style="text-align: center; margin-top: 20px;">
+        <form method="POST" action="{{ url_for('admin.order_complete', order_id=order['id']) }}">
+            <button type="submit" class="button danger">Завершить заказ</button>
+        </form>
 
-    <!-- Кнопка возврата -->
-    <div class="back-button">
-        <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к списку заказов</a>
     </div>
 </main>
 {% endblock %}

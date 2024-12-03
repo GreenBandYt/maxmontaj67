@@ -332,3 +332,20 @@ table tr {
 .order-details td {
     width: 70%; /* Устанавливаем ширину правой колонки */
 }
+
+
+/* Стиль для опасных действий */
+.danger-button {
+    background-color: #f44336; /* Красный фон */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.danger-button:hover {
+    background-color: #d32f2f; /* Более тёмный оттенок красного */
+}
