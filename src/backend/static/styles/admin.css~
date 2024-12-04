@@ -11,7 +11,7 @@
     text-decoration: none; /* Убираем подчёркивание */
     padding: 10px 15px; /* Внутренние отступы */
     border-radius: 5px; /* Скругление углов */
-    font-size: 14px; /* Размер текста для кнопок панели навигации */
+    font-size: 14px; /* Размер текста */
     transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
 }
 
@@ -20,32 +20,26 @@
 }
 
 /* Таблица заказов */
-/* Контейнер для добавления прокрутки */
 .scrollable-table {
     max-height: 400px; /* Ограничиваем высоту таблицы */
     overflow-y: auto; /* Добавляем вертикальную прокрутку */
     border: 1px solid #ddd; /* Рамка вокруг таблицы */
-    font-size: 0.9rem; /* Размер текста для всей таблицы (можно изменять) */
 }
 
-/* Таблица внутри прокручиваемого контейнера */
 .scrollable-table table {
     width: 100%; /* Таблица занимает всю ширину контейнера */
     border-collapse: collapse; /* Убираем промежутки между ячейками */
     margin: 0px 0; /* Отступы сверху и снизу */
-    font-size: inherit; /* Унаследованный размер текста для таблицы */
+    font-size: 1rem; /* Размер текста */
 }
 
-/* Ячейки таблицы */
 .scrollable-table th,
 .scrollable-table td {
     border: 1px solid #ddd; /* Светлая рамка ячеек */
-    padding: 5px; /* Внутренние отступы */
+    padding: 1px; /* Внутренние отступы */
     text-align: left; /* Текст по левому краю */
-    font-size: inherit; /* Унаследованный размер текста */
 }
 
-/* Заголовок таблицы */
 .scrollable-table th {
     position: sticky; /* Фиксируем заголовок */
     top: 0; /* Фиксация у верхней границы */
@@ -53,31 +47,29 @@
     background: linear-gradient(to bottom, #4CAF50, #45a049); /* Градиентный фон */
     color: white; /* Белый текст */
     text-transform: uppercase; /* Верхний регистр текста */
-    font-size: 1rem; /* Размер текста для заголовка таблицы (можно изменять) */
 }
 
-/* Чётные строки таблицы */
 .scrollable-table tr:nth-child(even) {
     background-color: #f9f9f9; /* Светло-серый фон для чётных строк */
 }
 
-/* Подсветка строки при наведении */
 .scrollable-table tr:hover {
     background-color: #f1f1f1; /* Более светлый фон при наведении */
 }
 
-/* Кнопки внутри таблицы */
+/* Кнопки в таблице */
 .scrollable-table a.button {
     background-color: #4CAF50; /* Зелёный фон */
     color: white; /* Белый текст */
     text-decoration: none; /* Убираем подчёркивание */
     padding: 5px 10px; /* Внутренние отступы */
     border-radius: 5px; /* Скругление углов */
-    font-size: 10px; /* Размер текста для кнопок внутри таблицы */
+    font-size: 10px; /* Размер текста */
     transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
 }
 
-/* Изменение фона кнопок при наведении */
 .scrollable-table a.button:hover {
     background-color: #45a049; /* Тёмно-зелёный фон при наведении */
 }
+
+/* Остальные стили остаются без изменений */
