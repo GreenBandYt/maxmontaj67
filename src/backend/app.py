@@ -70,11 +70,11 @@ def home():
 
                 # Перенаправление в зависимости от роли
                 role_redirects = {
-                    'Administrator': 'admin.orders',
-                    'Dispatcher': 'dispatcher.orders',
-                    'Specialist': 'specialist.orders',
-                    'Executor': 'executor.orders',
-                    'Customer': 'customer.orders',
+                    'admin': 'admin.orders',
+                    'dispatcher': 'dispatcher.orders',
+                    'specialist': 'specialist.orders',
+                    'executor': 'executor.orders',
+                    'customer': 'customer.orders',
                 }
                 return redirect(url_for(role_redirects.get(user['role'], 'home')))
             else:

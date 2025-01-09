@@ -3,82 +3,79 @@
 {% block title %}Редактирование пользователя{% endblock %}
 
 {% block content %}
-<!-- Панель навигации -->
-<div class="navigation-panel">
-    <a href="{{ url_for('admin.users') }}" class="button">Вернуться к списку</a>
-</div>
-
-<div class="user-details-container">
-    <!-- Левая колонка -->
-    <div class="left-column">
-        <h2 style="color: {% if not user.is_profile_complete %}red{% else %}black{% endif %};">
-            Редактирование пользователя
-        </h2>
-        <form method="POST">
-            <label for="id">ID:</label>
-            <input type="text" id="id" name="id" value="{{ user.id }}" readonly style="width: 20px;">
-
-            <label for="phone">Телефон (обязательно):</label>
-            <input type="text" id="phone" name="phone" value="{{ user.phone }}" required>
-            <br>
-
-            <label for="name">Имя (обязательно):</label>
-            <input type="text" id="name" name="name" value="{{ user.name }}" required style="width: 300px;">
-            <br>
-
-            <label for="address">Адрес (обязательно):</label>
-            <input type="text" id="address" name="address" value="{{ user.address }}" required style="width: 400px;">
-            <br>
-
-            <label for="rating">Рейтинг (0-5):</label>
-            <input type="number" id="rating" name="rating" value="{{ user.rating }}" min="0" max="5" step="0.1" required>
-
-            <label for="role">Роль:</label>
-            <select id="role" name="role">
-                {% for role in roles %}
-                <option value="{{ role.id }}" {% if role.id == user.role_id %}selected{% endif %}>
-                    {{ role.name }}
-                </option>
-                {% endfor %}
-            </select>
-            <br>
-            <hr>
-
-            <!-- Кнопка для сохранения изменений -->
-            <button type="submit" class="button">Сохранить изменения</button>
-        </form>
-        <!-- Контейнер для паспортных данных -->
-        <div class="passport-data-container">
-            <h3>Паспортные данные</h3>
-            <form method="POST" action="{{ url_for('admin.update_passport_details', user_id=user.id) }}">
-                <label for="passport_series">Серия: </label>
-                <input type="text" id="passport_series" name="passport_series" value="{{ user.passport_series or '' }}" maxlength="4" required style="width: 40px;">
-
-                <label for="passport_number">  Номер:  </label>
-                <input type="text" id="passport_number" name="passport_number" value="{{ user.passport_number or '' }}" maxlength="6" required style="width: 60px;">
-
-                <label for="passport_issue_date"> Дата выдачи:  </label>
-                <input type="text" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date or '' }}" placeholder="дд.мм.гггг" required style="width: 100px;">
-                <br>
-                <label for="passport_issued_by">Кем выдан:</label>
-                <input type="text" id="passport_issued_by" name="passport_issued_by" value="{{ user.passport_issued_by or '' }}" required style="width: 470px;">
-                <hr>
-                <!-- Кнопка для сохранения изменений -->
-                <button type="submit" class="button" onclick="return confirm('Вы уверены, что хотите изменить паспортные данные?')">Обновить паспортные данные</button>
-            </form>
-        </div>
+<div class="admin-user-edit">
+    <!-- Панель навигации -->
+    <div class="navigation-panel">
+        <a href="{{ url_for('admin.users') }}" class="button">Вернуться к списку</a>
     </div>
 
-    <!-- Правая колонка -->
-    <div class="right-column">
-        <h3>Фото пользователя</h3>
-        <img class="user-photo" src="{{ url_for('static', filename=user.photo_path or 'images/foto_placeholder.png') }}" alt="Фото пользователя">
+    <div class="user-edit-container">
+        <!-- Левая колонка -->
+        <div class="left-column">
+            <h2 class="user-edit-title {% if not user.is_profile_complete %}incomplete-data{% endif %}">
+                Редактирование пользователя
+            </h2>
+            <form method="POST" class="user-edit-form">
+                <label for="id">ID:</label>
+                <input type="text" id="id" name="id" value="{{ user.id }}" readonly>
 
-        <form method="POST" action="{{ url_for('admin.upload_photo', user_id=user.id) }}" enctype="multipart/form-data">
-            <label for="photo">Загрузить новое фото:</label>
-            <input type="file" id="photo" name="photo">
-            <button type="submit" class="button">Загрузить</button>
-        </form>
+                <label for="phone">Телефон (обязательно):</label>
+                <input type="text" id="phone" name="phone" value="{{ user.phone }}" required>
+
+                <label for="name">Имя (обязательно):</label>
+                <input type="text" id="name" name="name" value="{{ user.name }}" required>
+
+                <label for="address">Адрес (обязательно):</label>
+                <input type="text" id="address" name="address" value="{{ user.address }}" required>
+
+                <label for="rating">Рейтинг (0-5):</label>
+                <input type="number" id="rating" name="rating" value="{{ user.rating }}" min="0" max="5" step="0.1" required>
+
+                <label for="role">Роль:</label>
+                <select id="role" name="role">
+                    {% for role in roles %}
+                    <option value="{{ role.id }}" {% if role.id == user.role_id %}selected{% endif %}>
+                        {{ role.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="button save-button">Сохранить изменения</button>
+            </form>
+
+            <div class="passport-data">
+                <h3>Паспортные данные</h3>
+                <form method="POST" action="{{ url_for('admin.update_passport_details', user_id=user.id) }}" class="passport-form">
+                    <label for="passport_series">Серия:</label>
+                    <input type="text" id="passport_series" name="passport_series" value="{{ user.passport_series or '' }}" maxlength="4" required>
+
+                    <label for="passport_number">Номер:</label>
+                    <input type="text" id="passport_number" name="passport_number" value="{{ user.passport_number or '' }}" maxlength="6" required>
+
+                    <label for="passport_issue_date">Дата выдачи:</label>
+                    <input type="text" id="passport_issue_date" name="passport_issue_date" value="{{ user.passport_issue_date or '' }}" placeholder="дд.мм.гггг" required>
+
+                    <label for="passport_issued_by">Кем выдан:</label>
+                    <input type="text" id="passport_issued_by" name="passport_issued_by" value="{{ user.passport_issued_by or '' }}" required>
+
+                    <button type="submit" class="button save-button" onclick="return confirm('Вы уверены, что хотите изменить паспортные данные?')">Обновить паспортные данные</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Правая колонка -->
+        <div class="right-column">
+            <h3>Фото пользователя</h3>
+            <div class="user-photo-container">
+                <img class="user-photo" src="{{ url_for('static', filename=user.photo_path or 'images/foto_placeholder.png') }}" alt="Фото пользователя">
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.upload_photo', user_id=user.id) }}" enctype="multipart/form-data" class="photo-upload-form">
+                <label for="photo">Загрузить новое фото:</label>
+                <input type="file" id="photo" name="photo">
+                <button type="submit" class="button upload-button">Загрузить</button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

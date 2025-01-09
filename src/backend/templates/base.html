@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Default Title{% endblock %}</title>
     <link rel="stylesheet" href="/static/styles/styles.css">
-        {% if session.get('role') == 'Administrator' %}
+        {% if session.get('role') == 'admin' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin.css') }}">
-        {% elif session.get('role') == 'Dispatcher' %}
+        {% elif session.get('role') == 'dispatcher' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/dispatcher.css') }}">
-        {% elif session.get('role') == 'Specialist' %}
+        {% elif session.get('role') == 'specialist' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/specialist.css') }}">
-        {% elif session.get('role') == 'Executor' %}
+        {% elif session.get('role') == 'executor' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/executor.css') }}">
-        {% elif session.get('role') == 'Customer' %}
+        {% elif session.get('role') == 'customer' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/customer.css') }}">
         {% endif %}
 </head>

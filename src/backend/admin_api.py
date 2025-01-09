@@ -30,7 +30,7 @@ def orders():
     """
     Маршрут для отображения всех заказов.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))  # Перенаправление на главную страницу, если роль не админ
 
     try:
@@ -70,7 +70,7 @@ def customers():
     """
     Маршрут для отображения списка заказчиков.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))
 
     try:
@@ -98,7 +98,7 @@ def users():
     """
     Маршрут для отображения списка пользователей.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))
 
     try:
@@ -127,7 +127,7 @@ def assign_executor(order_id):
     """
     Назначение исполнителя для заказа.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))
 
     try:
@@ -196,7 +196,7 @@ def remove_executor(order_id):
     """
     Снятие исполнителя с заказа.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))
 
     try:
@@ -227,7 +227,7 @@ def user_details(user_id):
     """
     Маршрут для просмотра и редактирования данных пользователя.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))  # Перенаправление, если пользователь не админ
 
     try:
@@ -313,7 +313,7 @@ def upload_photo(user_id):
     """
     Маршрут для загрузки или обновления фото пользователя.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))
 
     try:
@@ -364,7 +364,7 @@ def update_passport_details(user_id):
     """
     Маршрут для обновления паспортных данных пользователя.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))  # Перенаправление, если пользователь не администратор
 
     try:
@@ -445,7 +445,7 @@ def order_details(order_id):
     """
     Маршрут для отображения и редактирования деталей заказа.
     """
-    if session.get('role') != 'Administrator':  # Проверка прав доступа
+    if session.get('role') != 'admin':  # Проверка прав доступа
         return redirect(url_for('home'))  # Перенаправление, если пользователь не администратор
 
     try:

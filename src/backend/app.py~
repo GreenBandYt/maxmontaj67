@@ -33,7 +33,7 @@ def home():
             with db_connect() as conn:
                 cursor = conn.cursor()
                 query = """
-                    SELECT u.id, u.password_hash, r.name AS role, u.name
+                    SELECT u.id, u.email, u.password_hash, r.name AS role, u.name
                     FROM users u
                     JOIN roles r ON u.role = r.id
                     WHERE u.email = %s
