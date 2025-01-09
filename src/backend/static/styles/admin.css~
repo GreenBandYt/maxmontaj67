@@ -1,63 +1,172 @@
-/* Стили для панели администратора */
-.admin-panel {
-    padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+/* Основной стиль для контейнера редактирования */
+.admin-user-edit {
+    margin: 20px auto;
+    padding: 10px;
+    max-width: 1200px; /* Уменьшаем максимальную ширину */
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Кнопки администратора */
-.admin-panel .button {
-    background-color: #f44336;
+/* Контейнер для формы */
+.user-edit-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px; /* Пространство между колонками */
+}
+
+/* Левая колонка */
+.left-column {
+    width: 60%; /* Уменьшаем ширину */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Пространство между элементами */
+}
+
+/* Заголовок редактирования */
+.user-edit-title {
+    font-size: 1.4rem; /* Уменьшаем размер текста */
+    color: #333; /* Цвет текста */
+    font-weight: bold;
+}
+
+/* Форма редактирования */
+.user-edit-form label {
+    display: block;
+    font-size: 0.9rem; /* Уменьшаем размер шрифта */
+    margin-bottom: 5px; /* Отступ под меткой */
+    font-weight: bold;
+}
+
+.user-edit-form input,
+.user-edit-form select {
+    width: 90%; /* Сужаем ширину */
+    padding: 8px;
+    font-size: 0.9rem; /* Уменьшаем шрифт */
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.user-edit-form input[readonly] {
+    background-color: #f9f9f9; /* Светло-серый фон для readonly полей */
+    cursor: not-allowed; /* Курсор "запрещено" */
+}
+
+.user-edit-form button {
+    align-self: flex-start; /* Кнопка выровнена по левому краю */
+    background-color: #4CAF50;
     color: white;
     border: none;
-    padding: 10px 20px;
-    font-size: 16px;
+    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
-}
-
-.admin-panel .button:hover {
-    background-color: #d32f2f;
-}
-
-/* Таблицы администратора */
-.admin-table th {
-    background-color: #f44336;
-    color: white;
-    text-align: center;
-}
-
-.admin-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-.admin-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.admin-table tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* Чёткое указание для администраторских таблиц */
-.admin-panel .admin-table {
-    font-size: 14px;
-}
-
-/* Кнопки внутри администраторских таблиц */
-.admin-table a.button {
-    background-color: #f44336;
-    color: white;
-    text-decoration: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 12px;
+    font-size: 0.9rem;
     transition: background-color 0.3s ease;
 }
 
-.admin-table a.button:hover {
-    background-color: #d32f2f;
+.user-edit-form button:hover {
+    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+}
+
+/* Паспортные данные */
+.passport-data {
+    margin-top: 20px; /* Отступ сверху */
+}
+
+.passport-data h3 {
+    font-size: 1.2rem; /* Уменьшаем размер заголовка */
+    font-weight: bold;
+}
+
+.passport-data label {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.passport-data input {
+    width: 70%; /* Уменьшаем ширину */
+    padding: 8px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.passport-form button {
+    margin-top: 10px; /* Отступ сверху */
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.passport-form button:hover {
+    background-color: #45a049;
+}
+
+/* Правая колонка */
+.right-column {
+    width: 35%; /* Ширина правой части */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Фото пользователя */
+.user-photo-container img {
+    max-width: 100%;
+    border-radius: 5px; /* Скругляем углы фото */
+    border: 1px solid #ddd; /* Тонкая рамка */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
+}
+
+.photo-upload-form label {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.photo-upload-form input {
+    margin-top: 5px;
+    padding: 5px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.photo-upload-form button {
+    margin-top: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.photo-upload-form button:hover {
+    background-color: #45a049;
+}
+
+/* Общие стили для кнопок */
+button,
+a.button {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+button:hover,
+a.button:hover {
+    background-color: #45a049;
 }

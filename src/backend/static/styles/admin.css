@@ -81,3 +81,61 @@
 .scrollable-table a.button:hover {
     background-color: #45a049; /* Тёмно-зелёный фон при наведении */
 }
+
+/* Контейнер для редактирования пользователя */
+.user-edit-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+/* Левая колонка */
+.left-column {
+    width: 60%;
+    padding-right: 20px;
+}
+
+/* Правая колонка */
+.right-column {
+    width: 35%;
+    text-align: center;
+}
+
+/* Фото пользователя */
+.user-photo-container img {
+    max-width: 100%;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Формы */
+.user-edit-form,
+.passport-form,
+.photo-upload-form {
+    margin-top: 10px;
+}
+
+/* Кнопки сохранения и загрузки */
+.save-button,
+.upload-button {
+    background-color: #4CAF50;
+    color: white;
+    text-transform: uppercase;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+.save-button:hover,
+.upload-button:hover {
+    background-color: #45a049;
+}
+
+/* Заголовок для незавершённых данных */
+.incomplete-data {
+    color: red;
+    font-weight: bold;
+}
