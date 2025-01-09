@@ -1,0 +1,84 @@
+/* Общие стили для всего проекта */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+/* Навигационная панель */
+.navigation-panel {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.navigation-panel .button {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.navigation-panel .button:hover {
+    background-color: #45a049;
+}
+
+/* Таблицы */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #4CAF50;
+    color: white;
+    text-transform: uppercase;
+}
+
+/* Прокрутка таблиц */
+.scrollable-table {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+}
+
+.scrollable-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.scrollable-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.scrollable-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Кнопки в таблице */
+.scrollable-table a.button {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.scrollable-table a.button:hover {
+    background-color: #45a049;
+}

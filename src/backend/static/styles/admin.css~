@@ -1,75 +1,63 @@
-/* Панель навигации */
-.navigation-panel {
-    display: flex; /* Горизонтальное расположение элементов */
-    justify-content: space-around; /* Равномерное распределение кнопок */
-    margin-bottom: 10px; /* Отступ снизу */
+/* Стили для панели администратора */
+.admin-panel {
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
-.navigation-panel .button {
-    background-color: #4CAF50; /* Зелёный фон */
-    color: white; /* Белый текст */
-    text-decoration: none; /* Убираем подчёркивание */
-    padding: 10px 15px; /* Внутренние отступы */
-    border-radius: 5px; /* Скругление углов */
-    font-size: 14px; /* Размер текста */
-    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+/* Кнопки администратора */
+.admin-panel .button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
-.navigation-panel .button:hover {
-    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
+.admin-panel .button:hover {
+    background-color: #d32f2f;
 }
 
-/* Таблица заказов */
-.scrollable-table {
-    max-height: 400px; /* Ограничиваем высоту таблицы */
-    overflow-y: auto; /* Добавляем вертикальную прокрутку */
-    border: 1px solid #ddd; /* Рамка вокруг таблицы */
+/* Таблицы администратора */
+.admin-table th {
+    background-color: #f44336;
+    color: white;
+    text-align: center;
 }
 
-.scrollable-table table {
-    width: 100%; /* Таблица занимает всю ширину контейнера */
-    border-collapse: collapse; /* Убираем промежутки между ячейками */
-    margin: 0px 0; /* Отступы сверху и снизу */
-    font-size: 1rem; /* Размер текста */
+.admin-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
 }
 
-.scrollable-table th,
-.scrollable-table td {
-    border: 1px solid #ddd; /* Светлая рамка ячеек */
-    padding: 1px; /* Внутренние отступы */
-    text-align: left; /* Текст по левому краю */
+.admin-table tr:nth-child(even) {
+    background-color: #f9f9f9;
 }
 
-.scrollable-table th {
-    position: sticky; /* Фиксируем заголовок */
-    top: 0; /* Фиксация у верхней границы */
-    z-index: 0; /* Приоритет отображения над строками */
-    background: linear-gradient(to bottom, #4CAF50, #45a049); /* Градиентный фон */
-    color: white; /* Белый текст */
-    text-transform: uppercase; /* Верхний регистр текста */
+.admin-table tr:hover {
+    background-color: #f1f1f1;
 }
 
-.scrollable-table tr:nth-child(even) {
-    background-color: #f9f9f9; /* Светло-серый фон для чётных строк */
+/* Чёткое указание для администраторских таблиц */
+.admin-panel .admin-table {
+    font-size: 14px;
 }
 
-.scrollable-table tr:hover {
-    background-color: #f1f1f1; /* Более светлый фон при наведении */
+/* Кнопки внутри администраторских таблиц */
+.admin-table a.button {
+    background-color: #f44336;
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
 }
 
-/* Кнопки в таблице */
-.scrollable-table a.button {
-    background-color: #4CAF50; /* Зелёный фон */
-    color: white; /* Белый текст */
-    text-decoration: none; /* Убираем подчёркивание */
-    padding: 5px 10px; /* Внутренние отступы */
-    border-radius: 5px; /* Скругление углов */
-    font-size: 10px; /* Размер текста */
-    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
+.admin-table a.button:hover {
+    background-color: #d32f2f;
 }
-
-.scrollable-table a.button:hover {
-    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
-}
-
-/* Остальные стили остаются без изменений */
