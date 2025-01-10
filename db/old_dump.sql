@@ -169,7 +169,7 @@ CREATE TABLE `users` (
   `passport_number` varchar(6) DEFAULT NULL,
   `passport_issued_by` text DEFAULT NULL,
   `passport_issue_date` varchar(10) DEFAULT NULL,
-  `photo_path` varchar(30) DEFAULT 'images/foto_placeholder.png',
+  `photo_path` text DEFAULT 'images/foto_placeholder.png',
   `rating` float DEFAULT 5,
   `is_profile_complete` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`id`),
@@ -206,4 +206,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-01-10  5:17:50
+-- Dump completed on 2025-01-10  3:13:05
