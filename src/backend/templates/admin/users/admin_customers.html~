@@ -7,7 +7,7 @@
     <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к заказам</a>
 </div>
 <h2>Список заказчиков</h2>
-<table class="scrollable-table">
+<table>
     <thead>
         <tr>
             <th>ID</th>

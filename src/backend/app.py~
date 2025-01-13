@@ -5,6 +5,11 @@ from utils import db_connect, verify_password, hash_password
 
 # Импортируем Blueprints
 from admin_api import admin_bp
+from customer_api import customer_bp
+from dispatcher_api import dispatcher_bp
+from executor_api import executor_bp
+from specialist_api import specialist_bp
+
 
 # Настройка приложения Flask
 app = Flask(__name__)
@@ -70,11 +75,11 @@ def home():
 
                 # Перенаправление в зависимости от роли
                 role_redirects = {
-                    'Administrator': 'admin.orders',
-                    'Dispatcher': 'dispatcher.orders',
-                    'Specialist': 'specialist.orders',
-                    'Executor': 'executor.orders',
-                    'Customer': 'customer.orders',
+                    'admin': 'admin.orders',
+                    'dispatcher': 'dispatcher.orders',
+                    'specialist': 'specialist.orders',
+                    'executor': 'executor.orders',
+                    'customer': 'customer.orders',
                 }
                 return redirect(url_for(role_redirects.get(user['role'], 'home')))
             else:

@@ -5,6 +5,11 @@ from utils import db_connect, verify_password, hash_password
 
 # Импортируем Blueprints
 from admin_api import admin_bp
+from customer_api import customer_bp
+from dispatcher_api import dispatcher_bp
+from executor_api import executor_bp
+from specialist_api import specialist_bp
+
 
 # Настройка приложения Flask
 app = Flask(__name__)
@@ -15,6 +20,10 @@ Session(app)
 
 # Регистрация Blueprints
 app.register_blueprint(admin_bp)
+app.register_blueprint(customer_bp)
+app.register_blueprint(dispatcher_bp)
+app.register_blueprint(executor_bp)
+app.register_blueprint(specialist_bp)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():

@@ -1,0 +1,55 @@
+/* Панель навигации */
+.navigation-panel {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.navigation-panel .button {
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.navigation-panel .button:hover {
+    background-color: #45a049;
+}
+
+/* Таблица заказов */
+.scrollable-table {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 20px 0;
+}
+
+.scrollable-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.scrollable-table th,
+.scrollable-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.scrollable-table th {
+    background-color: #4CAF50;
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+.scrollable-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.scrollable-table tr:hover {
+    background-color: #f1f1f1;
+}

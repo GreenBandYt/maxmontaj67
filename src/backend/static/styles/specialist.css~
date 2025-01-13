@@ -26,13 +26,16 @@
     overflow-y: auto; /* Добавляем вертикальную прокрутку */
     border: 1px solid #ddd; /* Рамка вокруг таблицы */
     font-size: 0.9rem; /* Размер текста для всей таблицы (можно изменять) */
+    margin: 20px 0; /* Отступы сверху и снизу */
+    border-radius: 5px; /* Скруглённые углы */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Тень для визуального эффекта */
 }
 
 /* Таблица внутри прокручиваемого контейнера */
 .scrollable-table table {
     width: 100%; /* Таблица занимает всю ширину контейнера */
     border-collapse: collapse; /* Убираем промежутки между ячейками */
-    margin: 0px 0; /* Отступы сверху и снизу */
+    margin: 0; /* Отступы сверху и снизу */
     font-size: inherit; /* Унаследованный размер текста для таблицы */
 }
 
@@ -40,7 +43,7 @@
 .scrollable-table th,
 .scrollable-table td {
     border: 1px solid #ddd; /* Светлая рамка ячеек */
-    padding: 5px; /* Внутренние отступы */
+    padding: 10px; /* Внутренние отступы */
     text-align: left; /* Текст по левому краю */
     font-size: inherit; /* Унаследованный размер текста */
 }
@@ -49,11 +52,12 @@
 .scrollable-table th {
     position: sticky; /* Фиксируем заголовок */
     top: 0; /* Фиксация у верхней границы */
-    z-index: 0; /* Приоритет отображения над строками */
+    z-index: 10; /* Приоритет отображения над строками */
     background: linear-gradient(to bottom, #4CAF50, #45a049); /* Градиентный фон */
     color: white; /* Белый текст */
     text-transform: uppercase; /* Верхний регистр текста */
     font-size: 1rem; /* Размер текста для заголовка таблицы (можно изменять) */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Тень для фиксации */
 }
 
 /* Чётные строки таблицы */
@@ -66,7 +70,13 @@
     background-color: #f1f1f1; /* Более светлый фон при наведении */
 }
 
-/* Кнопки внутри таблицы */
+/* Текст в таблице */
+.scrollable-table td {
+    word-wrap: break-word; /* Перенос длинного текста */
+    white-space: normal; /* Обычное отображение текста */
+}
+
+/* Фиксация кнопок в таблице */
 .scrollable-table a.button {
     background-color: #4CAF50; /* Зелёный фон */
     color: white; /* Белый текст */
@@ -82,60 +92,9 @@
     background-color: #45a049; /* Тёмно-зелёный фон при наведении */
 }
 
-/* Контейнер для редактирования пользователя */
-.user-edit-container {
-    display: flex;
-    justify-content: space-between;
-    margin: 10px 0;
-}
-
-/* Левая колонка */
-.left-column {
-    width: 70%;
-    padding-right: 10px;
-}
-
-/* Правая колонка */
-.right-column {
-    width: 25%;
-    text-align: center;
-}
-
-/* Фото пользователя */
-.user-photo-container img {
-    max-width: 100%;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Формы */
-.user-edit-form,
-.passport-form,
-.photo-upload-form {
-    margin-top: 2px;
-}
-
-/* Кнопки сохранения и загрузки */
-.save-button,
-.upload-button {
-    background-color: #4CAF50;
-    color: white;
-    text-transform: uppercase;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 5px;
-}
-
-.save-button:hover,
-.upload-button:hover {
-    background-color: #45a049;
-}
-
-/* Заголовок для незавершённых данных */
-.incomplete-data {
-    color: red;
-    font-weight: bold;
+/* Заголовок страницы */
+h2 {
+    color: #4CAF50; /* Зелёный цвет текста */
+    margin-bottom: 20px; /* Отступ снизу */
+    text-align: center; /* Выравнивание по центру */
 }

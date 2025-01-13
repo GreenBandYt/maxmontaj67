@@ -1,5 +1,10 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 from utils import db_connect
+from pymysql.cursors import DictCursor
+
+specialist_bp = Blueprint('specialist', __name__, url_prefix='/specialist')
+
+specialist_bp = Blueprint('specialist', __name__, url_prefix='/specialist')
 
 specialist_bp = Blueprint('specialist', __name__, url_prefix='/specialist')
 
@@ -17,7 +22,7 @@ def orders():
     connection = db_connect()
     cursor = connection.cursor()
 
-    # Обновленный запрос с добавлением всех необходимых полей
+    # Получение заказов, привязанных к пользователю через installer_id
     cursor.execute("""
         SELECT id, description, status, created_at, updated_at, deadline_at, montage_date
         FROM orders
