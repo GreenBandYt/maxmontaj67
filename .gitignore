@@ -15,6 +15,8 @@ venv/
 # Local settings
 local_settings.py
 config.py
+src/backend/config.py
+
 
 # Database
 db.sqlite3
