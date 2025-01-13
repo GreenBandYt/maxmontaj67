@@ -10,13 +10,16 @@ env/
 ENV/
 env.bak/
 venv.bak/
+venv/
 
 # Local settings
 local_settings.py
+config.py
 
 # Database
 db.sqlite3
 db.sqlite3-journal
+db/dump.sql
 
 # Logs
 *.log
