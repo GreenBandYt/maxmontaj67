@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 from utils import db_connect
 from pymysql.cursors import DictCursor  # Убедитесь, что DictCursor подключен
 
@@ -47,3 +47,40 @@ def get_calendar_data():
     except Exception as e:
         print(f"Ошибка при обработке данных: {e}")
         return jsonify([])
+
+
+@calendar_bp.route('/large', methods=['GET'])
+def large_calendar():
+    """
+    Рендер большого календаря для отображения всех заказов.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(DictCursor)
+
+            # Получение всех заказов с датой монтажа
+            query = """
+                SELECT id, description, montage_date AS start, installer_id
+                FROM orders
+                WHERE montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            tasks = cursor.fetchall()
+
+            # Форматирование данных для FullCalendar
+            events = [
+                {
+                    "id": task["id"],
+                    "title": f"Заказ #{task['id']}: {task['description']}",
+                    "start": task["start"].strftime('%Y-%m-%d') if task["start"] else None,
+                    "installer": task["installer_id"]
+                }
+                for task in tasks
+            ]
+
+            return render_template('calendar_large.html', events=events)
+
+    except Exception as e:
+        print(f"Ошибка при загрузке большого календаря: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
+

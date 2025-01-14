@@ -10,13 +10,14 @@ def get_calendar_data():
     installer_id = request.args.get('installer_id')  # ID исполнителя
 
     try:
-        with db_connect(cursorclass=DictCursor) as conn:
+        with db_connect() as conn:
             cursor = conn.cursor()
 
             # Запрос для занятости исполнителя
             if mode == 'installer' and installer_id:
                 query = """
-                    SELECT id, description AS title, montage_date AS start
+                    SELECT id, description AS title,
+                           IFNULL(montage_date, CURDATE()) AS start
                     FROM orders
                     WHERE installer_id = %s
                 """
@@ -46,3 +47,5 @@ def get_calendar_data():
     except Exception as e:
         print(f"Ошибка при обработке данных: {e}")
         return jsonify([])
+
+
