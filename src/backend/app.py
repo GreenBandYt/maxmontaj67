@@ -9,6 +9,8 @@ from customer_api import customer_bp
 from dispatcher_api import dispatcher_bp
 from executor_api import executor_bp
 from specialist_api import specialist_bp
+from calendar_api import calendar_bp
+
 
 
 # Настройка приложения Flask
@@ -24,6 +26,8 @@ app.register_blueprint(customer_bp)
 app.register_blueprint(dispatcher_bp)
 app.register_blueprint(executor_bp)
 app.register_blueprint(specialist_bp)
+app.register_blueprint(calendar_bp)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():

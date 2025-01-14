@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Календарь{% endblock %}
+
+{% block content %}
+<h2>{{ 'Календарь занятости' if mode == 'executor' else 'Аналитика по всем исполнителям' }}</h2>
+
+<div id="calendar-container" style="height: 600px; margin: 20px 0;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.css" rel="stylesheet" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar-container');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch(`/calendar/data?mode={{ mode }}{% if executor_id %}&executor_id={{ executor_id }}{% endif %}`)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => failureCallback(error));
+        },
+        eventClick: function(info) {
+            alert('Задача: ' + info.event.title);
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

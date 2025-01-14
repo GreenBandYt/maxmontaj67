@@ -43,9 +43,9 @@
                     <td>{{ order.installer_name or "Не назначен" }}</td>
                     <td>
                         {% if order.status == "Ожидает" %}
-                        <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Назначить</a>
+                        <a href="{{ url_for('admin.assign_installer', order_id=order.id) }}" class="button">Назначить</a>
                         {% elif order.status == "Выполняется" %}
-                        <a href="{{ url_for('admin.assign_executor', order_id=order.id) }}" class="button">Сменить</a>
+                        <a href="{{ url_for('admin.assign_installer', order_id=order.id) }}" class="button">Сменить</a>
                         {% else %}
                         —
                         {% endif %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Назначение исполнителя{% endblock %}
+
+{% block content %}
+<div class="navigation-panel">
+    <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к заказам</a>
+</div>
+
+<h2>Назначение исполнителя</h2>
+
+<!-- Информация о заказе -->
+<div class="order-details">
+    <p><strong>Описание заказа:</strong> {{ order.description }}</p>
+    <p><strong>Статус:</strong> {{ order.status }}</p>
+    <p><strong>Дата создания:</strong> {{ order.created_at.strftime('%d.%m.%Y') }}</p>
+    <p><strong>Клиент:</strong> {{ order.customer_name }}</p>
+</div>
+
+<p>Выберите исполнителя для заказа и дату монтажа. Календарь справа показывает занятость исполнителя.</p>
+
+<div style="display: flex; justify-content: space-between;">
+    <!-- Левая колонка: Форма -->
+    <div style="width: 45%;">
+        <form method="POST" style="margin-bottom: 20px;">
+            <label for="installer">Выберите исполнителя:</label><br>
+            <select name="installer" id="installer" required>
+                <option value="">-- Выберите исполнителя --</option>
+                {% for installer in installers %}
+                <option value="{{ installer.id }}">{{ installer.name }} ({{ installer.role }})</option>
+                {% endfor %}
+            </select>
+            <br><br>
+
+            <!-- Информация об исполнителе -->
+            <p id="installer-info" style="font-weight: bold; color: gray;">Информация об исполнителе будет загружена...</p>
+
+            <!-- Поле выбора даты -->
+            <label for="montage_date">Дата монтажа:</label><br>
+            <input type="date" name="montage_date" id="montage_date" required readonly>
+            <p style="font-size: 0.9em; color: gray;">Кликните по дню в календаре, чтобы выбрать дату.</p>
+            <br><br>
+
+            <button type="submit" class="button">Назначить</button>
+        </form>
+
+        <form method="POST" action="{{ url_for('admin.remove_installer', order_id=order_id) }}">
+            <button type="submit" class="button danger">Снять исполнителя</button>
+        </form>
+    </div>
+
+    <!-- Правая колонка: Календарь -->
+    <div style="width: 50%;">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Легенда -->
+<div style="margin-top: 20px;">
+    <span style="background-color: red; padding: 5px; margin-right: 10px;"></span> Занят
+    <span style="background-color: green; padding: 5px;"></span> Свободен
+</div>
+
+<!-- Подключение FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.css" rel="stylesheet" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ru',
+        events: "/calendar/data?mode=installer&installer_id={{ installer_id }}", // Путь для получения событий
+        dateClick: function(info) {
+            document.getElementById('montage_date').value = info.dateStr; // Устанавливаем дату
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+document.addEventListener('DOMContentLoaded', function () {
+    const executorSelect = document.getElementById('executor');
+    const executorInfo = document.getElementById('executor-info');
+    const montageDateInput = document.getElementById('montage_date');
+    let calendar; // Переменная для хранения экземпляра календаря
+
+    // Загружаем информацию об исполнителе при выборе
+    executorSelect.addEventListener('change', function () {
+        const executorId = this.value;
+        if (!executorId) {
+            executorInfo.textContent = 'Информация об исполнителе будет загружена...';
+            return;
+        }
+
+        // AJAX-запрос на получение информации об исполнителе
+        fetch(`/installer/info?installer_id=${installerId}`)
+            .then(response => response.json())
+            .then(data => {
+                executorInfo.textContent = `Имя: ${data.name}, Роль: ${data.role}, Занятость: ${data.tasks} задач.`;
+                loadCalendar(executorId); // Загружаем календарь
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке информации об исполнителе:', error);
+                executorInfo.textContent = 'Ошибка при загрузке информации.';
+            });
+    });
+
+    // Инициализация календаря
+    function loadCalendar(executorId) {
+        const calendarEl = document.getElementById('calendar');
+        if (calendar) {
+            calendar.destroy(); // Уничтожаем существующий экземпляр
+        }
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: `/calendar/data?mode=executor&executor_id=${executorId}`, // Загружаем данные для календаря
+            dateClick: function (info) {
+                montageDateInput.value = info.dateStr; // Устанавливаем дату при клике
+            }
+        });
+        calendar.render();
+    }
+});

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Назначение исполнителя{% endblock %}
+
+{% block content %}
+<div class="navigation-panel">
+    <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к заказам</a>
+</div>
+
+<h2>Назначение исполнителя для заказа #{{ order_id }}</h2>
+
+<table style="width: 100%; border-collapse: collapse;">
+    <tr>
+        <!-- Левая колонка -->
+        <td style="width: 50%; vertical-align: top; padding-right: 20px;">
+            <form method="POST" style="margin-bottom: 20px;">
+                <label for="executor">Выберите исполнителя:</label><br>
+                <select name="executor" id="executor">
+                    {% for executor in executors %}
+                    <option value="{{ executor.id }}">{{ executor.name }} ({{ executor.role }})</option>
+                    {% endfor %}
+                </select><br><br>
+                <button type="submit" class="button">Назначить</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.remove_executor', order_id=order_id) }}" style="margin-bottom: 20px;">
+                <button type="submit" class="button danger">Снять исполнителя</button>
+            </form>
+        </td>
+
+        <!-- Правая колонка -->
+        <td style="width: 50%; vertical-align: top;">
+            <h3>Календарь занятости</h3>
+            <div id="calendar-container" style="border: 1px solid #ddd; height: 400px; padding: 10px;">
+                <!-- Календарь будет подгружаться сюда -->
+            </div>
+        </td>
+    </tr>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.css" rel="stylesheet" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элемент для календаря
+    var calendarEl = document.getElementById('calendar-container');
+
+    // Инициализация FullCalendar
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: function(fetchInfo, successCallback, failureCallback) {
+            // Получаем ID исполнителя
+            var executorId = document.getElementById('executor').value;
+
+            // Делаем запрос на сервер для получения занятости
+            fetch(`/calendar/data?mode=executor&executor_id=${executorId}`)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => failureCallback(error));
+        }
+    });
+
+    calendar.render();
+
+    // Обновление календаря при смене исполнителя
+    document.getElementById('executor').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+});
+</script>
+{% endblock %}

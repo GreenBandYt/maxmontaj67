@@ -585,23 +585,19 @@ def get_installer_info():
     try:
         with db_connect() as conn:
             cursor = conn.cursor()
-            # Исправленный SQL-запрос
             query = """
                 SELECT u.id, u.name, r.name AS role, COUNT(o.id) AS tasks
                 FROM users u
-                JOIN roles r ON u.role = r.id  -- Исправлено role_id → role
+                JOIN roles r ON u.role_id = r.id
                 LEFT JOIN orders o ON u.id = o.installer_id
                 WHERE u.id = %s AND r.name IN ('executor', 'specialist')
             """
-            logging.debug(f"[DEBUG] Выполнение SQL-запроса: {query} с параметром {installer_id}")
             cursor.execute(query, (installer_id,))
             installer = cursor.fetchone()
 
             if not installer:
-                logging.warning(f"[WARNING] Исполнитель с ID {installer_id} не найден.")
                 return jsonify({'error': 'Installer not found'}), 404
 
-            logging.debug(f"[DEBUG] Найден исполнитель: {installer}")
             return jsonify({
                 'id': installer['id'],
                 'name': installer['name'],
@@ -610,5 +606,5 @@ def get_installer_info():
             })
 
     except Exception as e:
-        logging.error(f"Ошибка при загрузке информации об исполнителе: {e}")
+        print(f"Ошибка при загрузке информации об исполнителе: {e}")
         return jsonify({'error': 'Server error'}), 500
