@@ -142,12 +142,12 @@ def assign_installer(order_id):
                 JOIN roles r ON u.role = r.id
                 WHERE r.name IN ('executor', 'specialist') AND u.is_profile_complete = TRUE
             """)
-            executors = cursor.fetchall()
-            logging.debug(f"[DEBUG] Найдены исполнители: {executors}")
+            installers = cursor.fetchall()
+            logging.debug(f"[DEBUG] Найдены исполнители: {installers}")
 
             # Запрос для получения информации о заказе
             cursor.execute("""
-                SELECT o.id, o.description, o.status, o.created_at, 
+                SELECT o.id, o.description, o.status, o.created_at, o.installer_id, 
                        c.name AS customer_name
                 FROM orders o
                 LEFT JOIN customers c ON o.customer_id = c.id
@@ -158,6 +158,13 @@ def assign_installer(order_id):
             if not order:
                 logging.error(f"[ERROR] Заказ с ID {order_id} не найден.")
                 return "Заказ не найден", 404
+
+            # Получение текущего исполнителя, если он назначен
+            current_installer = None
+            if order['installer_id']:
+                cursor.execute("SELECT id, name FROM users WHERE id = %s", (order['installer_id'],))
+                current_installer = cursor.fetchone()
+                logging.debug(f"[DEBUG] Текущий исполнитель: {current_installer}")
 
             if request.method == 'POST':  # Обработка назначения исполнителя
                 installer_id = request.form['installer']
@@ -187,13 +194,45 @@ def assign_installer(order_id):
                 return redirect(url_for('admin.orders'))
 
             # Передача данных в шаблон
-            return render_template('admin/orders/assign_installer.html', order_id=order_id, order=order, executors=executors)
+            return render_template(
+                'admin/orders/assign_installer.html',
+                order_id=order_id,
+                order=order,
+                installers=installers,
+                current_installer=current_installer
+            )
 
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при назначении исполнителя: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
 
+# ----------------------------------------
+# API: Загрузка данных об исполнителе
+# ----------------------------------------
+@admin_bp.route('/get_installer_info/<int:installer_id>', methods=['GET'])
+def get_installer_info(installer_id):
+    """
+    Возвращает информацию об исполнителе.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
 
+            # Запрос для получения данных исполнителя
+            cursor.execute("""
+                SELECT id, name, role, phone, address, rating
+                FROM users
+                WHERE id = %s
+            """, (installer_id,))
+            installer = cursor.fetchone()
+
+            if not installer:
+                return jsonify({"error": "Исполнитель не найден"}), 404
+
+            return jsonify(installer)
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка при загрузке данных об исполнителе: {e}")
+        return jsonify({"error": "Ошибка сервера"}), 500
 
 
 # ----------------------------------------
