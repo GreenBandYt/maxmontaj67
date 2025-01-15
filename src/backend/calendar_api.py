@@ -160,3 +160,67 @@ def calendar_users_data():
     except Exception as e:
         print(f"Ошибка при загрузке данных календаря пользователей: {e}")
         return jsonify([]), 500
+
+# ----------------------------------------
+# API: Данные для конкретного заказа
+# ----------------------------------------
+@calendar_bp.route('/order_details', methods=['GET'])
+def calendar_order_details():
+    """
+    API для получения данных конкретного заказа для отображения в календаре.
+    """
+    order_id = request.args.get('order_id')  # Получаем ID заказа из запроса
+    if not order_id:
+        return jsonify({"error": "order_id not provided"}), 400
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(DictCursor)
+
+            # Запрос для получения данных конкретного заказа
+            query = """
+                SELECT id, description AS title, created_at, montage_date, deadline_at
+                FROM orders
+                WHERE id = %s
+            """
+            cursor.execute(query, (order_id,))
+            order = cursor.fetchone()
+
+            if not order:
+                return jsonify({"error": "Order not found"}), 404
+
+            # Форматирование данных для FullCalendar
+            events = []
+
+            # Дата создания заказа (жёлтый)
+            if order["created_at"]:
+                events.append({
+                    "id": f"{order['id']}_created",
+                    "title": f"Создан: {order['title']}",
+                    "start": order["created_at"].strftime('%Y-%m-%d'),
+                    "className": "event-created"
+                })
+
+            # Дата монтажа (зелёный)
+            if order["montage_date"]:
+                events.append({
+                    "id": f"{order['id']}_montage",
+                    "title": f"Монтаж: {order['title']}",
+                    "start": order["montage_date"].strftime('%Y-%m-%d'),
+                    "className": "event-montage"
+                })
+
+            # Крайняя дата (красный)
+            if order["deadline_at"]:
+                events.append({
+                    "id": f"{order['id']}_deadline",
+                    "title": f"Дедлайн: {order['title']}",
+                    "start": order["deadline_at"].strftime('%Y-%m-%d'),
+                    "className": "event-deadline"
+                })
+
+            return jsonify(events)
+
+    except Exception as e:
+        print(f"Ошибка при загрузке данных календаря: {e}")
+        return jsonify([]), 500
