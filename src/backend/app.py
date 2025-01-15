@@ -3,6 +3,7 @@ from flask_session import Session
 from config import SESSION_CONFIG
 from utils import db_connect, verify_password, hash_password
 
+
 # Импортируем Blueprints
 from admin_api import admin_bp
 from customer_api import customer_bp

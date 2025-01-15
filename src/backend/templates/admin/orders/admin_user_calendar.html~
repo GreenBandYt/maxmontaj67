@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Календарь пользователей{% endblock %}
+
+{% block content %}
+<div class="calendar-page-container">
+    <!-- Левая колонка -->
+    <div class="calendar-controls-container">
+        <!-- Заголовок календаря -->
+        <p id="calendar-title" class="calendar-title">Календарь пользователей</p>
+
+        <!-- Кнопки навигации -->
+        <div id="calendar-navigation" class="calendar-navigation">
+            <button id="prev-button" class="navigation-button">←</button>
+            <button id="today-button" class="navigation-button">Сегодня</button>
+            <button id="next-button" class="navigation-button">→</button>
+        </div>
+
+        <!-- Переключатели вида -->
+        <div id="view-switcher" class="view-switcher">
+            <button id="month-view" class="view-button">Месяц</button>
+            <button id="week-view" class="view-button">Неделя</button>
+            <button id="day-view" class="view-button">День</button>
+        </div>
+    </div>
+
+    <!-- Правая колонка -->
+    <div class="calendar-display-container">
+        <div id="calendar-container" class="calendar-container"></div>
+    </div>
+</div>
+
+<!-- Подключение FullCalendar -->
+<script src="{{ url_for('static', filename='scripts/main.min.js') }}"></script>
+<link href="{{ url_for('static', filename='styles/main.min.css') }}" rel="stylesheet">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar-container');
+    var titleEl = document.getElementById('calendar-title');
+
+    // Инициализация календаря
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ru', // Устанавливаем русский язык
+        events: '/calendar/users_data', // Динамическая загрузка данных
+        headerToolbar: false, // Отключаем стандартные кнопки
+        eventClick: function(info) {
+            alert('Нажатие на событие: ' + info.event.title);
+        },
+        dateClick: function(info) {
+            alert('Выбрана дата: ' + info.dateStr);
+        },
+        datesSet: function(info) {
+            titleEl.textContent = calendar.view.title; // Обновляем заголовок при смене месяца
+        }
+    });
+
+    calendar.render();
+
+    // Кнопки управления
+    document.getElementById('prev-button').addEventListener('click', function() {
+        calendar.prev();
+    });
+    document.getElementById('today-button').addEventListener('click', function() {
+        calendar.today();
+    });
+    document.getElementById('next-button').addEventListener('click', function() {
+        calendar.next();
+    });
+
+    // Переключатели вида
+    document.getElementById('month-view').addEventListener('click', function() {
+        calendar.changeView('dayGridMonth');
+    });
+    document.getElementById('week-view').addEventListener('click', function() {
+        calendar.changeView('timeGridWeek');
+    });
+    document.getElementById('day-view').addEventListener('click', function() {
+        calendar.changeView('timeGridDay');
+    });
+});
+</script>
+{% endblock %}

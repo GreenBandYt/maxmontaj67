@@ -585,19 +585,23 @@ def get_installer_info():
     try:
         with db_connect() as conn:
             cursor = conn.cursor()
+            # Исправленный SQL-запрос
             query = """
                 SELECT u.id, u.name, r.name AS role, COUNT(o.id) AS tasks
                 FROM users u
-                JOIN roles r ON u.role_id = r.id
+                JOIN roles r ON u.role = r.id  -- Исправлено role_id → role
                 LEFT JOIN orders o ON u.id = o.installer_id
                 WHERE u.id = %s AND r.name IN ('executor', 'specialist')
             """
+            logging.debug(f"[DEBUG] Выполнение SQL-запроса: {query} с параметром {installer_id}")
             cursor.execute(query, (installer_id,))
             installer = cursor.fetchone()
 
             if not installer:
+                logging.warning(f"[WARNING] Исполнитель с ID {installer_id} не найден.")
                 return jsonify({'error': 'Installer not found'}), 404
 
+            logging.debug(f"[DEBUG] Найден исполнитель: {installer}")
             return jsonify({
                 'id': installer['id'],
                 'name': installer['name'],
@@ -606,5 +610,81 @@ def get_installer_info():
             })
 
     except Exception as e:
-        print(f"Ошибка при загрузке информации об исполнителе: {e}")
+        logging.error(f"Ошибка при загрузке информации об исполнителе: {e}")
         return jsonify({'error': 'Server error'}), 500
+# ----------------------------------------
+# API: Данные для календаря заказов
+# ----------------------------------------
+@admin_bp.route('/calendar/orders_data', methods=['GET'])
+def calendar_orders_data():
+    """
+    API для получения данных всех заказов для отображения в календаре.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Получение всех заказов с монтажной датой
+            query = """
+                SELECT id, description AS title, montage_date AS start
+                FROM orders
+                WHERE montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            orders = cursor.fetchall()
+
+            # Форматируем данные для календаря
+            events = [
+                {
+                    "id": order["id"],
+                    "title": order["title"],
+                    "start": order["start"].strftime('%Y-%m-%d') if order["start"] else None
+                }
+                for order in orders
+            ]
+
+            return jsonify(events)
+
+    except Exception as e:
+        logging.error(f"Ошибка при загрузке данных календаря заказов: {e}")
+        return jsonify([]), 500
+
+
+# ----------------------------------------
+# API: Данные для календаря пользователей
+# ----------------------------------------
+@admin_bp.route('/calendar/users_data', methods=['GET'])
+def calendar_users_data():
+    """
+    API для получения данных всех исполнителей для отображения в календаре.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Получение уникальных исполнителей из заказов
+            query = """
+                SELECT DISTINCT installer_id AS id, 
+                                CONCAT('Исполнитель: ', installer_id) AS title,
+                                montage_date AS start
+                FROM orders
+                WHERE installer_id IS NOT NULL AND montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            installers = cursor.fetchall()
+
+            # Форматируем данные для календаря
+            events = [
+                {
+                    "id": installer["id"],
+                    "title": installer["title"],
+                    "start": installer["start"].strftime('%Y-%m-%d') if installer["start"] else None
+                }
+                for installer in installers
+            ]
+
+            return jsonify(events)
+
+    except Exception as e:
+        logging.error(f"Ошибка при загрузке данных календаря пользователей: {e}")
+        return jsonify([]), 500

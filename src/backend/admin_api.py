@@ -612,3 +612,120 @@ def get_installer_info():
     except Exception as e:
         logging.error(f"Ошибка при загрузке информации об исполнителе: {e}")
         return jsonify({'error': 'Server error'}), 500
+
+
+# ----------------------------------------
+# Маршрут: Календарь заказов
+# ----------------------------------------
+@admin_bp.route('/orders_calendar', methods=['GET'])
+def orders_calendar():
+    """
+    Маршрут для отображения большого календаря заказов.
+    """
+    if session.get('role') != 'admin':  # Проверка прав доступа
+        return redirect(url_for('home'))  # Перенаправление для неадминистраторов
+
+    try:
+        # Логирование успешной загрузки
+        logging.info("Открыт маршрут для большого календаря заказов")
+        return render_template('admin/orders/admin_order_calendar.html')
+    except Exception as e:
+        logging.error(f"Ошибка загрузки большого календаря заказов: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
+
+
+# ----------------------------------------
+# Маршрут: Календарь пользователей
+# ----------------------------------------
+@admin_bp.route('/users_calendar', methods=['GET'])
+def users_calendar():
+    """
+    Маршрут для отображения календаря пользователей.
+    """
+    if session.get('role') != 'admin':  # Проверка прав доступа
+        return redirect(url_for('home'))  # Перенаправление для неадминистраторов
+
+    try:
+        # Логирование успешной загрузки
+        logging.info("Открыт маршрут для календаря пользователей")
+        return render_template('admin/orders/admin_user_calendar.html')
+    except Exception as e:
+        logging.error(f"Ошибка загрузки календаря пользователей: {e}")
+        return "Ошибка сервера. Попробуйте позже.", 500
+
+# ----------------------------------------
+# API: Данные для календаря заказов
+# ----------------------------------------
+@admin_bp.route('/calendar/orders_data', methods=['GET'])
+def calendar_orders_data():
+    """
+    API для получения данных всех заказов для отображения в календаре.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Получение всех заказов с монтажной датой
+            query = """
+                SELECT id, description AS title, montage_date AS start
+                FROM orders
+                WHERE montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            orders = cursor.fetchall()
+
+            # Форматируем данные для календаря
+            events = [
+                {
+                    "id": order["id"],
+                    "title": order["title"],
+                    "start": order["start"].strftime('%Y-%m-%d') if order["start"] else None
+                }
+                for order in orders
+            ]
+
+            return jsonify(events)
+
+    except Exception as e:
+        logging.error(f"Ошибка при загрузке данных календаря заказов: {e}")
+        return jsonify([]), 500
+
+
+# ----------------------------------------
+# API: Данные для календаря пользователей
+# ----------------------------------------
+@admin_bp.route('/calendar/users_data', methods=['GET'])
+def calendar_users_data():
+    """
+    API для получения данных всех исполнителей для отображения в календаре.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Получение уникальных исполнителей из заказов
+            query = """
+                SELECT DISTINCT installer_id AS id, 
+                                CONCAT('Исполнитель: ', installer_id) AS title,
+                                montage_date AS start
+                FROM orders
+                WHERE installer_id IS NOT NULL AND montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            installers = cursor.fetchall()
+
+            # Форматируем данные для календаря
+            events = [
+                {
+                    "id": installer["id"],
+                    "title": installer["title"],
+                    "start": installer["start"].strftime('%Y-%m-%d') if installer["start"] else None
+                }
+                for installer in installers
+            ]
+
+            return jsonify(events)
+
+    except Exception as e:
+        logging.error(f"Ошибка при загрузке данных календаря пользователей: {e}")
+        return jsonify([]), 500

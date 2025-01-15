@@ -84,3 +84,79 @@ def large_calendar():
         print(f"Ошибка при загрузке большого календаря: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
 
+# ----------------------------------------
+# API: Данные для календаря заказов
+# ----------------------------------------
+@calendar_bp.route('/orders_data', methods=['GET'])
+def calendar_orders_data():
+    """
+    API для получения данных всех заказов для отображения в календаре.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(DictCursor)
+
+            # Получение всех заказов с монтажной датой
+            query = """
+                SELECT id, description AS title, montage_date AS start
+                FROM orders
+                WHERE montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            orders = cursor.fetchall()
+
+            # Форматирование данных для FullCalendar
+            events = [
+                {
+                    "id": order["id"],
+                    "title": order["title"],
+                    "start": order["start"].strftime('%Y-%m-%d') if order["start"] else None
+                }
+                for order in orders
+            ]
+
+            return jsonify(events)
+
+    except Exception as e:
+        print(f"Ошибка при загрузке данных календаря заказов: {e}")
+        return jsonify([]), 500
+
+
+# ----------------------------------------
+# API: Данные для календаря пользователей
+# ----------------------------------------
+@calendar_bp.route('/users_data', methods=['GET'])
+def calendar_users_data():
+    """
+    API для получения данных всех исполнителей для отображения в календаре.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor(DictCursor)
+
+            # Получение уникальных исполнителей из заказов
+            query = """
+                SELECT DISTINCT installer_id AS id, 
+                                CONCAT('Исполнитель: ', installer_id) AS title,
+                                montage_date AS start
+                FROM orders
+                WHERE installer_id IS NOT NULL AND montage_date IS NOT NULL
+            """
+            cursor.execute(query)
+            installers = cursor.fetchall()
+
+            # Форматирование данных для FullCalendar
+            events = [
+                {
+                    "id": installer["id"],
+                    "title": installer["title"],
+                    "start": installer["start"].strftime('%Y-%m-%d') if installer["start"] else None
+                }
+                for installer in installers
+            ]
+
+            return jsonify(events)
+
+    except Exception as e:
+        print(f"Ошибка при загрузке данных календаря пользователей: {e}")
+        return jsonify([]), 500
