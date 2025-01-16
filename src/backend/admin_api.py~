@@ -206,6 +206,33 @@ def assign_installer(order_id):
         logging.error(f"[ERROR] Ошибка при назначении исполнителя: {e}")
         return "Ошибка сервера. Попробуйте позже.", 500
 
+# ----------------------------------------
+# API: Загрузка данных об исполнителе
+# ----------------------------------------
+@admin_bp.route('/get_installer_info/<int:installer_id>', methods=['GET'])
+def get_installer_info(installer_id):
+    """
+    Возвращает информацию об исполнителе.
+    """
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            # Запрос для получения данных исполнителя
+            cursor.execute("""
+                SELECT id, name, role, phone, address, rating
+                FROM users
+                WHERE id = %s
+            """, (installer_id,))
+            installer = cursor.fetchone()
+
+            if not installer:
+                return jsonify({"error": "Исполнитель не найден"}), 404
+
+            return jsonify(installer)
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка при загрузке данных об исполнителе: {e}")
+        return jsonify({"error": "Ошибка сервера"}), 500
 
 
 # ----------------------------------------

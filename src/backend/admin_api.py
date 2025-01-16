@@ -616,7 +616,7 @@ def calendar_view():
 # ----------------------------------------
 
 @admin_bp.route('/installer/info', methods=['GET'])
-def get_installer_info():
+def fetch_get_installer_info():
     installer_id = request.args.get('installer_id')
     if not installer_id:
         return jsonify({'error': 'Installer ID is required'}), 400
