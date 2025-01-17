@@ -151,3 +151,36 @@ form button:hover {
 .calendar-container {
     max-width: 80%;
 }
+
+
+
+/* Стили для блока управления ботом */
+.bot-control {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.bot-button {
+    background-color: #4CAF50; /* Зелёный фон */
+    color: white; /* Белый текст */
+    border: none; /* Убираем рамку */
+    padding: 10px 20px; /* Внутренние отступы */
+    margin: 5px; /* Отступы между кнопками */
+    cursor: pointer; /* Курсор "рука" при наведении */
+    font-size: 14px; /* Размер текста */
+    border-radius: 5px; /* Скруглённые углы */
+    transition: background-color 0.3s ease; /* Плавная смена цвета */
+}
+
+.bot-button:hover {
+    background-color: #45a049; /* Более тёмный зелёный при наведении */
+}
+
+.bot-button:active {
+    background-color: #397d3a; /* Ещё более тёмный зелёный при нажатии */
+}
+
+.bot-button:disabled {
+    background-color: #6c757d; /* Серый фон для неактивных кнопок */
+    cursor: not-allowed; /* Неактивный курсор */
+}

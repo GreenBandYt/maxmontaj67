@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from flask_session import Session
+from multiprocessing import Process
+import os
+from decouple import config  # Добавлен импорт
 from config import SESSION_CONFIG
 from utils import db_connect, verify_password, hash_password
 
@@ -11,6 +14,13 @@ from executor_api import executor_bp
 from specialist_api import specialist_bp
 from calendar_api import calendar_bp
 
+# Делаем переменную environment доступной в шаблонах
+@app.context_processor
+def inject_environment():
+    """
+    Функция, которая делает переменную environment доступной во всех шаблонах.
+    """
+    return {'environment': config('FLASK_ENV', default='production')}
 
 
 # Настройка приложения Flask
@@ -20,6 +30,10 @@ app.config['SESSION_PERMANENT'] = SESSION_CONFIG['permanent']
 app.config['SESSION_FILE_DIR'] = SESSION_CONFIG['file_dir']
 Session(app)
 
+
+# Проверка переменной окружения
+print(f"Текущая среда: {config('FLASK_ENV', default='production')}")
+
 # Регистрация Blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(customer_bp)
@@ -28,6 +42,42 @@ app.register_blueprint(executor_bp)
 app.register_blueprint(specialist_bp)
 app.register_blueprint(calendar_bp)
 
+# Глобальные переменные для управления ботом
+bot_process = None
+bot_running = False  # Флаг состояния бота
+
+# Функция для запуска бота
+def run_bot():
+    os.system("python3 telegram_bot/bot_runner.py")
+
+@app.route('/bot/start', methods=['POST'])
+def start_bot():
+    """
+    Запуск Telegram-бота.
+    """
+    global bot_process, bot_running
+    if not bot_running:
+        bot_process = Process(target=run_bot)
+        bot_process.start()
+        bot_running = True
+        return jsonify({"status": "success", "message": "Бот запущен"}), 200
+    else:
+        return jsonify({"status": "error", "message": "Бот уже работает"}), 400
+
+@app.route('/bot/stop', methods=['POST'])
+def stop_bot():
+    """
+    Остановка Telegram-бота.
+    """
+    global bot_process, bot_running
+    if bot_running and bot_process:
+        bot_process.terminate()
+        bot_process.join()
+        bot_process = None
+        bot_running = False
+        return jsonify({"status": "success", "message": "Бот остановлен"}), 200
+    else:
+        return jsonify({"status": "error", "message": "Бот не запущен"}), 400
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -168,6 +218,6 @@ def logout():
 
 if __name__ == '__main__':
     # Печатаем зарегистрированные маршруты для отладки
-    for rule in app.url_map.iter_rules():
-        print(f"Rule: {rule}, Endpoint: {rule.endpoint}")
+    # for rule in app.url_map.iter_rules():
+    #     print(f"Rule: {rule}, Endpoint: {rule.endpoint}")
     app.run(debug=True, host='0.0.0.0')
