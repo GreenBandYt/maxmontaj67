@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Импорт токена из локального файла token.py
 try:
-    from token import TELEGRAM_BOT_TOKEN
+    from bot_token import TELEGRAM_BOT_TOKEN
 except ImportError:
     raise ImportError("Токен не найден! Убедитесь, что он находится в файле token.py внутри src/backend/telegram_bot.")
 

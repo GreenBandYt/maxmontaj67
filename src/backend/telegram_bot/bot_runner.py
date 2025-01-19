@@ -1,30 +1,11 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder
+from handlers.registration import register_all_handlers
 
 # Импорт токена из локального файла token.py
 try:
     from bot_token import TELEGRAM_BOT_TOKEN
 except ImportError:
     raise ImportError("Токен не найден! Убедитесь, что он находится в файле token.py внутри src/backend/telegram_bot.")
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /start.
-    """
-    await update.message.reply_text(
-        "Добро пожаловать в CRM-бот maxmontaj67! 🎉\n"
-        "Используйте /help для получения списка доступных команд."
-    )
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик команды /help.
-    """
-    await update.message.reply_text(
-        "Список доступных команд:\n"
-        "/start - Начать работу с ботом\n"
-        "/help - Показать список команд"
-    )
 
 def run_bot():
     """
@@ -37,9 +18,8 @@ def run_bot():
     # Создание приложения Telegram
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Регистрация обработчиков команд
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
+    # Регистрация всех обработчиков через registration.py
+    register_all_handlers(application)
 
     print("Telegram-бот запущен. Ожидание сообщений...")
     application.run_polling()
