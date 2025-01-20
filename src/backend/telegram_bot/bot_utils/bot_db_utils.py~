@@ -10,7 +10,7 @@ for path in sys.path:
 # Добавляем корневой путь src в sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import DATABASE_CONFIG  # Импортируется из backend/config.py
+from .bot_config import BOT_DB_CONFIG  # Импортируется из backend/config.py
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,13 +20,13 @@ def db_connect():
     Устанавливает соединение с базой данных с использованием PyMySQL.
     """
     try:
-        logging.debug("Попытка подключения к базе данных с параметрами: %s", DATABASE_CONFIG)
+        logging.debug("Попытка подключения к базе данных с параметрами: %s", BOT_DB_CONFIG)
         conn = pymysql.connect(
-            host=DATABASE_CONFIG['host'],
-            user=DATABASE_CONFIG['user'],
-            password=DATABASE_CONFIG['password'],
-            database=DATABASE_CONFIG['database'],
-            charset=DATABASE_CONFIG['charset'],
+            host=BOT_DB_CONFIG['host'],
+            user=BOT_DB_CONFIG['user'],
+            password=BOT_DB_CONFIG['password'],
+            database=BOT_DB_CONFIG['database'],
+            charset=BOT_DB_CONFIG['charset'],
             cursorclass=pymysql.cursors.DictCursor
         )
         logging.debug("Успешное подключение к базе данных через PyMySQL")
