@@ -1,6 +1,7 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from .common import start_command, help_command
 
+
 def register_common_handlers(application: Application):
     """
     Регистрация общих обработчиков.

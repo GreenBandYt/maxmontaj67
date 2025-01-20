@@ -1,33 +1,28 @@
-from telegram.ext import ApplicationBuilder
-from handlers.registration import register_all_handlers
 import os
 import sys
 
-# Определяем путь к корневой директории проекта (папка src)
-current_path = os.path.abspath(os.path.dirname(__file__))
-project_root = os.path.abspath(os.path.join(current_path, '..', '..'))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+# Путь к папке telegram_bot
+telegram_bot_root = os.path.abspath(os.path.dirname(__file__))
+if telegram_bot_root not in sys.path:
+    sys.path.insert(0, telegram_bot_root)
 
-
-# Импорт токена из локального файла token.py
-try:
-    from bot_token import TELEGRAM_BOT_TOKEN
-except ImportError:
-    raise ImportError("Токен не найден! Убедитесь, что он находится в файле token.py внутри src/backend/telegram_bot.")
+from handlers.registration import register_all_handlers
+from bot_utils.bot_config import BOT_DB_CONFIG
+from telegram.ext import ApplicationBuilder
 
 def run_bot():
     """
     Запуск Telegram-бота.
     """
-    # Проверка наличия токена
+    # Проверяем наличие токена
+    from bot_token import TELEGRAM_BOT_TOKEN
     if not TELEGRAM_BOT_TOKEN:
         raise ValueError("Токен Telegram не указан!")
 
-    # Создание приложения Telegram
+    # Создаем приложение Telegram
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Регистрация всех обработчиков через registration.py
+    # Регистрируем обработчики
     register_all_handlers(application)
 
     print("Telegram-бот запущен. Ожидание сообщений...")
