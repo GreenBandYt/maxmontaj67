@@ -1,6 +1,13 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from backend.telegram_bot.bot_utils.bot_db_utils import db_connect
+
+
+
+
+
+
 # Обработчик команды /start
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -54,4 +61,18 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # Обработчик кнопки "Регистрация"
-
+#
+# async def test_db_roles():
+#     """
+#     Выполняет тестовый запрос к базе данных.
+#     Цель: проверить доступные роли в таблице roles.
+#     """
+#     conn = db_connect()  # Устанавливаем подключение
+#     try:
+#         with conn.cursor() as cursor:
+#             query = "SELECT id, name FROM roles;"  # Запрос для получения данных из таблицы roles
+#             cursor.execute(query)
+#             roles = cursor.fetchall()
+#             print("Доступные роли:", roles)  # Логируем роли для проверки
+#     finally:
+#         conn.close()  # Закрываем соединение

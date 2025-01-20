@@ -1,5 +1,14 @@
 from telegram.ext import ApplicationBuilder
 from handlers.registration import register_all_handlers
+import os
+import sys
+
+# Определяем путь к корневой директории проекта (папка src)
+current_path = os.path.abspath(os.path.dirname(__file__))
+project_root = os.path.abspath(os.path.join(current_path, '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 
 # Импорт токена из локального файла token.py
 try:

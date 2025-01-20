@@ -1,0 +1,32 @@
+import pymysql.cursors
+import logging
+import os
+import sys
+
+# Добавляем корневой путь src в sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config import DATABASE_CONFIG  # Импортируется из backend/config.py
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def db_connect():
+    """
+    Устанавливает соединение с базой данных с использованием PyMySQL.
+    """
+    try:
+        logging.debug("Попытка подключения к базе данных с параметрами: %s", DATABASE_CONFIG)
+        conn = pymysql.connect(
+            host=DATABASE_CONFIG['host'],
+            user=DATABASE_CONFIG['user'],
+            password=DATABASE_CONFIG['password'],
+            database=DATABASE_CONFIG['database'],
+            charset=DATABASE_CONFIG['charset'],
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        logging.debug("Успешное подключение к базе данных через PyMySQL")
+        return conn
+    except pymysql.MySQLError as e:
+        logging.error("Ошибка подключения к базе данных: %s", e)
+        raise

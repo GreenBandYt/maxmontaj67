@@ -62,6 +62,8 @@ media/
 
 # Protected data
 protected/
+# Секретные данные бота
+src/backend/telegram_bot/bot_utils/bot_config.py
 src/backend/telegram_bot/bot_token.py
 
 # Ignore test files
