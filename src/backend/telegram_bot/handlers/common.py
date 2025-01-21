@@ -1,7 +1,12 @@
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, CallbackContext, CallbackQueryHandler
 from bot_utils.bot_db_utils import db_connect  # Подключение к базе данных
 from .keyboards.common_keyboards import guest_keyboard
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
 
 
 # Обработчик команды /start
@@ -35,18 +40,51 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Что вы хотите сделать?"
         )
 
+async def process_registration(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Универсальный обработчик для управления регистрацией.
+    Направляет сообщения в зависимости от этапа регистрации.
+    """
+    registration_step = context.user_data.get("registration_step")
+
+    if registration_step == "name_request":
+        # Перенаправляем в обработчик process_name
+        await process_name(update, context)
+    elif registration_step == "email_request":
+        # Перенаправляем в обработчик process_email
+        await process_email(update, context)
+    elif registration_step == "admin_message":
+        # Перенаправляем в обработчик process_admin_message
+        await process_admin_message(update, context)
+    else:
+        # Если шаг регистрации не установлен, отправляем предупреждение
+        await update.message.reply_text(
+            "Произошла ошибка. Попробуйте снова отправить команду /start."
+        )
+
+
+
+
 # Обработчик текстового сообщения для проверки имени пользователя
 async def process_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработчик текстового сообщения. Проверяет введённое имя пользователя.
     """
+    # Проверяем текущий шаг регистрации
+    if context.user_data.get('registration_step') != "name_request":
+        return
+
     user_name = update.message.text  # Получаем введённое имя пользователя
     user_id = update.effective_user.id  # Получаем telegram_id пользователя
+
+    logging.info(f"Проверка имени '{user_name}' для пользователя {user_id}...")
 
     # Проверяем имя в базе данных
     user_data = await check_user_name_in_db(user_name)
 
     if user_data:
+        logging.info(f"Имя '{user_name}' найдено. ID пользователя: {user_data['id']}, роль: {user_data['role']}")
+
         # Если имя найдено, привязываем telegram_id и сохраняем данные
         await bind_telegram_id_to_user(user_id, user_data['id'])
 
@@ -60,7 +98,11 @@ async def process_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Ваша роль: {role}.\n"
             "Что вы хотите сделать?"
         )
+        # Завершаем процесс регистрации
+        context.user_data.pop('registration_step', None)
     else:
+        logging.info(f"Имя '{user_name}' не найдено в базе данных.")
+
         # Если имя не найдено, запрашиваем email
         await update.message.reply_text(
             "Имя не найдено. Пожалуйста, введите ваш email для идентификации."
@@ -85,13 +127,17 @@ async def check_user_name_in_db(user_name: str) -> dict:
             """
             cursor.execute(query, (user_name,))
             result = cursor.fetchone()
-            return {
-                "id": result['id'],
-                "role": result['role_name']
-            } if result else None
+            if result:
+                print(f"[INFO] Имя '{user_name}' найдено в базе данных.")
+                return {
+                    "id": result['id'],
+                    "role": result['role_name']
+                }
+            else:
+                print(f"[INFO] Имя '{user_name}' не найдено в базе данных.")
+                return None
     except Exception as e:
-        # Логируем ошибку подключения
-        print(f"Ошибка при проверке имени в базе данных: {e}")
+        print(f"[ERROR] Ошибка при проверке имени в базе данных: {e}")
         return None
     finally:
         conn.close()  # Закрываем соединение
@@ -120,16 +166,23 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработчик ввода email. Проверяет email в базе данных и завершает регистрацию.
     """
+    # Проверяем текущий шаг регистрации
     if context.user_data.get('registration_step') != "email_request":
-        # Если шаг регистрации не "email_request", пропускаем обработчик
         return
 
     email = update.message.text.strip()  # Получаем текст сообщения
-    user = find_user_by_email(email)  # Проверяем email в базе данных
+    user_id = update.effective_user.id
+
+    logging.info(f"Проверка email '{email}' для пользователя {user_id}...")
+
+    # Проверяем email в базе данных
+    user = find_user_by_email(email)
 
     if user:
+        logging.info(f"Email '{email}' найден. ID пользователя: {user['id']}, роль: {user['role']}")
+
         # Привязываем telegram_id к пользователю
-        update_user_telegram_id(user['id'], update.effective_user.id)
+        update_user_telegram_id(user['id'], user_id)
         role = user['role']  # Получаем роль пользователя
         context.user_data['role'] = role  # Сохраняем роль в кеш
 
@@ -142,10 +195,148 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Убираем шаг регистрации
         context.user_data.pop('registration_step', None)
     else:
+        logging.info(f"Email '{email}' не найден в базе данных.")
+
         # Email не найден
         await update.message.reply_text(
-            "Email не найден. Пожалуйста, проверьте данные или свяжитесь с администратором."
+            "Email не найден. Пожалуйста, выберите следующее действие:",
+            reply_markup=generate_email_error_keyboard()  # Показываем инлайн-кнопки
         )
+
+# Генерация Inline-клавиатуры
+def generate_email_error_keyboard():
+    """
+    Возвращает Inline-клавиатуру для выбора действий при неверном email.
+    """
+    keyboard = [
+        [InlineKeyboardButton("🔁 Повторить ввод имени", callback_data="repeat_name")],
+        [InlineKeyboardButton("✍️ Зарегистрироваться", callback_data="register_user")],
+        [InlineKeyboardButton("📞 Связаться с администратором", callback_data="contact_admin")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+# Генерация Inline-клавиатуры для сообщения администратора
+def generate_admin_message_keyboard():
+    """
+    Возвращает Inline-клавиатуру с кнопкой '⬅️ Вернуться к выбору действия'.
+    """
+    keyboard = [
+        [InlineKeyboardButton("⬅️ Вернуться к выбору действия", callback_data="return_to_action")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+# Обработчик ввода сообщения для администратора
+async def process_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает сообщение, введённое пользователем для администратора.
+    """
+    # Проверяем текущий шаг регистрации
+    if context.user_data.get('registration_step') != "admin_message":
+        return
+
+    # Получаем сообщение пользователя
+    admin_message = update.message.text.strip()
+    user_name = update.effective_user.full_name
+    user_id = update.effective_user.id
+
+    # Логируем сообщение
+    logging.info(f"Сообщение от пользователя {user_name} ({user_id}): {admin_message}")
+
+    # Сохраняем сообщение и отправляем администраторам
+    success = await send_message_to_admins(context, user_name, user_id, admin_message)
+
+    if success:
+        # Подтверждаем отправку сообщения
+        await update.message.reply_text(
+            "Ваше сообщение успешно отправлено администраторам. Ожидайте ответа."
+        )
+        # Убираем шаг регистрации
+        context.user_data.pop('registration_step', None)
+    else:
+        # Уведомляем об ошибке
+        await update.message.reply_text(
+            "К сожалению, произошла ошибка при отправке сообщения администраторам. Попробуйте позже."
+        )
+
+async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, user_name: str, user_id: int, admin_message: str) -> bool:
+    """
+    Отправляет сообщение от пользователя всем администраторам.
+    Возвращает True при успешной отправке, иначе False.
+    """
+    try:
+        # Получаем список telegram_id администраторов
+        conn = db_connect()
+        with conn.cursor() as cursor:
+            query = """
+                SELECT telegram_id FROM users
+                WHERE role = (SELECT id FROM roles WHERE name = 'admin')
+            """
+            cursor.execute(query)
+            admins = cursor.fetchall()
+
+        if not admins:
+            logging.warning("Администраторы не найдены в базе данных.")
+            return False
+
+        # Формируем сообщение
+        message = (
+            f"Пользователь {user_name} (ID: {user_id}) оставил сообщение:\n"
+            f"\"{admin_message}\""
+        )
+
+        # Отправляем сообщение каждому администратору
+        for admin in admins:
+            admin_id = admin['telegram_id']
+            if admin_id:  # Проверяем, что telegram_id не пустой
+                await context.bot.send_message(chat_id=admin_id, text=message)
+
+        logging.info(f"Сообщение успешно отправлено {len(admins)} администраторам.")
+        return True
+    except Exception as e:
+        logging.error(f"Ошибка при отправке сообщения администраторам: {e}")
+        return False
+
+
+
+
+# Обновление обработчика нажатий кнопок
+async def handle_inline_buttons(update: Update, context: CallbackContext):
+    """
+    Обрабатывает нажатия на Inline-кнопки из клавиатуры.
+    """
+    query = update.callback_query
+    await query.answer()  # Отвечаем на нажатие кнопки
+
+    if query.data == "repeat_name":
+        # Возвращаем пользователя к шагу ввода имени
+        context.user_data['registration_step'] = "name_request"
+        await query.edit_message_text(
+            text="Введите ваше имя для идентификации."
+        )
+
+    elif query.data == "register_user":
+        # Переводим пользователя в процедуру регистрации
+        context.user_data['registration_step'] = "start_registration"
+        await query.edit_message_text(
+            text="Пожалуйста, введите своё имя для регистрации."
+        )
+
+    elif query.data == "contact_admin":
+        # Переводим пользователя в шаг ввода сообщения для администратора
+        context.user_data['registration_step'] = "admin_message"
+        await query.edit_message_text(
+            text="Напишите, что именно вы хотите сообщить администратору.",
+            reply_markup=generate_admin_message_keyboard()  # Показываем кнопку "⬅️ Вернуться к выбору действия"
+        )
+
+    elif query.data == "return_to_action":
+        # Возвращаем пользователя на этап выбора действия
+        context.user_data['registration_step'] = "email_request"
+        await query.edit_message_text(
+            text="Email не найден. Пожалуйста, выберите следующее действие:",
+            reply_markup=generate_email_error_keyboard()  # Показываем клавиатуру с основными кнопками
+        )
+
 
 # Функция для поиска пользователя по email
 def find_user_by_email(email: str):
@@ -162,7 +353,16 @@ def find_user_by_email(email: str):
                 WHERE u.email = %s
             """
             cursor.execute(query, (email,))
-            return cursor.fetchone()  # Возвращаем первую найденную запись
+            result = cursor.fetchone()
+            if result:
+                print(f"[INFO] Email '{email}' найден в базе данных.")
+                return result
+            else:
+                print(f"[INFO] Email '{email}' не найден в базе данных.")
+                return None
+    except Exception as e:
+        print(f"[ERROR] Ошибка при поиске email в базе данных: {e}")
+        return None
     finally:
         conn.close()
 
