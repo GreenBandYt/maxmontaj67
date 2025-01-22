@@ -1,5 +1,6 @@
 from telegram.ext import Application
 from .reg_common import register_common_handlers
+from .admin.reg_admin import register_admin_handlers
 
 def register_all_handlers(application: Application):
     """
@@ -8,4 +9,5 @@ def register_all_handlers(application: Application):
     # Регистрируем общие обработчики
     register_common_handlers(application)
 
-    # Здесь будут добавляться обработчики для других ролей (admin, customer и т.д.)
+    # Регистрируем обработчики для администратора
+    register_admin_handlers(application)

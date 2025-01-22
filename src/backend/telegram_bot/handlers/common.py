@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes, CallbackContext, CallbackQueryHandler
 from bot_utils.bot_db_utils import db_connect  # Подключение к базе данных
 from .keyboards.common_keyboards import guest_keyboard
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from handlers.admin.admin_menu import admin_start  # Импортируем обработчик для администратора
 import logging
 
 # Настройка логирования
@@ -43,6 +44,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Мы не нашли вас в системе. Пожалуйста, введите своё имя для идентификации."
         )
         context.user_data['registration_step'] = "name_request"  # Устанавливаем шаг регистрации
+    elif role == "admin":
+        # Если роль администратора, направляем на стартовую страницу администратора
+        await admin_start(update, context)
     else:
         # Если пользователь найден, приветствуем в зависимости от роли
         await update.message.reply_text(
