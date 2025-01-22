@@ -5,6 +5,14 @@ from bot_utils.bot_db_utils import db_connect  # Подключение к ба�
 from .keyboards.common_keyboards import guest_keyboard
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from handlers.admin.admin_menu import admin_start  # Импортируем обработчик для администратора
+from handlers.dispatcher.dispatcher_menu import dispatcher_start  # Импортируем обработчик для диспетчера
+from handlers.executor.executor_menu import executor_start  # Импортируем обработчик для исполнителя
+from handlers.specialist.specialist_menu import specialist_start  # Импортируем обработчик для специалиста
+from handlers.customer.customer_menu import customer_start  # Импортируем обработчик для заказчика
+from handlers.blocked.blocked_menu import blocked_start  # Импортируем обработчик для заблокированного пользователя
+
+
+
 import logging
 
 # Настройка логирования
@@ -47,13 +55,29 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif role == "admin":
         # Если роль администратора, направляем на стартовую страницу администратора
         await admin_start(update, context)
+    elif role == "dispatcher":
+        # Если роль диспетчера, направляем на стартовую страницу диспетчера
+        await dispatcher_start(update, context)
+    elif role == "executor":
+        # Если роль исполнителя, направляем на стартовую страницу исполнителя
+        await executor_start(update, context)
+    elif role == "specialist":
+        # Если роль специалиста, направляем на стартовую страницу специалиста
+        await specialist_start(update, context)
+    elif role == "customer":
+        # Если роль заказчика, направляем на стартовую страницу заказчика
+        await customer_start(update, context)
+    elif role == "blocked":
+        # Если роль заблокированного, направляем на стартовую страницу заблокированного пользователя
+        await blocked_start(update, context)
     else:
-        # Если пользователь найден, приветствуем в зависимости от роли
+        # Если роль не определена, просто приветствуем пользователя
         await update.message.reply_text(
             f"Добро пожаловать, {user_name}!\n"
             f"Ваша роль: {role}.\n"
             "Что вы хотите сделать?"
         )
+
 
 # Функция определения роли пользователя
 async def get_user_role(user_id: int) -> str:
