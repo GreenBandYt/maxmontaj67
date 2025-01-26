@@ -1,19 +1,17 @@
-from telegram.ext import Application, CommandHandler
-from handlers.common import start_command
-from handlers.guest.guest_menu import (
-    process_name,
-    process_email,
-    process_registration,
-    handle_inline_buttons,
-    handle_guest_help as help_command,
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from handlers.common import start_command, help_command, handle_user_input
 
 def register_common_handlers(application: Application):
     """
     Регистрирует обработчики для общих команд.
     """
+    # Обработка команды /start
     application.add_handler(CommandHandler("start", start_command))
+
+    # Обработка команды /help (общая логика для всех ролей)
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("name", process_name))
-    application.add_handler(CommandHandler("email", process_email))
-    application.add_handler(CommandHandler("register", process_registration))
+
+    # Универсальный обработчик для текстовых сообщений
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
+
+    print("[INFO] Общие обработчики успешно зарегистрированы.")

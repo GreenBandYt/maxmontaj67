@@ -10,6 +10,8 @@ from handlers.customer.customer_menu import customer_start
 from handlers.blocked.blocked_menu import blocked_start
 from handlers.guest.guest_menu import start_guest
 import logging
+from dictionaries.text_actions import TEXT_ACTIONS_BY_ROLE
+from dictionaries.smart_replies import get_smart_reply
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
@@ -187,3 +189,44 @@ def update_user_telegram_id(user_id: int, telegram_id: int):
             conn.commit()  # Подтверждаем изменения
     finally:
         conn.close()
+
+async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Универсальный обработчик для обработки текста от пользователя.
+    """
+    # Получаем текст сообщения от пользователя
+    user_text = update.message.text.strip()
+
+    # Проверяем роль пользователя
+    user_role = context.user_data.get("role", "guest")
+
+    # Проверяем, является ли текст кнопкой
+    actions = TEXT_ACTIONS_BY_ROLE.get(user_role, {})
+    if user_text in actions:
+        action = actions[user_text]
+        await process_action(action, update, context)  # Обрабатываем действие
+        return
+
+    # Проверяем "умные ответы"
+    response = get_smart_reply(user_text)
+    if response:
+        await update.message.reply_text(response)
+        return
+
+    # Если ничего не найдено, отправляем сообщение по умолчанию
+    await update.message.reply_text(
+        "Извините, я вас не понял. Попробуйте уточнить запрос или воспользуйтесь кнопками меню. 🤔"
+    )
+
+async def process_action(action: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Выполняет действие, привязанное к тексту кнопки.
+    """
+    if action == "guest_register":
+        await update.message.reply_text("Запущен процесс регистрации. Пожалуйста, введите ваше имя.")
+        context.user_data['step'] = 'registration_name'
+    elif action == "admin_analytics":
+        await update.message.reply_text("Показываю аналитику 📊...")
+    elif action == "admin_users":
+        await update.message.reply_text("Показываю список пользователей 👥...")
+    # Добавляйте другие действия...
