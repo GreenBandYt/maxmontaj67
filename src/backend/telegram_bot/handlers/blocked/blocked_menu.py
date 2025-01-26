@@ -11,3 +11,9 @@ async def blocked_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Свяжитесь с администратором для уточнения.",
         reply_markup=blocked_keyboard()  # Клавиатура для заблокированного пользователя
     )
+
+async def handle_blocked_contact_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработка кнопки "📞 Вопрос администратору".
+    """
+    await update.message.reply_text("Напишите ваш вопрос администратору. Мы передадим ваше сообщение.")

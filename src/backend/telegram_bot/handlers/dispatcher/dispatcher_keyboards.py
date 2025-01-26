@@ -1,6 +1,6 @@
 from telegram import ReplyKeyboardMarkup
 
-def dispatcher_keyboard():
+def dispatcher_menu_keyboard():
     """
     Возвращает клавиатуру для диспетчера.
     """

@@ -5,6 +5,7 @@ INITIAL_STATES = {
     "guest": "guest_idle",
     "dispatcher": "dispatcher_idle",
     "executor": "executor_idle",
+    "specialist": "specialist_idle",
     "customer": "customer_idle",
     "admin": "admin_idle",
     "blocked": "blocked_idle",
@@ -29,6 +30,13 @@ STATES = {
     "executor_view_tasks": "Исполнитель просматривает задачи",
     "executor_complete_task": "Исполнитель завершает задачу",
     "executor_upload_photo": "Исполнитель загружает фото выполнения",
+
+    # Состояния специалиста
+    "specialist_idle": "Начальное состояние специалиста",
+    "specialist_view_tasks": "Специалист просматривает задачи",
+    "specialist_complete_task": "Специалист завершает задачу",
+    "specialist_upload_photo": "Специалист загружает фото выполнения",
+
 
     # Состояния заказчика
     "customer_idle": "Начальное состояние заказчика",

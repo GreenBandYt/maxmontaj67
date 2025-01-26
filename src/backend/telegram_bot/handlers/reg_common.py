@@ -1,23 +1,19 @@
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-from .common import start_command, help_command, process_name, process_email, process_registration, handle_inline_buttons
-
+from telegram.ext import Application, CommandHandler
+from handlers.common import start_command
+from handlers.guest.guest_menu import (
+    process_name,
+    process_email,
+    process_registration,
+    handle_inline_buttons,
+    handle_guest_help as help_command,
+)
 
 def register_common_handlers(application: Application):
     """
-    Регистрация общих обработчиков.
+    Регистрирует обработчики для общих команд.
     """
-    # Регистрируем команду /start
     application.add_handler(CommandHandler("start", start_command))
-
-    # Добавляем обработчик текстовых сообщений
-    application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, process_registration))
-
-    # Регистрируем обработчик нажатий Inline-кнопок
-    application.add_handler(CallbackQueryHandler(handle_inline_buttons))
-
-
-    # Регистрация команды /help
     application.add_handler(CommandHandler("help", help_command))
-
-    # Регистрация обработчика кнопки "Помощь"
-    application.add_handler(MessageHandler(filters.Text("🆘 Помощь"), help_command))
+    application.add_handler(CommandHandler("name", process_name))
+    application.add_handler(CommandHandler("email", process_email))
+    application.add_handler(CommandHandler("register", process_registration))
