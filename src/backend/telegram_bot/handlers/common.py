@@ -10,7 +10,8 @@ from handlers.customer.customer_menu import customer_start
 from handlers.blocked.blocked_menu import blocked_start
 from handlers.guest.guest_menu import start_guest
 import logging
-from dictionaries.text_actions import TEXT_ACTIONS_BY_ROLE
+from dictionaries.text_actions import TEXT_ACTIONS
+from dictionaries.callback_actions import CALLBACK_ACTIONS  # Словарь callback_data и функций
 from dictionaries.smart_replies import get_smart_reply
 
 # Настройка логирования
@@ -197,14 +198,17 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Получаем текст сообщения от пользователя
     user_text = update.message.text.strip()
 
-    # Проверяем роль пользователя
-    user_role = context.user_data.get("role", "guest")
-
     # Проверяем, является ли текст кнопкой
-    actions = TEXT_ACTIONS_BY_ROLE.get(user_role, {})
-    if user_text in actions:
-        action = actions[user_text]
-        await process_action(action, update, context)  # Обрабатываем действие
+    action = TEXT_ACTIONS.get(user_text)
+    if action:
+        # Вызываем функцию напрямую из словаря
+        try:
+            # Используем `globals()` для вызова функции по имени
+            await globals()[action](update, context)
+        except KeyError:
+            await update.message.reply_text(
+                "Произошла ошибка при выполнении действия. Попробуйте снова или обратитесь к администратору. 🤔"
+            )
         return
 
     # Проверяем "умные ответы"
@@ -218,15 +222,30 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Извините, я вас не понял. Попробуйте уточнить запрос или воспользуйтесь кнопками меню. 🤔"
     )
 
-async def process_action(action: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_inline_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Выполняет действие, привязанное к тексту кнопки.
+    Универсальный обработчик для инлайн-кнопок.
     """
-    if action == "guest_register":
-        await update.message.reply_text("Запущен процесс регистрации. Пожалуйста, введите ваше имя.")
-        context.user_data['step'] = 'registration_name'
-    elif action == "admin_analytics":
-        await update.message.reply_text("Показываю аналитику 📊...")
-    elif action == "admin_users":
-        await update.message.reply_text("Показываю список пользователей 👥...")
-    # Добавляйте другие действия...
+    query = update.callback_query
+    await query.answer()  # Подтверждаем нажатие кнопки
+
+    callback_data = query.data  # Получаем callback_data кнопки
+    logging.info(f"Получено callback_data: {callback_data}")
+
+    # Проверяем наличие callback_data в словаре
+    action = CALLBACK_ACTIONS.get(callback_data)
+    if action:
+        try:
+            # Вызываем функцию напрямую из словаря
+            await globals()[action](update, context)
+        except KeyError:
+            logging.error(f"Функция для callback_data '{callback_data}' не найдена.")
+            await query.edit_message_text(
+                "Произошла ошибка при выполнении действия. Обратитесь к администратору."
+            )
+    else:
+        # Если callback_data отсутствует в словаре
+        logging.warning(f"Неизвестное callback_data: {callback_data}")
+        await query.edit_message_text(
+            "Кнопка больше не активна. Попробуйте снова или обратитесь к администратору."
+        )
