@@ -200,16 +200,11 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Проверяем, является ли текст кнопкой
     action = TEXT_ACTIONS.get(user_text)
+
     if action:
-        # Вызываем функцию напрямую из словаря
-        try:
-            # Используем `globals()` для вызова функции по имени
-            await globals()[action](update, context)
-        except KeyError:
-            await update.message.reply_text(
-                "Произошла ошибка при выполнении действия. Попробуйте снова или обратитесь к администратору. 🤔"
-            )
+        await action(update, context)  # Вызываем функцию напрямую
         return
+
 
     # Проверяем "умные ответы"
     response = get_smart_reply(user_text)

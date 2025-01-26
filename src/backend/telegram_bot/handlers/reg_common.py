@@ -1,5 +1,6 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from handlers.common import start_command,  handle_user_input
+from handlers.common import handle_inline_buttons
 
 def register_common_handlers(application: Application):
     """
