@@ -13,6 +13,7 @@ import logging
 from dictionaries.text_actions import TEXT_ACTIONS
 from dictionaries.callback_actions import CALLBACK_ACTIONS  # Словарь callback_data и функций
 from dictionaries.smart_replies import get_smart_reply
+from dictionaries.states import INITIAL_STATES
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
@@ -27,23 +28,23 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data['telegram_id'] = user_id
 
-    # Проверяем роль пользователя
-    role = context.user_data.get('role')
-    if not role:
-        # Если роли нет в кеше, запрашиваем её из базы
-        role = await get_user_role(user_id)
-        context.user_data['role'] = role
+    # Проверяем роль пользователя из базы
+    role = await get_user_role(user_id)
+    context.user_data['role'] = role  # Сохраняем роль в кэше
 
-    if role == "guest":
-        # Гость зарегистрирован, но ждёт активации
+    # Устанавливаем начальное состояние на основе роли
+    initial_state = INITIAL_STATES.get(role, "guest_idle")
+    context.user_data['state'] = initial_state
+
+    # Обрабатываем роль
+    if role == "new_guest":
+        await start_guest(update, context)
+    elif role == "guest":
         await update.message.reply_text(
             f"Привет, {user_name}!\n"
             "Вы успешно зарегистрированы в системе, но ваша роль пока не активирована.\n"
             "Ожидайте назначения роли администратором."
         )
-    elif role is None:
-        # Новый пользователь — перенаправляем на стартовую страницу гостя
-        await start_guest(update, context)
     elif role == "admin":
         await admin_start(update, context)
     elif role == "dispatcher":
@@ -57,7 +58,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif role == "blocked":
         await blocked_start(update, context)
     else:
-        # Если роль не определена
         await update.message.reply_text(
             f"Добро пожаловать, {user_name}!\n"
             f"Ваша роль: {role}.\n"
@@ -67,10 +67,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Функция определения роли пользователя
-async def get_user_role(user_id: int) -> str | None:
+async def get_user_role(user_id: int) -> str:
     """
     Проверяет роль пользователя по его telegram_id.
-    Возвращает строку с ролью или None, если пользователь отсутствует в базе.
+    Возвращает строку с ролью или 'new_guest', если пользователь отсутствует в базе.
     """
     logging.info(f"Проверка роли для user_id: {user_id}")
     try:
@@ -89,10 +89,10 @@ async def get_user_role(user_id: int) -> str | None:
                 return result['role']
             else:
                 logging.warning(f"Пользователь с user_id {user_id} не найден в базе.")
-                return None  # Явно указываем, что пользователь отсутствует
+                return "new_guest"  # Если пользователь не найден, назначаем роль new_guest
     except Exception as e:
         logging.error(f"Ошибка подключения к базе данных: {e}")
-        return None  # В случае ошибки считаем, что пользователя нет
+        return "new_guest"  # В случае ошибки возвращаем 'new_guest'
     finally:
         conn.close()  # Закрываем соединение
 

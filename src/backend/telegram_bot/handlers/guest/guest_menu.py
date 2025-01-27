@@ -1,8 +1,11 @@
 from telegram import Update
 from telegram.ext import ContextTypes, CallbackContext
 from .guest_keyboards import guest_keyboard, generate_email_error_keyboard, generate_admin_message_keyboard
+from bot_utils.access_control import check_access
+
 import logging
 
+@check_access(required_role="new_guest", required_state="guest_idle")
 async def start_guest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Стартовая страница для гостя.
