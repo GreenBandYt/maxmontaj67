@@ -1,19 +1,19 @@
 import bcrypt
+import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from bot_utils.bot_db_utils import db_connect
-from handlers.admin.admin_menu import admin_start
-from handlers.dispatcher.dispatcher_menu import dispatcher_start
-from handlers.executor.executor_menu import executor_start
-from handlers.specialist.specialist_menu import specialist_start
-from handlers.customer.customer_menu import customer_start
-from handlers.blocked.blocked_menu import blocked_start
-from handlers.guest.guest_menu import start_guest
-import logging
-from dictionaries.text_actions import TEXT_ACTIONS
-from dictionaries.callback_actions import CALLBACK_ACTIONS  # Словарь callback_data и функций
-from dictionaries.smart_replies import get_smart_reply
-from dictionaries.states import INITIAL_STATES
+from telegram_bot.bot_utils.bot_db_utils import db_connect
+from telegram_bot.handlers.admin.admin_menu import admin_start
+from telegram_bot.handlers.dispatcher.dispatcher_menu import dispatcher_start
+from telegram_bot.handlers.executor.executor_menu import executor_start
+from telegram_bot.handlers.specialist.specialist_menu import specialist_start
+from telegram_bot.handlers.customer.customer_menu import customer_start
+from telegram_bot.handlers.blocked.blocked_menu import blocked_start
+from telegram_bot.handlers.guest.guest_menu import start_guest
+from telegram_bot.dictionaries.text_actions import TEXT_ACTIONS
+from telegram_bot.dictionaries.callback_actions import CALLBACK_ACTIONS
+from telegram_bot.dictionaries.smart_replies import get_smart_reply
+from telegram_bot.dictionaries.states import INITIAL_STATES
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
@@ -94,7 +94,8 @@ async def get_user_role(user_id: int) -> str:
         logging.error(f"Ошибка подключения к базе данных: {e}")
         return "new_guest"  # В случае ошибки возвращаем 'new_guest'
     finally:
-        conn.close()  # Закрываем соединение
+        if conn:
+            conn.close()
 
 # Функция для проверки имени в базе данных
 async def check_user_name_in_db(user_name: str) -> dict:

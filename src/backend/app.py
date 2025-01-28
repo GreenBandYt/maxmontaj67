@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from flask_session import Session
 from multiprocessing import Process
+import subprocess
 import os
 from decouple import config  # Добавлен импорт
 from config import SESSION_CONFIG
@@ -53,10 +54,14 @@ def run_bot():
 @app.route('/bot/start', methods=['POST'])
 def start_bot():
     """
-    Запуск Telegram-бота.
+    Запуск Telegram-бота как модуля.
     """
     global bot_process, bot_running
+
     if not bot_running:
+        def run_bot():
+            subprocess.run(['python3', '-m', 'telegram_bot.bot_runner'])
+
         bot_process = Process(target=run_bot)
         bot_process.start()
         bot_running = True
@@ -70,14 +75,15 @@ def stop_bot():
     Остановка Telegram-бота.
     """
     global bot_process, bot_running
-    if bot_running and bot_process:
+
+    if bot_running and bot_process is not None:
         bot_process.terminate()
         bot_process.join()
-        bot_process = None
         bot_running = False
         return jsonify({"status": "success", "message": "Бот остановлен"}), 200
     else:
         return jsonify({"status": "error", "message": "Бот не запущен"}), 400
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():

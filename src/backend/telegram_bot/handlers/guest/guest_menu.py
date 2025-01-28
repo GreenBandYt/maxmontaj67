@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes, CallbackContext
 from .guest_keyboards import guest_keyboard, generate_email_error_keyboard, generate_admin_message_keyboard
-from bot_utils.access_control import check_access
+from telegram_bot.bot_utils.access_control import check_access
 
 import logging
 

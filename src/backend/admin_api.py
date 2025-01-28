@@ -4,6 +4,8 @@ from utils.validators import is_user_data_complete
 import logging
 import os
 from datetime import datetime
+from telegram_bot.dictionaries.text_actions import TEXT_ACTIONS
+
 
 
 
@@ -768,3 +770,31 @@ def calendar_users_data():
     except Exception as e:
         logging.error(f"Ошибка при загрузке данных календаря пользователей: {e}")
         return jsonify([]), 500
+
+
+@admin_bp.route('/utils', methods=['GET'])
+def utils_list():
+    """
+    Перенаправление на первую утилиту (Реестр callback_data).
+    """
+    return redirect(url_for('admin.utils_callback_data'))
+
+
+@admin_bp.route('/utils/callback_data', methods=['GET'])
+def utils_callback_data():
+    """
+    Страница для отображения реестра callback_data.
+    """
+    callback_registry = []
+    for callback, func in TEXT_ACTIONS.items():
+        callback_registry.append({
+            "callback": callback,
+            "function": func.__name__ if hasattr(func, '__name__') else str(func),
+            "module": func.__module__ if hasattr(func, '__module__') else "Неизвестно",
+            "description": func.__doc__ if func.__doc__ else "Описание отсутствует"
+        })
+
+    return render_template(
+        'admin/utils/callback_data_registry.html',
+        callback_registry=callback_registry
+    )

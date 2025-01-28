@@ -1,9 +1,12 @@
 import os
 import sys
 import logging
-from handlers.registration import register_all_handlers
+from telegram_bot.handlers.registration import register_all_handlers
 from bot_utils.bot_config import BOT_DB_CONFIG
 from telegram.ext import ApplicationBuilder
+
+# Добавляем папку "telegram_bot" в sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")

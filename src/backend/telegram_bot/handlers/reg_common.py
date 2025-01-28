@@ -1,6 +1,9 @@
+import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-from handlers.common import start_command,  handle_user_input
-from handlers.common import handle_inline_buttons
+from telegram_bot.handlers.common import start_command, handle_user_input, handle_inline_buttons
+
+# Настройка логирования
+logger = logging.getLogger(__name__)
 
 def register_common_handlers(application: Application):
     """
@@ -9,11 +12,10 @@ def register_common_handlers(application: Application):
     # Обработка команды /start
     application.add_handler(CommandHandler("start", start_command))
 
-
     # Универсальный обработчик для текстовых сообщений
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
 
     # Регистрируем обработчик инлайн-кнопок
     application.add_handler(CallbackQueryHandler(handle_inline_buttons))
 
-    print("[INFO] Общие обработчики успешно зарегистрированы.")
+    logger.info("Общие обработчики успешно зарегистрированы.")

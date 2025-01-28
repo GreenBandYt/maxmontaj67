@@ -1,0 +1,43 @@
+{% extends "admin/utils/utils_base.html" %}
+
+{% block utils_content %}
+<h2>📜 Реестр callback_data</h2>
+
+<div class="scrollable-table">
+    <table id="callbackTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">📌 CALLBACK DATA</th>
+                <th onclick="sortTable(1)">⚙️ ФУНКЦИЯ</th>
+                <th onclick="sortTable(2)">📦 МОДУЛЬ</th>
+                <th onclick="sortTable(3)">📄 ОПИСАНИЕ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in callback_registry %}
+            <tr>
+                <td>{{ item.callback }}</td>
+                <td>{{ item.function }}</td>
+                <td>{{ item.module }}</td>
+                <td>{{ item.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+<script>
+function sortTable(columnIndex) {
+    let table = document.getElementById("callbackTable");
+    let rows = Array.from(table.rows).slice(1); // Пропускаем заголовок
+    let sortedRows = rows.sort((rowA, rowB) => {
+        let cellA = rowA.cells[columnIndex].innerText.toLowerCase();
+        let cellB = rowB.cells[columnIndex].innerText.toLowerCase();
+        return cellA.localeCompare(cellB);
+    });
+    table.tBodies[0].append(...sortedRows);
+}
+</script>
+
+
+</div>
+{% endblock %}
