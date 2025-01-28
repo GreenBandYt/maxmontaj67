@@ -1,0 +1,47 @@
+{% extends "admin/utils/utils_base.html" %}
+
+{% block utils_content %}
+<h2>📜 Реестр декораторов</h2>
+
+<!-- Ввод для поиска функции -->
+<div class="function-search">
+    <input type="text" id="function-search" placeholder="Начните вводить имя функции...">
+    <div id="search-result"></div> <!-- Здесь будут выводиться результаты поиска -->
+</div>
+
+<div class="scrollable-table">
+    <table id="decoratorTable">
+        <thead>
+            <tr>
+                <th>📌 ФУНКЦИЯ</th>
+                <th>⚙️ ДЕКОРАТОР</th>
+                <th>📦 МОДУЛЬ</th>
+                <th>📄 ОПИСАНИЕ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in decorated_functions %}
+            <tr>
+                <td>{{ item.function_name }}</td>
+                <td>{{ item.decorator }}</td>
+                <td>{{ item.module }}</td>
+                <td>{{ item.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+<script>
+function sortTable(columnIndex) {
+    let table = document.getElementById("decoratorTable");
+    let rows = Array.from(table.rows).slice(1); // Пропускаем заголовок
+    let sortedRows = rows.sort((rowA, rowB) => {
+        let cellA = rowA.cells[columnIndex].innerText.toLowerCase();
+        let cellB = rowB.cells[columnIndex].innerText.toLowerCase();
+        return cellA.localeCompare(cellB);
+    });
+    table.tBodies[0].append(...sortedRows);
+}
+</script>
+</div>
+{% endblock %}

@@ -23,6 +23,7 @@ async def handle_guest_register(update: Update, context: ContextTypes.DEFAULT_TY
     """
     await update.message.reply_text("Регистрация начата. Пожалуйста, введите ваше имя.")
 
+@check_access(required_role="guest", required_state="guest_idle")
 async def handle_guest_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработка кнопки "🆘 Помощь".
@@ -249,6 +250,7 @@ async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, user_name: 
     except Exception as e:
         logging.error(f"Ошибка при отправке сообщения администраторам: {e}")
         return False
+
 
 async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """

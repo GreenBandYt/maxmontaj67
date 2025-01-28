@@ -1,6 +1,9 @@
 from functools import wraps
 from telegram import Update
 from telegram.ext import ContextTypes
+import sys
+import inspect
+
 
 def check_access(required_role=None, required_state=None):
     """
@@ -37,3 +40,26 @@ def check_access(required_role=None, required_state=None):
             return await func(update, context, *args, **kwargs)
         return wrapper
     return decorator
+
+
+def find_decorated_functions():
+    """
+    Поиск всех функций, имеющих декораторы.
+    """
+    decorated_functions = []
+
+    print("🔎 Поиск задекорированных функций...")
+
+    for module_name, module in sys.modules.items():
+        for name, func in inspect.getmembers(module, inspect.isfunction):
+            if hasattr(func, '__wrapped__'):
+                print(f"✅ Найдена задекорированная функция: {func.__name__} в модуле {module_name}")
+                decorated_functions.append({
+                    "function_name": func.__name__,
+                    "decorator": func.__wrapped__.__name__,
+                    "module": module_name,
+                    "description": func.__doc__ or "Описание отсутствует"
+                })
+
+    print(f"📌 Всего найдено задекорированных функций: {len(decorated_functions)}")
+    return decorated_functions

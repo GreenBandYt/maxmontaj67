@@ -1,10 +1,13 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request, flash, jsonify
 from utils import db_connect
+
+
 from utils.validators import is_user_data_complete
 import logging
 import os
 from datetime import datetime
 from telegram_bot.dictionaries.text_actions import TEXT_ACTIONS
+from telegram_bot.bot_utils.access_control import find_decorated_functions
 
 
 
@@ -797,4 +800,20 @@ def utils_callback_data():
     return render_template(
         'admin/utils/callback_data_registry.html',
         callback_registry=callback_registry
+    )
+
+
+
+
+@admin_bp.route('/utils/decorators', methods=['GET'])
+def utils_decorators():
+    """
+    Страница для отображения реестра декораторов.
+    """
+    # Получаем список декорированных функций
+    decorated_functions = find_decorated_functions()
+
+    return render_template(
+        'admin/utils/decorators_list.html',
+        decorated_functions=decorated_functions
     )

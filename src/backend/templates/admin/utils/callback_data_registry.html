@@ -3,6 +3,18 @@
 {% block utils_content %}
 <h2>📜 Реестр callback_data</h2>
 
+<!-- Ввод для поиска функции -->
+<div class="function-search">
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 30%;"><label for="function-search">Начните вводить имя функции:</label></td>
+            <td style="width: 40%;"><input type="text" id="function-search" placeholder="Начните вводить имя функции..."></td>
+            <td style="width: 30%;"><button id="clear-search">❌</button></td>
+        </tr>
+    </table>
+    <div id="search-result"></div> <!-- Здесь будут выводиться результаты поиска -->
+</div>
+
 <div class="scrollable-table">
     <table id="callbackTable">
         <thead>
@@ -24,20 +36,39 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
 
 <script>
-function sortTable(columnIndex) {
-    let table = document.getElementById("callbackTable");
-    let rows = Array.from(table.rows).slice(1); // Пропускаем заголовок
-    let sortedRows = rows.sort((rowA, rowB) => {
-        let cellA = rowA.cells[columnIndex].innerText.toLowerCase();
-        let cellB = rowB.cells[columnIndex].innerText.toLowerCase();
-        return cellA.localeCompare(cellB);
+    const functionSearchInput = document.getElementById("function-search");
+    const clearSearchButton = document.getElementById("clear-search");
+    const searchResultDiv = document.getElementById("search-result");
+
+    const functions = [
+        {% for item in callback_registry %}
+            { name: "{{ item.function }}", callback: "{{ item.callback }}" },
+        {% endfor %}
+    ];
+
+    functionSearchInput.addEventListener("input", function() {
+        const searchQuery = functionSearchInput.value.toLowerCase();
+        const results = functions.filter(function(item) {
+            return item.name.toLowerCase().includes(searchQuery);
+        });
+
+        displayResults(results);
     });
-    table.tBodies[0].append(...sortedRows);
-}
+
+    clearSearchButton.addEventListener("click", function() {
+        functionSearchInput.value = ""; // Очищаем поле
+        searchResultDiv.innerHTML = ""; // Очищаем список результатов
+    });
+
+    function displayResults(results) {
+        searchResultDiv.innerHTML = results.length
+            ? results.map(result => `<div>${result.name}</div>`).join("")
+            : "Нет совпадений";
+    }
 </script>
 
 
-</div>
 {% endblock %}
