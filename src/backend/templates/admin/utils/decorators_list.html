@@ -3,25 +3,38 @@
 {% block utils_content %}
 <h2>📜 Реестр декораторов</h2>
 
-<!-- Ввод для поиска функции -->
-<div class="function-search">
-    <input type="text" id="function-search" placeholder="Начните вводить имя функции...">
-    <div id="search-result"></div> <!-- Здесь будут выводиться результаты поиска -->
-</div>
+<!-- Поле поиска функции -->
+<table style="width: 100%; margin-bottom: 10px;">
+    <tr>
+        <td style="width: 30%; text-align: right;">
+            <label for="function-search"><strong>🔍 Найти функцию:</strong></label>
+        </td>
+        <td style="width: 40%;">
+            <input type="text" id="function-search" placeholder="Введите имя функции..." style="width: 100%;">
+        </td>
+        <td style="width: 30%;">
+            <button id="clear-search" style="width: 50px;">❌</button>
+        </td>
+    </tr>
+</table>
 
 <div class="scrollable-table">
     <table id="decoratorTable">
         <thead>
             <tr>
-                <th>📌 ФУНКЦИЯ</th>
-                <th>⚙️ ДЕКОРАТОР</th>
-                <th>📦 МОДУЛЬ</th>
-                <th>📄 ОПИСАНИЕ</th>
+                <th onclick="sortTable(0)">🛡 РОЛЬ</th>
+                <th onclick="sortTable(1)">🔄 СОСТОЯНИЕ</th>
+                <th onclick="sortTable(2)">📌 ФУНКЦИЯ</th>
+                <th onclick="sortTable(3)">⚙️ ДЕКОРАТОР</th>
+                <th onclick="sortTable(4)">📦 МОДУЛЬ</th>
+                <th onclick="sortTable(5)">📄 ОПИСАНИЕ</th>
             </tr>
         </thead>
         <tbody>
             {% for item in decorated_functions %}
             <tr>
+                <td>{{ item.required_role or "—" }}</td>
+                <td>{{ item.required_state or "—" }}</td>
                 <td>{{ item.function_name }}</td>
                 <td>{{ item.decorator }}</td>
                 <td>{{ item.module }}</td>
@@ -32,6 +45,27 @@
     </table>
 
 <script>
+document.getElementById("function-search").addEventListener("input", function() {
+    let searchValue = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#decoratorTable tbody tr");
+
+    rows.forEach(row => {
+        let functionName = row.cells[2].innerText.toLowerCase();
+        if (functionName.includes(searchValue)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+});
+
+// Кнопка очистки поля ввода
+document.getElementById("clear-search").addEventListener("click", function() {
+    document.getElementById("function-search").value = "";
+    let rows = document.querySelectorAll("#decoratorTable tbody tr");
+    rows.forEach(row => row.style.display = ""); // Показать все строки
+});
+
 function sortTable(columnIndex) {
     let table = document.getElementById("decoratorTable");
     let rows = Array.from(table.rows).slice(1); // Пропускаем заголовок
