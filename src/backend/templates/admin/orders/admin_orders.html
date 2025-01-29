@@ -6,6 +6,7 @@
 <div class="admin-orders">
     <!-- Панель навигации -->
     <div class="navigation-panel">
+        <a href="{{ url_for('admin.create_order') }}" class="button" style="color: yellow; font-weight: bold;">Создать заказ</a>
         <a href="{{ url_for('admin.customers') }}" class="button">Заказчики</a>
         <a href="{{ url_for('admin.orders_calendar') }}" class="button">Календарь заказов</a>
         <a href="{{ url_for('admin.users_calendar') }}" class="button">Календарь пользователей</a>

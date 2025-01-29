@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Создание нового заказа{% endblock %}
+
+{% block content %}
+<div class="navigation-panel">
+    <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к списку заказов</a>
+</div>
+
+<main>
+    <h2>Создание нового заказа</h2>
+
+    <!-- Форма для создания нового заказа -->
+    <form id="createOrderForm" method="POST" action="{{ url_for('admin.create_order') }}" enctype="multipart/form-data">
+        <table style="width: 100%; border-collapse: collapse;">
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: 80%;">
+            </colgroup>
+            <tr>
+                <th>Короткое описание</th>
+                <td>
+                    <input type="text" id="short_description" name="short_description" style="width: 100%;" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Полное описание</th>
+                <td>
+                    <textarea id="description" name="description" rows="4" style="width: 100%;" required></textarea>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Стоимость</th>
+                <td>
+                    <input type="number" id="price" name="price" step="0.01" style="width: 100%;" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Крайний срок</th>
+                <td>
+                    <input type="date" id="deadline_at" name="deadline_at" style="width: 100%;" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Адрес заказчика</th>
+                <td>
+                    <input type="text" id="customer_address" name="customer_address" style="width: 100%;" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            {% if session.get('role') in ['admin', 'dispatcher'] %}
+            <tr>
+                <th>Заказчик</th>
+                <td>
+                    <select id="customer_id" name="customer_id" style="width: 100%;" required>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.email }})</option>
+                        {% endfor %}
+                    </select>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+        <div style="text-align: center; margin-top: 20px;">
+            <button type="submit" class="button">Создать заказ</button>
+        </div>
+    </form>
+
+    <!-- JavaScript-валидация -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("createOrderForm");
+
+        const fields = {
+            short_description: "Введите краткое описание заказа.",
+            description: "Введите подробное описание заказа.",
+            price: "Цена должна быть положительным числом.",
+            deadline_at: "Выберите крайний срок.",
+            customer_address: "Введите адрес заказчика."
+        };
+
+        function showError(input, message) {
+            let errorSpan = input.nextElementSibling;
+            if (!errorSpan || !errorSpan.classList.contains("error-message")) {
+                errorSpan = document.createElement("span");
+                errorSpan.classList.add("error-message");
+                input.parentNode.appendChild(errorSpan);
+            }
+            errorSpan.textContent = message;
+            input.classList.add("error-border");
+        }
+
+        function clearError(input) {
+            let errorSpan = input.nextElementSibling;
+            if (errorSpan && errorSpan.classList.contains("error-message")) {
+                errorSpan.textContent = "";
+            }
+            input.classList.remove("error-border");
+        }
+
+        function validateField(input) {
+            if (input.id === "price") {
+                if (!input.value || isNaN(input.value) || Number(input.value) <= 0) {
+                    showError(input, fields[input.id]);
+                    return false;
+                }
+            } else if (!input.value.trim()) {
+                showError(input, fields[input.id]);
+                return false;
+            }
+            clearError(input);
+            return true;
+        }
+
+        // Вешаем проверку на каждое поле при выходе (blur)
+        Object.keys(fields).forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener("blur", () => validateField(input));
+            }
+        });
+
+        form.addEventListener("submit", function (event) {
+            let isValid = true;
+
+            Object.keys(fields).forEach(id => {
+                const input = document.getElementById(id);
+                if (input && !validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                event.preventDefault();  // Отменяем отправку формы
+            }
+        });
+    });
+    </script>
+</main>
+{% endblock %}

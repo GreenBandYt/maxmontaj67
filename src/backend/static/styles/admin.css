@@ -200,3 +200,14 @@
     background-color: #6c757d; /* Серый фон для неактивных кнопок */
     cursor: not-allowed; /* Неактивный курсор */
 }
+
+.error-message {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+.error-border {
+    border: 2px solid red;
+}

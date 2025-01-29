@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request, flash, jsonify
 from utils import db_connect
+from decimal import Decimal
 
 
 from utils.validators import is_user_data_complete
@@ -817,3 +818,86 @@ def utils_decorators():
         'admin/utils/decorators_list.html',
         decorated_functions=decorated_functions
     )
+# ======================================================================================
+
+# Логирование
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Директория загрузки файлов
+UPLOAD_FOLDER = 'src/backend/static/uploads/orders'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx'}
+
+# Проверка разрешённых расширений файлов
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ----------------------------------------
+# Маршрут: Создание нового заказа (БЕЗ загрузки файлов!)
+# ----------------------------------------
+@admin_bp.route('/create_order', methods=['GET', 'POST'])
+def create_order():
+    """Создание нового заказа (поддерживает GET и POST)."""
+    if session.get("role") not in ["admin", "dispatcher"]:  # Проверка прав
+        return redirect(url_for("home"))
+
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+
+            if request.method == "POST":  # Обрабатываем отправку формы
+                short_description = request.form.get("short_description")
+                description = request.form.get("description")
+                price = request.form.get("price")
+                deadline_at = request.form.get("deadline_at")
+                customer_address = request.form.get("customer_address")
+
+                # Получение ID заказчика
+                customer_id = request.form.get("customer_id") or session.get("user_id")
+                customer_id = int(customer_id) if customer_id else None
+
+                # Приведение цены к Decimal
+                try:
+                    price = Decimal(price) if price else Decimal("0.00")
+                except:
+                    logging.error(f"[ERROR] Некорректный формат цены: {price}")
+                    flash("Ошибка: неверный формат цены.", "error")
+                    return redirect(url_for("admin.create_order"))
+
+                # Проверка обязательных полей
+                if not all([short_description, description, deadline_at, customer_address, customer_id]):
+                    flash("Все поля должны быть заполнены.", "error")
+                    return redirect(url_for("admin.create_order"))
+
+                # Создание заказа
+                cursor.execute("""
+                    INSERT INTO orders (short_description, description, price, deadline_at, customer_address, customer_id, status, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'Ожидает', NOW());
+                """, (short_description, description, price, deadline_at, customer_address, customer_id))
+
+                conn.commit()
+
+                # Получаем ID созданного заказа
+                cursor.execute("SELECT LAST_INSERT_ID();")
+                order_id = cursor.fetchone()[0]
+
+                if order_id == 0:
+                    logging.error("[ERROR] Ошибка при получении ID заказа")
+                    flash("Ошибка при создании заказа.", "error")
+                    return redirect(url_for("admin.create_order"))
+
+                logging.info(f"[INFO] Новый заказ создан ID {order_id}")
+
+                flash("Заказ успешно создан.", "success")
+
+                # --- Рендеринг на admin_orders_detail.html ---
+                return redirect(url_for("admin.order_detail", order_id=order_id))
+
+            # --- Обработка GET-запроса: отображаем форму ---
+            cursor.execute("SELECT id, name, email FROM customers")
+            customers = cursor.fetchall()
+            return render_template("admin/orders/admin_orders_create_new.html", customers=customers)
+
+    except Exception as e:
+        logging.error(f"[ERROR] Ошибка при создании заказа: {e}")
+        flash("Ошибка сервера. Попробуйте позже.", "error")
+        return redirect(url_for("admin.create_order"))
