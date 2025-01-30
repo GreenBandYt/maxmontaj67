@@ -868,29 +868,25 @@ def create_order():
                     flash("Все поля должны быть заполнены.", "error")
                     return redirect(url_for("admin.create_order"))
 
-                # Создание заказа
+                # Создание заказа + получение ID
                 cursor.execute("""
                     INSERT INTO orders (short_description, description, price, deadline_at, customer_address, customer_id, status, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, 'Ожидает', NOW());
+                    VALUES (%s, %s, %s, %s, %s, %s, 'Ожидает', NOW())
                 """, (short_description, description, price, deadline_at, customer_address, customer_id))
 
-                conn.commit()
+                order_id = cursor.lastrowid  # Правильный способ получить ID в MariaDB
 
-                # Получаем ID созданного заказа
-                cursor.execute("SELECT LAST_INSERT_ID();")
-                order_id = cursor.fetchone()[0]
-
-                if order_id == 0:
-                    logging.error("[ERROR] Ошибка при получении ID заказа")
+                if not order_id or order_id == 0:
+                    logging.error("[ERROR] Ошибка при получении ID заказа!")
                     flash("Ошибка при создании заказа.", "error")
                     return redirect(url_for("admin.create_order"))
 
-                logging.info(f"[INFO] Новый заказ создан ID {order_id}")
+                conn.commit()  # Подтверждаем транзакцию
 
+                logging.info(f"[INFO] Новый заказ успешно создан с ID {order_id}")
                 flash("Заказ успешно создан.", "success")
 
-                # --- Рендеринг на admin_orders_detail.html ---
-                return redirect(url_for("admin.order_detail", order_id=order_id))
+                return redirect(url_for("admin.order_details", order_id=order_id))
 
             # --- Обработка GET-запроса: отображаем форму ---
             cursor.execute("SELECT id, name, email FROM customers")
