@@ -4,19 +4,57 @@
 
 {% block content %}
 <div class="navigation-panel">
-    <a href="{{ url_for('admin.orders') }}" class="button">Вернуться к списку заказов</a>
+    <a href="{{ url_for('admin.orders') }}" class="button">Назад</a>
+    <a href="{{ url_for('admin.create_customer') }}" class="button highlight">➕ Добавить заказчика</a>
+    <a href="{{ url_for('admin.customers') }}" class="button">Заказчики</a>
 </div>
 
 <main>
     <h2>Создание нового заказа</h2>
 
-    <!-- Форма для создания нового заказа -->
-    <form id="createOrderForm" method="POST" action="{{ url_for('admin.create_order') }}" enctype="multipart/form-data">
+    <!-- Поиск заказчика -->
+    <div class="search-bar">
+        🔍 <label for="searchCustomers">Найти заказчика:</label>
+        <input type="text" id="searchCustomers" placeholder="Введите имя или email...">
+        <button type="button" id="clearSearch">❌</button>
+    </div>
+
+    <form id="createOrderForm" method="POST" action="{{ url_for('admin.create_order') }}">
         <table style="width: 100%; border-collapse: collapse;">
             <colgroup>
                 <col style="width: 20%;">
                 <col style="width: 80%;">
             </colgroup>
+
+            <tr>
+                <th>Имя заказчика</th>
+                <td>
+                    <select id="customer_id" name="customer_id" style="width: 100%;" required>
+                        <option value="">Выберите заказчика...</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" data-phone="{{ customer.phone }}" data-address="{{ customer.address }}">
+                            {{ customer.name }} ({{ customer.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Телефон заказчика</th>
+                <td>
+                    <input type="text" id="customer_phone" name="customer_phone" style="width: 100%;" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Адрес заказчика</th>
+                <td>
+                    <input type="text" id="customer_address" name="customer_address" style="width: 100%;" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+
             <tr>
                 <th>Короткое описание</th>
                 <td>
@@ -31,115 +69,92 @@
                     <span class="error-message"></span>
                 </td>
             </tr>
+
             <tr>
-                <th>Стоимость</th>
+                <th>Крайний срок / Стоимость</th>
                 <td>
-                    <input type="number" id="price" name="price" step="0.01" style="width: 100%;" required>
+                    <input type="date" id="deadline_at" name="deadline_at" style="width: 48%;" required>
+                    <input type="number" id="price" name="price" step="0.01" style="width: 48%;" required placeholder="Стоимость">
                     <span class="error-message"></span>
                 </td>
             </tr>
+
             <tr>
-                <th>Крайний срок</th>
-                <td>
-                    <input type="date" id="deadline_at" name="deadline_at" style="width: 100%;" required>
-                    <span class="error-message"></span>
+                <th>Отправить уведомление</th>
+                <td class="checkbox-container">
+                    <label>
+                        <input type="checkbox" id="send_executor" name="send_executor" value="1" checked>
+                        <span>Монтажник</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="send_specialist" name="send_specialist" value="1">
+                        <span>Специалист</span>
+                    </label>
                 </td>
             </tr>
-            <tr>
-                <th>Адрес заказчика</th>
-                <td>
-                    <input type="text" id="customer_address" name="customer_address" style="width: 100%;" required>
-                    <span class="error-message"></span>
-                </td>
-            </tr>
-            {% if session.get('role') in ['admin', 'dispatcher'] %}
-            <tr>
-                <th>Заказчик</th>
-                <td>
-                    <select id="customer_id" name="customer_id" style="width: 100%;" required>
-                        {% for customer in customers %}
-                        <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.email }})</option>
-                        {% endfor %}
-                    </select>
-                    <span class="error-message"></span>
-                </td>
-            </tr>
-            {% endif %}
+
         </table>
+
         <div style="text-align: center; margin-top: 20px;">
             <button type="submit" class="button">Создать заказ</button>
         </div>
     </form>
-
-    <!-- JavaScript-валидация -->
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const form = document.getElementById("createOrderForm");
-
-        const fields = {
-            short_description: "Введите краткое описание заказа.",
-            description: "Введите подробное описание заказа.",
-            price: "Цена должна быть положительным числом.",
-            deadline_at: "Выберите крайний срок.",
-            customer_address: "Введите адрес заказчика."
-        };
-
-        function showError(input, message) {
-            let errorSpan = input.nextElementSibling;
-            if (!errorSpan || !errorSpan.classList.contains("error-message")) {
-                errorSpan = document.createElement("span");
-                errorSpan.classList.add("error-message");
-                input.parentNode.appendChild(errorSpan);
-            }
-            errorSpan.textContent = message;
-            input.classList.add("error-border");
-        }
-
-        function clearError(input) {
-            let errorSpan = input.nextElementSibling;
-            if (errorSpan && errorSpan.classList.contains("error-message")) {
-                errorSpan.textContent = "";
-            }
-            input.classList.remove("error-border");
-        }
-
-        function validateField(input) {
-            if (input.id === "price") {
-                if (!input.value || isNaN(input.value) || Number(input.value) <= 0) {
-                    showError(input, fields[input.id]);
-                    return false;
-                }
-            } else if (!input.value.trim()) {
-                showError(input, fields[input.id]);
-                return false;
-            }
-            clearError(input);
-            return true;
-        }
-
-        // Вешаем проверку на каждое поле при выходе (blur)
-        Object.keys(fields).forEach(id => {
-            const input = document.getElementById(id);
-            if (input) {
-                input.addEventListener("blur", () => validateField(input));
-            }
-        });
-
-        form.addEventListener("submit", function (event) {
-            let isValid = true;
-
-            Object.keys(fields).forEach(id => {
-                const input = document.getElementById(id);
-                if (input && !validateField(input)) {
-                    isValid = false;
-                }
-            });
-
-            if (!isValid) {
-                event.preventDefault();  // Отменяем отправку формы
-            }
-        });
-    });
-    </script>
 </main>
+
+<!-- Автозаполнение данных заказчика и работающий поиск -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const customerSelect = document.getElementById("customer_id");
+    const searchInput = document.getElementById("searchCustomers");
+    const clearButton = document.getElementById("clearSearch");
+    const phoneInput = document.getElementById("customer_phone");
+    const addressInput = document.getElementById("customer_address");
+
+    // Сохраняем оригинальные данные заказчиков
+    let originalCustomers = Array.from(customerSelect.options);
+
+    function filterCustomers() {
+        let filter = searchInput.value.toLowerCase();
+
+        // Очищаем список, оставляя первую опцию "Выберите заказчика..."
+        customerSelect.innerHTML = "";
+        customerSelect.appendChild(originalCustomers[0]); // Восстанавливаем первую строку
+
+        let found = false;
+
+        originalCustomers.slice(1).forEach(option => {
+            if (option.textContent.toLowerCase().includes(filter)) {
+                customerSelect.appendChild(option);
+                if (!found) {
+                    customerSelect.value = option.value;
+                    found = true;
+                }
+            }
+        });
+
+        // Если совпадений нет, сбрасываем выбор
+        if (!found) {
+            customerSelect.value = "";
+        }
+    }
+
+    function clearCustomerSearch() {
+        searchInput.value = "";
+        customerSelect.innerHTML = "";
+        originalCustomers.forEach(option => customerSelect.appendChild(option));
+        customerSelect.value = "";
+    }
+
+    function updateCustomerDetails() {
+        let selectedOption = customerSelect.options[customerSelect.selectedIndex];
+        phoneInput.value = selectedOption.dataset.phone || "";
+        addressInput.value = selectedOption.dataset.address || "";
+    }
+
+    searchInput.addEventListener("input", filterCustomers);
+    clearButton.addEventListener("click", clearCustomerSearch);
+    customerSelect.addEventListener("change", updateCustomerDetails);
+});
+</script>
+
 {% endblock %}

@@ -184,3 +184,21 @@ form button:hover {
     background-color: #6c757d; /* Серый фон для неактивных кнопок */
     cursor: not-allowed; /* Неактивный курсор */
 }
+
+.footer-logo {
+    width: 15px;
+    position: relative;
+    top: -2.5px; /* Поднимаем логотип */
+}
+
+.logo-text {
+    display: inline-flex;
+    align-items: center; /* Центрируем по вертикали */
+    gap: 2px; /* Расстояние между логотипом и текстом */
+}
+
+.logo-text span {
+    display: flex;
+    align-items: flex-end; /* Опускаем текст вниз */
+}
+

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление нового клиента{% endblock %}
+
+{% block content %}
+<div class="navigation-panel">
+    <a href="{{ url_for('admin.create_order') }}" class="button">⬅ Назад к заказу</a>
+    <a href="{{ url_for('admin.customers') }}" class="button">📜 Список клиентов</a>
+</div>
+
+<main>
+    <h2>📝 Добавление нового клиента</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <ul class="flashes">
+        {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+    <form id="createCustomerForm" method="POST" action="{{ url_for('admin.create_customer') }}">
+        <table style="width: 100%;">
+            <tr>
+                <th>Имя клиента</th>
+                <td>
+                    <input type="text" id="name" name="name" required>
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Email (необязательно)</th>
+                <td>
+                    <input type="email" id="email" name="email">
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Телефон (пример: +71234567890)</th>
+                <td>
+                    <input type="text" id="phone" name="phone" placeholder="+7XXXXXXXXXX">
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+            <tr>
+                <th>Адрес</th>
+                <td>
+                    <input type="text" id="address" name="address">
+                    <span class="error-message"></span>
+                </td>
+            </tr>
+        </table>
+        <div style="text-align: center; margin-top: 20px;">
+            <button type="submit" class="button">✅ Создать клиента</button>
+        </div>
+    </form>
+</main>
+
+<!-- Вставляем JS-валидацию только для этого шаблона -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function showError(input, message) {
+            let errorSpan = input.nextElementSibling;
+            if (!errorSpan || !errorSpan.classList.contains("error-message")) {
+                errorSpan = document.createElement("span");
+                errorSpan.classList.add("error-message");
+                input.parentNode.appendChild(errorSpan);
+            }
+            errorSpan.textContent = message;
+            input.classList.add("error-border");
+        }
+
+        function clearError(input) {
+            let errorSpan = input.nextElementSibling;
+            if (errorSpan && errorSpan.classList.contains("error-message")) {
+                errorSpan.remove();
+            }
+            input.classList.remove("error-border");
+        }
+
+        function validateName(input) {
+            if (!input.value.trim()) {
+                showError(input, "Имя обязательно!");
+                return false;
+            }
+            clearError(input);
+            return true;
+        }
+
+        function validateEmail(input) {
+            const emailPattern = /^[\w\.-]+@[\w\.-]+\.\w+$/;
+            if (input.value.trim() && !emailPattern.test(input.value.trim())) {
+                showError(input, "Некорректный email!");
+                return false;
+            }
+            clearError(input);
+            return true;
+        }
+
+        function validatePhone(input) {
+            const phonePattern = /^\+?\d{10,15}$/;
+            if (input.value.trim() && !phonePattern.test(input.value.trim())) {
+                showError(input, "Некорректный телефон! Пример: +71234567890");
+                return false;
+            }
+            clearError(input);
+            return true;
+        }
+
+        const form = document.getElementById("createCustomerForm");
+        if (form) {
+            const nameInput = form.querySelector("input[name='name']");
+            const emailInput = form.querySelector("input[name='email']");
+            const phoneInput = form.querySelector("input[name='phone']");
+
+            if (nameInput) nameInput.addEventListener("blur", () => validateName(nameInput));
+            if (emailInput) emailInput.addEventListener("blur", () => validateEmail(emailInput));
+            if (phoneInput) phoneInput.addEventListener("blur", () => validatePhone(phoneInput));
+
+            form.addEventListener("submit", function (event) {
+                let isValid = true;
+                if (nameInput) isValid = isValid && validateName(nameInput);
+                if (emailInput) isValid = isValid && validateEmail(emailInput);
+                if (phoneInput) isValid = isValid && validatePhone(phoneInput);
+                if (!isValid) event.preventDefault();
+            });
+        }
+    });
+</script>
+
+{% endblock %}

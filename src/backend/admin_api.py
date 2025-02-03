@@ -897,3 +897,41 @@ def create_order():
         logging.error(f"[ERROR] Ошибка при создании заказа: {e}")
         flash("Ошибка сервера. Попробуйте позже.", "error")
         return redirect(url_for("admin.create_order"))
+
+
+@admin_bp.route('/customers/create', methods=['GET', 'POST'])
+def create_customer():
+    """Страница создания нового клиента."""
+    if session.get("role") not in ["admin", "dispatcher"]:
+        return redirect(url_for("home"))  # Проверка прав
+
+    if request.method == "POST":
+        name = request.form.get("name").strip()
+        email = request.form.get("email").strip().lower()
+        phone = request.form.get("phone").strip() or None
+        address = request.form.get("address").strip() or None
+
+        if not name or not email:
+            flash("Ошибка: Имя и email обязательны!", "error")
+            return redirect(url_for("admin.create_customer"))
+
+        with db_connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM customers WHERE email = %s", (email,))
+            existing_customer = cursor.fetchone()
+
+            if existing_customer:
+                flash("Ошибка: Клиент с таким email уже существует!", "error")
+                return redirect(url_for("admin.create_customer"))
+
+            cursor.execute("""
+                INSERT INTO customers (name, email, phone, address, created_at)
+                VALUES (%s, %s, %s, %s, NOW())
+            """, (name, email, phone, address))
+            conn.commit()
+
+        flash("Клиент успешно добавлен!", "success")
+        return redirect(url_for("admin.customers"))
+
+    return render_template("admin/users/admin_customer_create.html")
+

@@ -36,7 +36,12 @@
 
     <footer>
         <p>&copy; 2024 MaxMontaj67. Все права защищены.</p>
-        <p>Разработано GreenBandYt (GBt)</p>
+        <p>Разработано -
+            <span class="logo-text">
+                <img src="{{ url_for('static', filename='images/logo_g.png') }}" alt="G" class="footer-logo">
+                reenBandYt (GBt)
+            </span>
+        </p>
 
         <!-- Блок управления ботом -->
         {% if environment == 'development' %}
@@ -46,6 +51,7 @@
         </div>
         {% endif %}
     </footer>
+
 
     <!-- Подключение FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.js"></script>

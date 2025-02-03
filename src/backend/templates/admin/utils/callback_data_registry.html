@@ -1,15 +1,16 @@
 {% extends "admin/utils/utils_base.html" %}
 
 {% block utils_content %}
-<h2>📜 Реестр callback_data</h2>
+
 
 <!-- Ввод для поиска функции -->
 <div class="function-search">
     <table style="width: 100%;">
         <tr>
-            <td style="width: 30%;"><label for="function-search">Начните вводить имя функции:</label></td>
-            <td style="width: 40%;"><input type="text" id="function-search" placeholder="Начните вводить имя функции..."></td>
-            <td style="width: 30%;"><button id="clear-search">❌</button></td>
+            <td style="width: 20%; right;"><h2>📜 Реестр callback_data</h2></td>
+            <td style="width: 20%; right;"><label for="function-search">Начните вводить имя функции:</label></td>
+            <td style="width: 30%; right;"><input type="text" id="function-search" placeholder="Начните вводить имя функции..." style="width: 100%;"></td>
+            <td style="width: 10%; right;"><button id="clear-search" style="width: 50px;">❌</button></td>
         </tr>
     </table>
     <div id="search-result"></div> <!-- Здесь будут выводиться результаты поиска -->

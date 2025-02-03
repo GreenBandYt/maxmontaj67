@@ -211,3 +211,54 @@
 .error-border {
     border: 2px solid red;
 }
+
+/* Специальный стиль для выделенной кнопки */
+.navigation-panel .button.highlight {
+    background-color: #4CAF50; /* Оставляем зелёный фон */
+    color: yellow; /* Меняем цвет текста на жёлтый */
+    font-weight: bold;
+    border: 2px solid yellow; /* Добавляем жёлтую рамку */
+}
+
+.navigation-panel .button.highlight:hover {
+    background-color: #45a049;
+    color: white; /* При наведении возвращаем белый цвет */
+}
+
+
+/* Выравнивание чекбоксов с текстом */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Отступ между чекбоксами */
+}
+
+.checkbox-container label {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Минимальный отступ между чекбоксом и текстом */
+}
+.checkbox-container label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 20px; /* Отступ между чекбоксами */
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 5px;
+}
+
+.search-bar button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}

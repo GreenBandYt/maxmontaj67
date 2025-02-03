@@ -1,18 +1,21 @@
 {% extends "admin/utils/utils_base.html" %}
 
 {% block utils_content %}
-<h2>📜 Реестр декораторов</h2>
+
 
 <!-- Поле поиска функции -->
 <table style="width: 100%; margin-bottom: 10px;">
     <tr>
-        <td style="width: 30%; text-align: right;">
+        <td style="width: 20%; text-align: right;">
+            <h2>📜 Реестр декораторов</h2>
+        </td>
+        <td style="width: 15%; text-align: right;">
             <label for="function-search"><strong>🔍 Найти функцию:</strong></label>
         </td>
-        <td style="width: 40%;">
+        <td style="width: 30%;">
             <input type="text" id="function-search" placeholder="Введите имя функции..." style="width: 100%;">
         </td>
-        <td style="width: 30%;">
+        <td style="width: 10%;">
             <button id="clear-search" style="width: 50px;">❌</button>
         </td>
     </tr>
