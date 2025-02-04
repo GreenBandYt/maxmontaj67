@@ -831,73 +831,62 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ----------------------------------------
-# Маршрут: Создание нового заказа (БЕЗ загрузки файлов!)
-# ----------------------------------------
+
 @admin_bp.route('/create_order', methods=['GET', 'POST'])
 def create_order():
-    """Создание нового заказа (поддерживает GET и POST)."""
-    if session.get("role") not in ["admin", "dispatcher"]:  # Проверка прав
+    """Создание нового заказа с записью в pending_orders."""
+    if session.get("role") not in ["admin", "dispatcher"]:
         return redirect(url_for("home"))
 
     try:
         with db_connect() as conn:
             cursor = conn.cursor()
 
-            if request.method == "POST":  # Обрабатываем отправку формы
+            if request.method == "POST":
+                # Получаем данные из формы
                 short_description = request.form.get("short_description")
                 description = request.form.get("description")
                 price = request.form.get("price")
                 deadline_at = request.form.get("deadline_at")
                 customer_address = request.form.get("customer_address")
+                customer_id = request.form.get("customer_id")
 
-                # Получение ID заказчика
-                customer_id = request.form.get("customer_id") or session.get("user_id")
-                customer_id = int(customer_id) if customer_id else None
-
-                # Приведение цены к Decimal
-                try:
-                    price = Decimal(price) if price else Decimal("0.00")
-                except:
-                    logging.error(f"[ERROR] Некорректный формат цены: {price}")
-                    flash("Ошибка: неверный формат цены.", "error")
-                    return redirect(url_for("admin.create_order"))
-
-                # Проверка обязательных полей
                 if not all([short_description, description, deadline_at, customer_address, customer_id]):
                     flash("Все поля должны быть заполнены.", "error")
                     return redirect(url_for("admin.create_order"))
 
-                # Создание заказа + получение ID
+                # Вставка в orders
                 cursor.execute("""
                     INSERT INTO orders (short_description, description, price, deadline_at, customer_address, customer_id, status, created_at)
                     VALUES (%s, %s, %s, %s, %s, %s, 'Ожидает', NOW())
                 """, (short_description, description, price, deadline_at, customer_address, customer_id))
 
-                order_id = cursor.lastrowid  # Правильный способ получить ID в MariaDB
+                order_id = cursor.lastrowid  # Получаем ID созданного заказа
 
-                if not order_id or order_id == 0:
-                    logging.error("[ERROR] Ошибка при получении ID заказа!")
-                    flash("Ошибка при создании заказа.", "error")
-                    return redirect(url_for("admin.create_order"))
+                # Получаем флаги отправки уведомлений
+                send_to_executor = 1 if request.form.get("send_executor") else 0
+                send_to_specialist = 1 if request.form.get("send_specialist") else 0
 
-                conn.commit()  # Подтверждаем транзакцию
+                # Вставка в pending_orders
+                cursor.execute("""
+                    INSERT INTO pending_orders (order_id, short_description, price, deadline_at, send_to_specialist, send_to_executor, status, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'new', NOW())
+                """, (order_id, short_description, price, deadline_at, send_to_specialist, send_to_executor))
 
-                logging.info(f"[INFO] Новый заказ успешно создан с ID {order_id}")
-                flash("Заказ успешно создан.", "success")
+                conn.commit()  # Подтверждаем обе вставки
 
-                return redirect(url_for("admin.order_details", order_id=order_id))
+                flash("Заказ успешно создан и добавлен в ожидание уведомления.", "success")
+                return redirect(url_for("admin.orders"))
 
-            # --- Обработка GET-запроса: отображаем форму ---
-            cursor.execute("SELECT id, name, email FROM customers")
+            # --- Отображаем форму создания заказа ---
+            cursor.execute("SELECT id, name, email, phone, address FROM customers")
             customers = cursor.fetchall()
             return render_template("admin/orders/admin_orders_create_new.html", customers=customers)
 
     except Exception as e:
-        logging.error(f"[ERROR] Ошибка при создании заказа: {e}")
-        flash("Ошибка сервера. Попробуйте позже.", "error")
+        logging.error(f"Ошибка при создании заказа: {e}")
+        flash("Ошибка сервера.", "error")
         return redirect(url_for("admin.create_order"))
-
 
 @admin_bp.route('/customers/create', methods=['GET', 'POST'])
 def create_customer():
@@ -906,23 +895,27 @@ def create_customer():
         return redirect(url_for("home"))  # Проверка прав
 
     if request.method == "POST":
-        name = request.form.get("name").strip()
-        email = request.form.get("email").strip().lower()
-        phone = request.form.get("phone").strip() or None
-        address = request.form.get("address").strip() or None
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email")  # Теперь email может отсутствовать
+        email = email.strip().lower() if email else None
+        phone = request.form.get("phone", "").strip() or None
+        address = request.form.get("address", "").strip() or None
 
-        if not name or not email:
-            flash("Ошибка: Имя и email обязательны!", "error")
+        if not name:
+            flash("Ошибка: Имя обязательно!", "error")
             return redirect(url_for("admin.create_customer"))
 
         with db_connect() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM customers WHERE email = %s", (email,))
-            existing_customer = cursor.fetchone()
 
-            if existing_customer:
-                flash("Ошибка: Клиент с таким email уже существует!", "error")
-                return redirect(url_for("admin.create_customer"))
+            # Проверка уникальности email, если он указан
+            if email:
+                cursor.execute("SELECT id FROM customers WHERE email = %s", (email,))
+                existing_customer = cursor.fetchone()
+
+                if existing_customer:
+                    flash("Ошибка: Клиент с таким email уже существует!", "error")
+                    return redirect(url_for("admin.create_customer"))
 
             cursor.execute("""
                 INSERT INTO customers (name, email, phone, address, created_at)
@@ -934,4 +927,3 @@ def create_customer():
         return redirect(url_for("admin.customers"))
 
     return render_template("admin/users/admin_customer_create.html")
-

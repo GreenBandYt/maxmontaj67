@@ -1,109 +1,141 @@
-/* Общие стили */
+/* ==============================
+   ГЛОБАЛЬНЫЕ СТИЛИ
+============================== */
 body {
-    font-family: Arial, sans-serif; /* Используем шрифт Arial как основной */
+    font-family: Arial, sans-serif; /* Основной шрифт */
     background-color: #b2babb; /* Светло-серый фон */
     color: #333; /* Цвет текста - тёмно-серый */
-    margin: 0; /* Убираем отступы по умолчанию */
-    padding: 0; /* Убираем внутренние отступы по умолчанию */
-    line-height: 1.6; /* Увеличиваем высоту строки для удобства чтения */
+    margin: 0;
+    padding: 0;
+    line-height: 1.6; /* Оптимальный интервал между строками */
 }
 
+/* Заголовки */
+h1, h2 {
+    color: #333; /* Тёмно-серый цвет */
+    font-weight: bold;
+}
+
+/* h1 - Основной заголовок */
 h1 {
-    text-align: center; /* Выравнивание заголовка по центру */
-    color: #4CAF50; /* Зелёный цвет текста */
-    margin-top: 0px; /* Отступ сверху */
-    margin-bottom: 0px; /* Отступ снизу */
-    font-size: 1.8rem; /* Размер текста в единицах rem */
+    text-align: center;
+    color: #4CAF50; /* Зелёный цвет */
+    margin: 0px;
+    font-size: 1.8rem;
 }
 
-/* Основной контейнер */
+/* h2 - Подзаголовки */
+h2 {
+    text-align: left;
+    margin: 10px 0;
+    font-size: 1.2rem;
+}
+
+/* Основной контейнер страницы */
 main {
-    max-width: 1200px; /* Ограничиваем ширину страницы */
-    margin: 5px auto; /* Центрируем и добавляем отступы сверху и снизу */
-    padding: 5px; /* Внутренние отступы */
+    max-width: 1200px;
+    margin: 5px auto;
+    padding: 5px;
     background-color: #fff; /* Белый фон */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
-    border-radius: 5px; /* Скругление углов */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Тень для эффекта поднятости */
+    border-radius: 5px; /* Скругленные углы */
 }
 
-/* Футер */
-footer {
-    background: #333; /* Тёмно-серый фон */
-    color: #fff; /* Белый текст */
-    padding: 5px 5px; /* Внутренние отступы */
-    text-align: center; /* Выравнивание текста по центру */
-    font-size: 0.9rem; /* Небольшой размер текста */
-    position: fixed; /* Фиксируем футер внизу */
-    bottom: 0; /* Располагаем внизу страницы */
-    width: 100%; /* Футер занимает всю ширину */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Тень над футером */
+/* ==============================
+   ФОРМЫ И ВВОД ДАННЫХ
+============================== */
+form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
 }
 
-footer p {
-    margin: 5px 0; /* Отступы сверху и снизу для текста в футере */
+form input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 1rem;
+    box-sizing: border-box; /* Корректный расчёт ширины */
+}
+
+/* Кнопки в формах */
+form button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    text-transform: uppercase;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #45a049;
+}
+
+/* ==============================
+   СТИЛИ НАВИГАЦИИ И КНОПОК
+============================== */
+
+/* Верхняя панель навигации */
+.navigation-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* Кнопки в навигации */
+.button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background-color: #45a049;
+}
+
+/* Специальная кнопка */
+.button.highlight {
+    background-color: #ff9800;
+}
+
+.button.highlight:hover {
+    background-color: #e68900;
 }
 
 /* Кнопка выхода */
 .logout-button {
-    background-color: #f44336; /* Красный фон */
-    color: white; /* Белый текст */
-    padding: 5px 10px; /* Внутренние отступы */
-    text-decoration: none; /* Убираем подчёркивание */
-    border-radius: 3px; /* Скругление углов */
-    font-weight: bold; /* Жирный текст */
-    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
-    position: absolute; /* Абсолютное позиционирование */
-    right: 10px; /* Отступ от правого края */
-    top: 10px; /* Отступ от верхнего края */
+    background-color: #f44336;
+    color: white;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 3px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    position: absolute;
+    right: 10px;
+    top: 10px;
 }
 
 .logout-button:hover {
-    background-color: #d32f2f; /* Более тёмный красный при наведении */
+    background-color: #d32f2f;
 }
 
-
-h2 {
-    text-align: left; /* Выравнивание текста по левому краю */
-    color: #333; /* Тёмно-серый цвет */
-    margin: 10px 0; /* Отступы сверху и снизу */
-    font-size: 1.2rem; /* Размер текста */
-    font-weight: bold; /* Жирное начертание */
-}
-
-
-form label {
-    display: block; /* Метки занимают всю ширину строки */
-    margin-top: 10px; /* Отступ сверху */
-    font-weight: bold; /* Жирный текст */
-}
-
-form input {
-    width: 100%; /* Поля ввода занимают всю ширину контейнера */
-    padding: 8px; /* Внутренние отступы */
-    margin-top: 5px; /* Отступ сверху */
-    border: 1px solid #ddd; /* Светлая рамка */
-    border-radius: 3px; /* Скругление углов */
-    font-size: 1rem; /* Размер текста */
-    box-sizing: border-box; /* Включаем отступы в ширину элемента */
-}
-
-form button {
-    background-color: #4CAF50; /* Зелёный фон */
-    color: white; /* Белый текст */
-    border: none; /* Убираем обводку */
-    padding: 10px 15px; /* Внутренние отступы */
-    text-transform: uppercase; /* Верхний регистр текста */
-    font-size: 16px; /* Размер текста */
-    border-radius: 5px; /* Скругление углов */
-    cursor: pointer; /* Указатель мыши меняется на "руку" */
-    transition: background-color 0.3s ease; /* Плавная анимация смены цвета */
-}
-
-form button:hover {
-    background-color: #45a049; /* Тёмно-зелёный фон при наведении */
-}
-
-
+/* ==============================
+   СТИЛИ КАЛЕНДАРЯ
+============================== */
 .calendar-page-container {
     display: flex;
     justify-content: center;
@@ -152,53 +184,105 @@ form button:hover {
     max-width: 80%;
 }
 
+/* ==============================
+   ФУТЕР - СТИЛИ
+============================== */
+footer {
+    background: #333; /* Тёмно-серый фон */
+    color: #fff; /* Белый текст */
+    padding: 5px 15px; /* Внутренние отступы */
+    font-size: 0.9rem; /* Размер шрифта */
+    position: fixed; /* Фиксируем футер */
+    bottom: 0; /* Размещаем внизу */
+    width: 100%; /* На всю ширину экрана */
+    height: 40px; /* Фиксированная высота */
+    display: flex;
+    justify-content: center; /* Центрируем содержимое */
+    align-items: center;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Тень над футером */
+}
 
+/* ==============================
+   КОНТЕЙНЕР ФУТЕРА
+============================== */
+.footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Равномерное распределение элементов */
+    width: 100%;
+    max-width: 1200px;
+}
 
-/* Стили для блока управления ботом */
-.bot-control {
-    margin-top: 10px;
+/* ==============================
+   ЛЕВАЯ ЧАСТЬ (АВТОРСКИЕ ПРАВА)
+============================== */
+footer p {
+    margin: 0;
+    padding: 0 5px;
+}
+
+/* ==============================
+   ЦЕНТРАЛЬНАЯ ЧАСТЬ (ЛОГОТИП + НАЗВАНИЕ)
+============================== */
+.footer-center {
+    flex-grow: 3; /* Даем больше места среднему блоку */
     text-align: center;
 }
 
-.bot-button {
-    background-color: #4CAF50; /* Зелёный фон */
-    color: white; /* Белый текст */
-    border: none; /* Убираем рамку */
-    padding: 10px 20px; /* Внутренние отступы */
-    margin: 5px; /* Отступы между кнопками */
-    cursor: pointer; /* Курсор "рука" при наведении */
-    font-size: 14px; /* Размер текста */
-    border-radius: 5px; /* Скруглённые углы */
-    transition: background-color 0.3s ease; /* Плавная смена цвета */
-}
-
-.bot-button:hover {
-    background-color: #45a049; /* Более тёмный зелёный при наведении */
-}
-
-.bot-button:active {
-    background-color: #397d3a; /* Ещё более тёмный зелёный при нажатии */
-}
-
-.bot-button:disabled {
-    background-color: #6c757d; /* Серый фон для неактивных кнопок */
-    cursor: not-allowed; /* Неактивный курсор */
-}
-
-.footer-logo {
-    width: 15px;
-    position: relative;
-    top: -2.5px; /* Поднимаем логотип */
-}
-
+/* ==============================
+   ЛОГОТИП + ТЕКСТ
+============================== */
 .logo-text {
-    display: inline-flex;
-    align-items: center; /* Центрируем по вертикали */
+    display: flex;
+    align-items: center;
     gap: 2px; /* Расстояние между логотипом и текстом */
 }
 
-.logo-text span {
-    display: flex;
-    align-items: flex-end; /* Опускаем текст вниз */
+/* ==============================
+   ЛОГОТИП ФУТЕРА
+============================== */
+.footer-logo {
+    width: 14px;
+    height: auto;
 }
 
+/* ==============================
+   ПРАВАЯ ЧАСТЬ (КНОПКИ БОТА)
+============================== */
+.footer-right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1px; /* Отступ между кнопками */
+}
+
+/* ==============================
+   БЛОК УПРАВЛЕНИЯ БОТОМ
+============================== */
+.bot-control {
+    display: flex;
+    gap: 10px; /* Расстояние между кнопками */
+}
+
+.bot-button {
+    padding: 6px 12px; /* Чуть увеличил кнопки */
+    font-size: 12px;
+    border-radius: 3px;
+    background-color: #4CAF50; /* Зелёный */
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.bot-button:hover {
+    background-color: #45a049;
+}
+
+.bot-button:active {
+    background-color: #397d3a;
+}
+
+.bot-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}

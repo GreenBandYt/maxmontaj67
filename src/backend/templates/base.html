@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+
     <title>{% block title %}Default Title{% endblock %}</title>
     <link rel="stylesheet" href="/static/styles/styles.css">
 
     <!-- Подключение FullCalendar -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.css" rel="stylesheet">
+<!--    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.css" rel="stylesheet">-->
 
     {% if session.get('role') == 'admin' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin.css') }}">
@@ -33,30 +36,30 @@
         <!-- Основное содержимое страницы -->
         {% endblock %}
     </main>
-
-    <footer>
+<footer class="footer">
+    <div class="footer-content">
         <p>&copy; 2024 MaxMontaj67. Все права защищены.</p>
-        <p>Разработано -
+        <p>
             <span class="logo-text">
-                <img src="{{ url_for('static', filename='images/logo_g.png') }}" alt="G" class="footer-logo">
+                Разработано - <img src="{{ url_for('static', filename='images/logo_g.png') }}" alt="G" class="footer-logo">
                 reenBandYt (GBt)
             </span>
         </p>
 
-        <!-- Блок управления ботом -->
         {% if environment == 'development' %}
         <div class="bot-control">
             <button id="start-bot" class="bot-button">Запустить бота</button>
             <button id="stop-bot" class="bot-button" style="display:none;">Остановить бота</button>
         </div>
         {% endif %}
-    </footer>
+    </div>
+</footer>
 
 
     <!-- Подключение FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.js"></script>-->
     <!-- Подключение пользовательского скрипта -->
-    <script src="{{ url_for('static', filename='scripts/assign_installer.js') }}"></script>
+<!--    <script src="{{ url_for('static', filename='scripts/assign_installer.js') }}"></script>-->
 
     <!-- Скрипт управления ботом -->
     {% if environment == 'development' %}

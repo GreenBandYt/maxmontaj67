@@ -30,13 +30,7 @@
                     <span class="error-message"></span>
                 </td>
             </tr>
-            <tr>
-                <th>Email (необязательно)</th>
-                <td>
-                    <input type="email" id="email" name="email">
-                    <span class="error-message"></span>
-                </td>
-            </tr>
+
             <tr>
                 <th>Телефон (пример: +71234567890)</th>
                 <td>
@@ -89,16 +83,6 @@
             return true;
         }
 
-        function validateEmail(input) {
-            const emailPattern = /^[\w\.-]+@[\w\.-]+\.\w+$/;
-            if (input.value.trim() && !emailPattern.test(input.value.trim())) {
-                showError(input, "Некорректный email!");
-                return false;
-            }
-            clearError(input);
-            return true;
-        }
-
         function validatePhone(input) {
             const phonePattern = /^\+?\d{10,15}$/;
             if (input.value.trim() && !phonePattern.test(input.value.trim())) {
@@ -112,17 +96,14 @@
         const form = document.getElementById("createCustomerForm");
         if (form) {
             const nameInput = form.querySelector("input[name='name']");
-            const emailInput = form.querySelector("input[name='email']");
             const phoneInput = form.querySelector("input[name='phone']");
 
             if (nameInput) nameInput.addEventListener("blur", () => validateName(nameInput));
-            if (emailInput) emailInput.addEventListener("blur", () => validateEmail(emailInput));
             if (phoneInput) phoneInput.addEventListener("blur", () => validatePhone(phoneInput));
 
             form.addEventListener("submit", function (event) {
                 let isValid = true;
                 if (nameInput) isValid = isValid && validateName(nameInput);
-                if (emailInput) isValid = isValid && validateEmail(emailInput);
                 if (phoneInput) isValid = isValid && validatePhone(phoneInput);
                 if (!isValid) event.preventDefault();
             });

@@ -15,46 +15,35 @@
     <!-- Поиск заказчика -->
     <div class="search-bar">
         🔍 <label for="searchCustomers">Найти заказчика:</label>
-        <input type="text" id="searchCustomers" placeholder="Введите имя или email...">
-        <button type="button" id="clearSearch">❌</button>
+        <input type="text" id="searchCustomers" placeholder="Введите имя заказчика для поиска..." autocomplete="off">
+        <ul id="customerDropdown" class="dropdown-menu"></ul>
     </div>
 
     <form id="createOrderForm" method="POST" action="{{ url_for('admin.create_order') }}">
-        <table style="width: 100%; border-collapse: collapse;">
-            <colgroup>
-                <col style="width: 20%;">
-                <col style="width: 80%;">
-            </colgroup>
+        <input type="hidden" id="customer_id" name="customer_id">
 
+        <table style="width: 100%; border-collapse: collapse;">
             <tr>
                 <th>Имя заказчика</th>
                 <td>
-                    <select id="customer_id" name="customer_id" style="width: 100%;" required>
-                        <option value="">Выберите заказчика...</option>
-                        {% for customer in customers %}
-                        <option value="{{ customer.id }}" data-phone="{{ customer.phone }}" data-address="{{ customer.address }}">
-                            {{ customer.name }} ({{ customer.email }})
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <input type="text" id="customer_name" name="customer_name" style="width: 100%;" readonly required>
                     <span class="error-message"></span>
                 </td>
             </tr>
             <tr>
                 <th>Телефон заказчика</th>
                 <td>
-                    <input type="text" id="customer_phone" name="customer_phone" style="width: 100%;" required>
+                    <input type="text" id="customer_phone" name="customer_phone" style="width: 100%;" readonly required>
                     <span class="error-message"></span>
                 </td>
             </tr>
             <tr>
                 <th>Адрес заказчика</th>
                 <td>
-                    <input type="text" id="customer_address" name="customer_address" style="width: 100%;" required>
+                    <input type="text" id="customer_address" name="customer_address" style="width: 100%;" readonly required>
                     <span class="error-message"></span>
                 </td>
             </tr>
-
             <tr>
                 <th>Короткое описание</th>
                 <td>
@@ -69,7 +58,6 @@
                     <span class="error-message"></span>
                 </td>
             </tr>
-
             <tr>
                 <th>Крайний срок / Стоимость</th>
                 <td>
@@ -78,7 +66,6 @@
                     <span class="error-message"></span>
                 </td>
             </tr>
-
             <tr>
                 <th>Отправить уведомление</th>
                 <td class="checkbox-container">
@@ -92,7 +79,6 @@
                     </label>
                 </td>
             </tr>
-
         </table>
 
         <div style="text-align: center; margin-top: 20px;">
@@ -101,60 +87,79 @@
     </form>
 </main>
 
-<!-- Автозаполнение данных заказчика и работающий поиск -->
+<!-- Улучшенный поиск с автозаполнением -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const customerSelect = document.getElementById("customer_id");
     const searchInput = document.getElementById("searchCustomers");
-    const clearButton = document.getElementById("clearSearch");
+    const dropdown = document.getElementById("customerDropdown");
+    const customerIdInput = document.getElementById("customer_id");
+    const customerNameInput = document.getElementById("customer_name");
     const phoneInput = document.getElementById("customer_phone");
     const addressInput = document.getElementById("customer_address");
 
-    // Сохраняем оригинальные данные заказчиков
-    let originalCustomers = Array.from(customerSelect.options);
+    let customers = {{ customers | tojson }};  // Получаем список заказчиков из Python
 
-    function filterCustomers() {
-        let filter = searchInput.value.toLowerCase();
-
-        // Очищаем список, оставляя первую опцию "Выберите заказчика..."
-        customerSelect.innerHTML = "";
-        customerSelect.appendChild(originalCustomers[0]); // Восстанавливаем первую строку
-
-        let found = false;
-
-        originalCustomers.slice(1).forEach(option => {
-            if (option.textContent.toLowerCase().includes(filter)) {
-                customerSelect.appendChild(option);
-                if (!found) {
-                    customerSelect.value = option.value;
-                    found = true;
-                }
-            }
-        });
-
-        // Если совпадений нет, сбрасываем выбор
-        if (!found) {
-            customerSelect.value = "";
+    function updateDropdown(filteredCustomers) {
+        dropdown.innerHTML = "";
+        if (filteredCustomers.length === 0) {
+            dropdown.style.display = "none";
+            return;
         }
+
+        dropdown.style.display = "block";
+        filteredCustomers.forEach(customer => {
+            let item = document.createElement("li");
+            item.textContent = `${customer.name} (${customer.email || "нет email"})`;
+            item.dataset.id = customer.id;
+            item.dataset.phone = customer.phone || "";
+            item.dataset.address = customer.address || "";
+            item.addEventListener("click", function () {
+                customerIdInput.value = this.dataset.id;
+                customerNameInput.value = this.textContent;
+                phoneInput.value = this.dataset.phone;
+                addressInput.value = this.dataset.address;
+                dropdown.style.display = "none";
+            });
+            dropdown.appendChild(item);
+        });
     }
 
-    function clearCustomerSearch() {
-        searchInput.value = "";
-        customerSelect.innerHTML = "";
-        originalCustomers.forEach(option => customerSelect.appendChild(option));
-        customerSelect.value = "";
-    }
+    searchInput.addEventListener("input", function () {
+        let query = searchInput.value.toLowerCase();
+        let filteredCustomers = customers.filter(customer =>
+            customer.name.toLowerCase().includes(query) || (customer.email || "").toLowerCase().includes(query)
+        );
+        updateDropdown(filteredCustomers);
+    });
 
-    function updateCustomerDetails() {
-        let selectedOption = customerSelect.options[customerSelect.selectedIndex];
-        phoneInput.value = selectedOption.dataset.phone || "";
-        addressInput.value = selectedOption.dataset.address || "";
-    }
-
-    searchInput.addEventListener("input", filterCustomers);
-    clearButton.addEventListener("click", clearCustomerSearch);
-    customerSelect.addEventListener("change", updateCustomerDetails);
+    document.addEventListener("click", function (event) {
+        if (!dropdown.contains(event.target) && event.target !== searchInput) {
+            dropdown.style.display = "none";
+        }
+    });
 });
 </script>
+
+<style>
+.dropdown-menu {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 300px;
+    display: none;
+}
+.dropdown-menu li {
+    padding: 5px;
+    cursor: pointer;
+}
+.dropdown-menu li:hover {
+    background: #ddd;
+}
+</style>
 
 {% endblock %}
