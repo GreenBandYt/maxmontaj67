@@ -1,11 +1,11 @@
 import os
 import sys
 import logging
-import inspect
-from functools import wraps
+import asyncio
+import threading  # ✅ Добавляем потоки
+from telegram.ext import ApplicationBuilder
 from telegram_bot.handlers.registration import register_all_handlers
 from bot_utils.bot_config import BOT_DB_CONFIG
-from telegram.ext import ApplicationBuilder
 
 # Добавляем папку "telegram_bot" в sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -14,31 +14,17 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
-# def find_decorated_functions():
-#     """
-#     Поиск всех функций, которые имеют декораторы.
-#     """
-#     decorated_functions = []
-#
-#     logging.info("Поиск задекорированных функций...")
-#
-#     for name, func in globals().items():
-#         if callable(func) and hasattr(func, '__wrapped__'):
-#             logging.info(f"Найдена задекорированная функция: {func.__name__}")
-#             decorated_functions.append({
-#                 "function_name": func.__name__,
-#                 "decorator": func.__wrapped__.__name__,
-#                 "module": func.__module__,
-#                 "description": func.__doc__ or "Описание отсутствует"
-#             })
-#
-#     logging.info(f"Найдено декорированных функций: {len(decorated_functions)}")
-#     return decorated_functions
+# ✅ Функция для запуска `notifications.py` в отдельном потоке
+def start_notifications():
+    from bot_utils.messages.notifications import send_notifications  # ✅ Импорт функции отправки уведомлений
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(send_notifications())
 
 
 def run_bot():
     """
-    Запуск Telegram-бота.
+    Запуск Telegram-бота и системы уведомлений.
     """
     try:
         # Проверяем наличие токена
@@ -52,11 +38,16 @@ def run_bot():
         # Регистрируем обработчики
         register_all_handlers(application)
 
-        logging.info("Telegram-бот успешно запущен. Ожидание сообщений...")
+        # ✅ Запускаем `notifications.py` в отдельном потоке
+        notification_thread = threading.Thread(target=start_notifications, daemon=True)
+        notification_thread.start()
+        logging.info("📢 Уведомления о заказах запущены в фоновом режиме!")
+
+        logging.info("✅ Telegram-бот успешно запущен. Ожидание сообщений...")
         application.run_polling()
 
     except Exception as e:
-        logging.error(f"Ошибка запуска бота: {e}")
+        logging.error(f"❌ Ошибка запуска бота: {e}")
 
 
 if __name__ == "__main__":
