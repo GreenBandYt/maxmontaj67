@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import asyncio
+import pymysql  # ✅ Добавляем импорт
+
 from datetime import datetime
 from telegram import Bot
 from telegram_bot.bot_token import TELEGRAM_BOT_TOKEN
@@ -12,7 +14,8 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 # ✅ Теперь импорт `db_connect` должен работать
-from src.backend.database import db_connect
+from telegram_bot.bot_utils.bot_db_utils import db_connect
+
 
 # 🛠 Настройка логирования
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -39,24 +42,27 @@ async def send_notifications():
         await asyncio.sleep(60)  # Проверка каждые 60 секунд
 
 async def process_new_orders():
-    """
-    🛠 Обрабатывает новые заказы в `pending_orders` и отправляет уведомления.
-    """
+    """Обрабатывает новые заказы в `pending_orders` и отправляет уведомления."""
     try:
         with db_connect() as conn:
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor(pymysql.cursors.DictCursor)  # ✅ Оставляем DictCursor
             cursor.execute("SELECT * FROM pending_orders WHERE status = 'new'")
             new_orders = cursor.fetchall()
+
+            logging.info(f"📌 Найдено {len(new_orders)} новых заказов для обработки.")
 
             if not new_orders:
                 logging.info("✅ Нет новых заказов для отправки.")
                 return
 
             for order in new_orders:
+                logging.info(f"🔄 Обрабатываем заказ ID: {order['id']}")
                 await notify_users(order, conn, cursor)
 
     except Exception as e:
         logging.error(f"❌ Ошибка обработки новых заказов: {e}")
+
+
 
 async def notify_users(order, conn, cursor):
     """
@@ -67,19 +73,19 @@ async def notify_users(order, conn, cursor):
 
     # Отправляем исполнителям
     if order["send_to_executor"]:
-        success = await send_to_role("executor", message, cursor)
+        success = await send_to_role("4", message, cursor)
 
     # Отправляем специалистам
     if order["send_to_specialist"]:
-        success = await send_to_role("specialist", message, cursor)
+        success = await send_to_role("3", message, cursor)
 
     # ✅ Если уведомление отправлено, обновляем статус заказа
     if success:
         cursor.execute(
-            "UPDATE pending_orders SET status = 'wait' WHERE id = %s", (order["id"],)
+            "UPDATE pending_orders SET status = 'notified' WHERE id = %s", (order["id"],)
         )
         conn.commit()
-        logging.info(f"🔄 Заказ {order['id']} переведен в статус 'wait'")
+        logging.info(f"🔄 Заказ {order['id']} переведен в статус 'notified'")
 
 async def send_to_role(role, message, cursor):
     """
@@ -122,7 +128,6 @@ def format_order_message(order):
 📌 *Описание:* {order['short_description']}
 💰 *Цена:* {order['price']} ₽
 📅 *Дедлайн:* {order['deadline_at']}
-📍 *Адрес:* {order['customer_address']}
 👀 *Кто первый возьмет заказ?*
 """
 
