@@ -1,17 +1,21 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request, flash, jsonify
 from utils import db_connect
 from decimal import Decimal
+from datetime import datetime
+# import locale
 
 
 from utils.validators import is_user_data_complete
 import logging
 import os
+import pymysql
+import pytz
+
 from datetime import datetime
 from telegram_bot.dictionaries.text_actions import TEXT_ACTIONS
 from telegram_bot.bot_utils.access_control import find_decorated_functions
 
-
-
+MOSCOW_TZ = pytz.timezone("Europe/Moscow")
 
 # Логирование
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -927,3 +931,95 @@ def create_customer():
         return redirect(url_for("admin.customers"))
 
     return render_template("admin/users/admin_customer_create.html")
+
+from datetime import datetime, timedelta
+import logging
+import pytz
+import pymysql
+
+MOSCOW_TZ = pytz.timezone("Europe/Moscow")
+
+# 🔧 Настройка логирования
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - [%(levelname)s] - %(message)s")
+
+@admin_bp.route('/utils/notifications', methods=['GET', 'POST'])
+def utils_notifications():
+    """Страница настроек уведомлений (тайминги и логика отправки)."""
+    logging.info("🚀 Вход в маршрут настроек уведомлений")
+
+    if session.get("role") not in ["admin"]:  # ✅ Доступ только для администраторов
+        logging.warning("⛔ Доступ запрещён: недостаточно прав")
+        return redirect(url_for("home"))
+
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+        if request.method == "POST":
+            logging.info("📌 Получаем данные из формы...")
+            work_hours_start = request.form.get("work_hours_start")
+            work_hours_end = request.form.get("work_hours_end")
+            # initial_delay = request.form.get("initial_delay")
+            repeat_interval = request.form.get("repeat_interval")
+            repeat_notified_interval = request.form.get("repeat_notified_interval")  # ✅ Добавлено
+
+            logging.debug(f"📊 Данные из формы: start={work_hours_start}, end={work_hours_end}, "
+                          f" repeat_interval={repeat_interval}, "
+                          f"repeat_notified_interval={repeat_notified_interval}")
+
+            # ✅ Обновляем настройки в БД (Теперь два интервала!)
+            cursor.execute("""
+                UPDATE notification_settings 
+                SET work_hours_start=%s, work_hours_end=%s,  
+                    repeat_interval=%s, repeat_notified_interval=%s
+                WHERE id = 1
+            """, (work_hours_start, work_hours_end, repeat_interval, repeat_notified_interval))
+            conn.commit()
+
+            logging.info("✅ Настройки уведомлений обновлены в БД")
+            flash("✅ Настройки уведомлений обновлены!", "success")
+            return redirect(url_for("admin.utils_notifications"))
+
+        # ✅ Загружаем текущие настройки
+        logging.info("📥 Загружаем настройки из БД...")
+        cursor.execute("SELECT * FROM notification_settings WHERE id = 1")
+        settings = cursor.fetchone()
+        logging.debug(f"📊 Текущие настройки: {settings}")
+
+        # **🛠 Конвертируем `timedelta` в `HH:MM` для шаблона**
+        def format_timedelta(td):
+            if isinstance(td, timedelta):
+                return (datetime.min + td).strftime("%H:%M")
+            return td  # Если уже строка, оставляем как есть
+
+        settings["work_hours_start"] = format_timedelta(settings["work_hours_start"])
+        settings["work_hours_end"] = format_timedelta(settings["work_hours_end"])
+
+        logging.debug(f"🛠 После конвертации: start={settings['work_hours_start']}, end={settings['work_hours_end']}")
+
+        # ✅ Загружаем активные заказы
+        logging.info("📥 Загружаем активные заказы из pending_orders...")
+        cursor.execute("SELECT * FROM pending_orders")
+        pending_orders = cursor.fetchall()
+        logging.debug(f"📊 Загружено заказов: {len(pending_orders)}")
+
+    # ✅ Добавляем текущее время и день недели
+    now = datetime.now(MOSCOW_TZ)
+    days_ru = {
+        "Monday": "Понедельник",
+        "Tuesday": "Вторник",
+        "Wednesday": "Среда",
+        "Thursday": "Четверг",
+        "Friday": "Пятница",
+        "Saturday": "Суббота",
+        "Sunday": "Воскресенье"
+    }
+
+    logging.info(f"⌚ Текущее время: {now.strftime('%H:%M:%S')}, день недели: {days_ru[now.strftime('%A')]}")
+
+    return render_template(
+        "admin/utils/admin_notifications_settings.html",
+        settings=settings,
+        pending_orders=pending_orders,
+        current_time=now.strftime("%H:%M:%S"),
+        current_day=days_ru[now.strftime("%A")]
+    )

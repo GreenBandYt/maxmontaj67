@@ -1,0 +1,78 @@
+{% extends "admin/utils/utils_base.html" %}
+
+{% block utils_content %}
+<h2>⚙️ Настройки уведомлений</h2>
+
+<!-- 🔥 Блок с текущим временем и днём недели -->
+<div class="current-time-block">
+    🕒 <strong>Текущее время:</strong> {{ current_time }}
+    📅 <strong>День недели:</strong> {{ current_day }}
+</div>
+
+<!-- 🔧 Форма настройки таймингов -->
+<form id="notificationSettingsForm" method="POST" action="{{ url_for('admin.utils_notifications') }}">
+    <table class="settings-table">
+<tr>
+    <th>Интервал отправки сообщений (новые заказы) (в минутах):</th>
+    <td>
+        <input type="number" name="repeat_interval" value="{{ settings.repeat_interval }}" min="1" required>
+    </td>
+</tr>
+<tr>
+    <th>Интервал повторных сообщений (ожидание ответа) (в минутах):</th>
+    <td>
+        <input type="number" name="repeat_notified_interval" value="{{ settings.repeat_notified_interval }}" min="1" required>
+    </td>
+</tr>
+
+            <th>Часы работы (начало):</th>
+            <td>
+                <input type="time" name="work_hours_start" value="{{ settings.work_hours_start }}" required>
+            </td>
+        </tr>
+        <tr>
+            <th>Часы работы (конец):</th>
+            <td>
+                <input type="time" name="work_hours_end" value="{{ settings.work_hours_end }}" required>
+            </td>
+        </tr>
+    </table>
+    <div style="text-align: center; margin-top: 15px;">
+        <button type="submit" class="button">💾 Сохранить настройки</button>
+    </div>
+</form>
+
+<hr>
+
+<!-- 📋 Таблица текущих заказов в ожидании -->
+<h2>📋 Активные заказы в `pending_orders`</h2>
+<div class="scrollable-table">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Описание</th>
+                <th>Цена</th>
+                <th>Дедлайн</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in pending_orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.short_description }}</td>
+                <td>{{ order.price }} ₽</td>
+                <td>{{ order.deadline_at }}</td>
+                <td>{{ order.status }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">📭 Нет активных заказов</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
