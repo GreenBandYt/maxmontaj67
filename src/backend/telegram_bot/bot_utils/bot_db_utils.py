@@ -17,7 +17,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def db_connect():
     """
-    Устанавливает соединение с базой данных с использованием PyMySQL.
+    Устанавливает соединение с базой данных с использованием PyMySQL,
+    сразу устанавливая московский часовой пояс для сессии.
     """
     try:
         logging.debug("Попытка подключения к базе данных с параметрами: %s", BOT_DB_CONFIG)
@@ -27,7 +28,8 @@ def db_connect():
             password=BOT_DB_CONFIG['password'],
             database=BOT_DB_CONFIG['database'],
             charset=BOT_DB_CONFIG['charset'],
-            cursorclass=pymysql.cursors.DictCursor
+            cursorclass=pymysql.cursors.DictCursor,
+            init_command="SET time_zone = '+03:00'"
         )
         logging.debug("Успешное подключение к базе данных через PyMySQL")
         return conn

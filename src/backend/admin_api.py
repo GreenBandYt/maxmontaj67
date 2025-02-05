@@ -931,23 +931,24 @@ def create_customer():
         return redirect(url_for("admin.customers"))
 
     return render_template("admin/users/admin_customer_create.html")
-
 from datetime import datetime, timedelta
 import logging
 import pytz
 import pymysql
 
-MOSCOW_TZ = pytz.timezone("Europe/Moscow")
+from flask import request, session, redirect, url_for, flash, render_template
+from telegram_bot.bot_utils.bot_db_utils import db_connect
 
-# 🔧 Настройка логирования
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - [%(levelname)s] - %(message)s")
+
+# Устанавливаем московский часовой пояс
+MOSCOW_TZ = pytz.timezone("Europe/Moscow")
 
 @admin_bp.route('/utils/notifications', methods=['GET', 'POST'])
 def utils_notifications():
     """Страница настроек уведомлений (тайминги и логика отправки)."""
     logging.info("🚀 Вход в маршрут настроек уведомлений")
 
-    if session.get("role") not in ["admin"]:  # ✅ Доступ только для администраторов
+    if session.get("role") not in ["admin"]:
         logging.warning("⛔ Доступ запрещён: недостаточно прав")
         return redirect(url_for("home"))
 
@@ -956,17 +957,14 @@ def utils_notifications():
 
         if request.method == "POST":
             logging.info("📌 Получаем данные из формы...")
-            work_hours_start = request.form.get("work_hours_start")
-            work_hours_end = request.form.get("work_hours_end")
-            # initial_delay = request.form.get("initial_delay")
+            work_hours_start = request.form.get("work_hours_start")  # Ожидаем формат "HH:MM"
+            work_hours_end = request.form.get("work_hours_end")        # Ожидаем формат "HH:MM"
             repeat_interval = request.form.get("repeat_interval")
-            repeat_notified_interval = request.form.get("repeat_notified_interval")  # ✅ Добавлено
+            repeat_notified_interval = request.form.get("repeat_notified_interval")
 
             logging.debug(f"📊 Данные из формы: start={work_hours_start}, end={work_hours_end}, "
-                          f" repeat_interval={repeat_interval}, "
-                          f"repeat_notified_interval={repeat_notified_interval}")
+                          f"repeat_interval={repeat_interval}, repeat_notified_interval={repeat_notified_interval}")
 
-            # ✅ Обновляем настройки в БД (Теперь два интервала!)
             cursor.execute("""
                 UPDATE notification_settings 
                 SET work_hours_start=%s, work_hours_end=%s,  
@@ -979,30 +977,27 @@ def utils_notifications():
             flash("✅ Настройки уведомлений обновлены!", "success")
             return redirect(url_for("admin.utils_notifications"))
 
-        # ✅ Загружаем текущие настройки
         logging.info("📥 Загружаем настройки из БД...")
         cursor.execute("SELECT * FROM notification_settings WHERE id = 1")
         settings = cursor.fetchone()
         logging.debug(f"📊 Текущие настройки: {settings}")
 
-        # **🛠 Конвертируем `timedelta` в `HH:MM` для шаблона**
+        # Если в БД поля work_hours_start/work_hours_end хранятся как timedelta, форматируем их в "HH:MM"
         def format_timedelta(td):
             if isinstance(td, timedelta):
                 return (datetime.min + td).strftime("%H:%M")
-            return td  # Если уже строка, оставляем как есть
+            return td
 
         settings["work_hours_start"] = format_timedelta(settings["work_hours_start"])
         settings["work_hours_end"] = format_timedelta(settings["work_hours_end"])
-
         logging.debug(f"🛠 После конвертации: start={settings['work_hours_start']}, end={settings['work_hours_end']}")
 
-        # ✅ Загружаем активные заказы
         logging.info("📥 Загружаем активные заказы из pending_orders...")
         cursor.execute("SELECT * FROM pending_orders")
         pending_orders = cursor.fetchall()
         logging.debug(f"📊 Загружено заказов: {len(pending_orders)}")
 
-    # ✅ Добавляем текущее время и день недели
+    # Получаем текущее время в Москве
     now = datetime.now(MOSCOW_TZ)
     days_ru = {
         "Monday": "Понедельник",
@@ -1014,12 +1009,29 @@ def utils_notifications():
         "Sunday": "Воскресенье"
     }
 
-    logging.info(f"⌚ Текущее время: {now.strftime('%H:%M:%S')}, день недели: {days_ru[now.strftime('%A')]}")
+    # Вычисляем время отсечки для повторного уведомления
+    check_time = now - timedelta(minutes=int(settings["repeat_notified_interval"]), seconds=5)
+
+    # Определяем адаптивный интервал отправки уведомлений
+    adaptive_interval = int(settings["repeat_interval"])
+    if now.weekday() in [5, 6]:  # Суббота или Воскресенье
+        adaptive_interval = 8 * 60  # 8 часов
+    else:
+        # Сравнение рабочего времени: переводим строки в объекты time
+        work_start = datetime.strptime(settings["work_hours_start"], "%H:%M").time()
+        work_end = datetime.strptime(settings["work_hours_end"], "%H:%M").time()
+        if not (work_start <= now.time() < work_end):
+            adaptive_interval = 30  # 30 минут вне рабочего времени
+
+    logging.info(f"⏳ Время отсечки (check_time): {check_time.strftime('%H:%M:%S')}")
+    logging.info(f"⏱ Текущий интервал отправки: {adaptive_interval} минут")
 
     return render_template(
         "admin/utils/admin_notifications_settings.html",
         settings=settings,
         pending_orders=pending_orders,
         current_time=now.strftime("%H:%M:%S"),
+        check_time=check_time.strftime("%H:%M:%S"),
+        adaptive_interval=adaptive_interval,
         current_day=days_ru[now.strftime("%A")]
     )

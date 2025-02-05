@@ -7,24 +7,26 @@
 <div class="current-time-block">
     🕒 <strong>Текущее время:</strong> {{ current_time }}
     📅 <strong>День недели:</strong> {{ current_day }}
+    ⏳ <strong>Время отсечки (check_time):</strong> {{ check_time }}
+    ⏱️ <strong>Текущий интервал отправки:</strong> {{ adaptive_interval }} минут
 </div>
 
 <!-- 🔧 Форма настройки таймингов -->
 <form id="notificationSettingsForm" method="POST" action="{{ url_for('admin.utils_notifications') }}">
     <table class="settings-table">
-<tr>
-    <th>Интервал отправки сообщений (новые заказы) (в минутах):</th>
-    <td>
-        <input type="number" name="repeat_interval" value="{{ settings.repeat_interval }}" min="1" required>
-    </td>
-</tr>
-<tr>
-    <th>Интервал повторных сообщений (ожидание ответа) (в минутах):</th>
-    <td>
-        <input type="number" name="repeat_notified_interval" value="{{ settings.repeat_notified_interval }}" min="1" required>
-    </td>
-</tr>
-
+        <tr>
+            <th>Интервал отправки сообщений (новые заказы) (в минутах):</th>
+            <td>
+                <input type="number" name="repeat_interval" value="{{ settings.repeat_interval }}" min="1" required>
+            </td>
+        </tr>
+        <tr>
+            <th>Интервал повторных сообщений (ожидание ответа) (в минутах):</th>
+            <td>
+                <input type="number" name="repeat_notified_interval" value="{{ settings.repeat_notified_interval }}" min="1" required>
+            </td>
+        </tr>
+        <tr>
             <th>Часы работы (начало):</th>
             <td>
                 <input type="time" name="work_hours_start" value="{{ settings.work_hours_start }}" required>
@@ -55,6 +57,7 @@
                 <th>Цена</th>
                 <th>Дедлайн</th>
                 <th>Статус</th>
+                <th>Последнее уведомление (МСК)</th> <!-- ✅ Исправлено -->
             </tr>
         </thead>
         <tbody>
@@ -65,10 +68,11 @@
                 <td>{{ order.price }} ₽</td>
                 <td>{{ order.deadline_at }}</td>
                 <td>{{ order.status }}</td>
+                <td>{{ order.last_notified_at }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" style="text-align: center;">📭 Нет активных заказов</td>
+                <td colspan="6" style="text-align: center;">📭 Нет активных заказов</td>
             </tr>
             {% endfor %}
         </tbody>

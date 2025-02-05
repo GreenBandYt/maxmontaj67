@@ -29,14 +29,14 @@ def start_notifications():
     if BASE_DIR not in sys.path:
         sys.path.insert(0, BASE_DIR)
 
-    from bot_utils.messages.notifications import send_notifications
+    from bot_utils.messages.notifications import notification_worker  # ✅ Исправлено
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
         while not stop_notifications.is_set():
-            loop.run_until_complete(send_notifications())
+            loop.run_until_complete(notification_worker())  # ✅ Исправлено
     except Exception as e:
         logging.error(f"❌ Ошибка в потоке `start_notifications`: {e}")
 
