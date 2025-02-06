@@ -2,6 +2,17 @@
 
 # Пример callback_data и связанных функций
 CALLBACK_ACTIONS = {
-    "example_callback": "example_function",  # Укажите имя функции
-    # Добавьте другие callback_data
+    # Для администратора
+
+    # Для диспетчера
+
+    # Для монтажника
+    "executor_accept_order": "handle_executor_accept_order",
+    "executor_decline_order": "handle_executor_decline_order",
+
+    # Для специалиста
+    "specialist_accept_order": "handle_specialist_accept_order",
+    "specialist_decline_order": "handle_specialist_decline_order",
+
+    # Для клиента
 }
