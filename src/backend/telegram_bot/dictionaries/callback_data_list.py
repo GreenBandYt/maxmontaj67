@@ -1,3 +1,4 @@
+
 CALLBACK_DATA_LIST = [
     "admin_analytics",          # Аналитика (Администратор) # admin_menu.py
     "admin_notifications",      # Уведомления (Администратор) # admin_menu.py

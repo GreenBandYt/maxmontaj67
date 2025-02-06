@@ -931,6 +931,7 @@ def create_customer():
         return redirect(url_for("admin.customers"))
 
     return render_template("admin/users/admin_customer_create.html")
+
 from datetime import datetime, timedelta
 import logging
 import pytz
@@ -1024,7 +1025,7 @@ def utils_notifications():
             adaptive_interval = 30  # 30 минут вне рабочего времени
 
     logging.info(f"⏳ Время отсечки (check_time): {check_time.strftime('%H:%M:%S')}")
-    logging.info(f"⏱ Текущий интервал отправки: {adaptive_interval} минут")
+    logging.info(f"⏱ Текущий интервал отправки новых: {adaptive_interval} минут")
 
     return render_template(
         "admin/utils/admin_notifications_settings.html",

@@ -3,53 +3,107 @@
 {% block utils_content %}
 <h2>⚙️ Настройки уведомлений</h2>
 
-<!-- 🔥 Блок с текущим временем и днём недели -->
-<div class="current-time-block">
-    🕒 <strong>Текущее время:</strong> {{ current_time }}
-    📅 <strong>День недели:</strong> {{ current_day }}
-    ⏳ <strong>Время отсечки (check_time):</strong> {{ check_time }}
-    ⏱️ <strong>Текущий интервал отправки:</strong> {{ adaptive_interval }} минут
-</div>
+<!-- Таблица одной строкой для верхних данных, тянется на 100% -->
+<table style="margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; width: 100%;">
+    <tr>
+        <td style="padding: 5px; font-weight: bold;">Сейчас:</td>
+        <td style="padding: 5px;">{{ current_time }}</td>
 
-<!-- 🔧 Форма настройки таймингов -->
-<form id="notificationSettingsForm" method="POST" action="{{ url_for('admin.utils_notifications') }}">
-    <table class="settings-table">
-        <tr>
-            <th>Интервал отправки сообщений (новые заказы) (в минутах):</th>
-            <td>
-                <input type="number" name="repeat_interval" value="{{ settings.repeat_interval }}" min="1" required>
-            </td>
-        </tr>
-        <tr>
-            <th>Интервал повторных сообщений (ожидание ответа) (в минутах):</th>
-            <td>
-                <input type="number" name="repeat_notified_interval" value="{{ settings.repeat_notified_interval }}" min="1" required>
-            </td>
-        </tr>
-        <tr>
-            <th>Часы работы (начало):</th>
-            <td>
-                <input type="time" name="work_hours_start" value="{{ settings.work_hours_start }}" required>
-            </td>
-        </tr>
-        <tr>
-            <th>Часы работы (конец):</th>
-            <td>
-                <input type="time" name="work_hours_end" value="{{ settings.work_hours_end }}" required>
-            </td>
-        </tr>
-    </table>
-    <div style="text-align: center; margin-top: 15px;">
-        <button type="submit" class="button">💾 Сохранить настройки</button>
-    </div>
-</form>
+        <td style="padding: 5px; font-weight: bold;">День:</td>
+        <td style="padding: 5px;">{{ current_day }}</td>
 
-<hr>
+        <td style="padding: 5px; font-weight: bold;">Отсечка:</td>
+        <td style="padding: 5px;">{{ check_time }}</td>
 
-<!-- 📋 Таблица текущих заказов в ожидании -->
+        <td style="padding: 5px; font-weight: bold;">Интервал:</td>
+        <td style="padding: 5px;">{{ adaptive_interval }} минут</td>
+    </tr>
+</table>
+
+<!-- Параметры уведомлений на одной строке -->
+<fieldset style="width: 98%; margin: 0 0 0px 0; border: 1px solid #ccc; border-radius: 5px;">
+    <legend style="font-weight: bold; padding: 0 10px;">Параметры уведомлений</legend>
+
+    <form id="notificationSettingsForm" method="POST" action="{{ url_for('admin.utils_notifications') }}">
+        <table style="width: 100%; border-spacing: 0; border-collapse: collapse; table-layout: fixed;">
+            <colgroup>
+                <!-- «Новые, мин:» -->
+                <col style="width: 120px;" />
+                <col style="width: 80px;" />
+                <!-- «Повторы, мин:» -->
+                <col style="width: 120px;" />
+                <col style="width: 80px;" />
+                <!-- «Начало:» -->
+                <col style="width: 80px;" />
+                <col style="width: 70px;" />
+                <!-- «Конец:» -->
+                <col style="width: 80px;" />
+                <col style="width: 70px;" />
+                <!-- «Дедлайн (дни):» -->
+                <col style="width: 120px;" />
+                <col style="width: 70px;" />
+                <!-- Кнопка -->
+                <col style="width: auto;" />
+            </colgroup>
+            <tr>
+                <!-- Новые, мин -->
+                <th style="text-align: left; padding: 5px; white-space: nowrap;">Новые, мин:</th>
+                <td style="padding: 5px;">
+                    <input type="number" name="repeat_interval"
+                           value="{{ settings.repeat_interval }}"
+                           min="1" required
+                           style="width: 80px;" />
+                </td>
+
+                <!-- Повторы, мин -->
+                <th style="text-align: left; padding: 5px; white-space: nowrap;">Повторы, мин:</th>
+                <td style="padding: 5px;">
+                    <input type="number" name="repeat_notified_interval"
+                           value="{{ settings.repeat_notified_interval }}"
+                           min="1" required
+                           style="width: 80px;" />
+                </td>
+
+                <!-- Начало -->
+                <th style="text-align: left; padding: 5px; white-space: nowrap;">Начало:</th>
+                <td style="padding: 5px;">
+                    <input type="time" name="work_hours_start"
+                           value="{{ settings.work_hours_start }}"
+                           required
+                           style="width: 70px;" />
+                </td>
+
+                <!-- Конец -->
+                <th style="text-align: left; padding: 5px; white-space: nowrap;">Конец:</th>
+                <td style="padding: 5px;">
+                    <input type="time" name="work_hours_end"
+                           value="{{ settings.work_hours_end }}"
+                           required
+                           style="width: 70px;" />
+                </td>
+
+                <!-- Дедлайн (дни) -->
+                <th style="text-align: left; padding: 5px; white-space: nowrap;">Дедлайн (дни):</th>
+                <td style="padding: 5px;">
+                    <input type="number" name="deadline_warning_days"
+                           value="{{ settings.deadline_warning_days }}"
+                           min="1"
+                           style="width: 70px;" />
+                </td>
+
+                <!-- Кнопка сохранения -->
+                <td style="padding: 5px; text-align: left;">
+                    <button type="submit" class="button">💾 Сохранить</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+</fieldset>
+
+<!-- Таблица заказов -->
 <h2>📋 Активные заказы в `pending_orders`</h2>
 <div class="scrollable-table">
-    <table>
+    <table style="width: 100%;">
         <thead>
             <tr>
                 <th>ID</th>
@@ -57,7 +111,7 @@
                 <th>Цена</th>
                 <th>Дедлайн</th>
                 <th>Статус</th>
-                <th>Последнее уведомление (МСК)</th> <!-- ✅ Исправлено -->
+                <th>Последнее уведомление (МСК)</th>
             </tr>
         </thead>
         <tbody>
@@ -78,5 +132,4 @@
         </tbody>
     </table>
 </div>
-
 {% endblock %}
