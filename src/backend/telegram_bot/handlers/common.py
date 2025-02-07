@@ -15,6 +15,15 @@ from telegram_bot.dictionaries.callback_actions import CALLBACK_ACTIONS
 from telegram_bot.dictionaries.smart_replies import get_smart_reply
 from telegram_bot.dictionaries.states import INITIAL_STATES
 
+from handlers.executor.executor_menu import (
+    handle_executor_accept_order,
+    handle_executor_decline_order,
+)
+from handlers.specialist.specialist_menu import (
+    handle_specialist_accept_order,
+    handle_specialist_decline_order,
+)
+
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
 
@@ -225,11 +234,13 @@ async def handle_inline_buttons(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     await query.answer()  # Подтверждаем нажатие кнопки
 
+
     callback_data = query.data  # Получаем callback_data кнопки
     logging.info(f"Получено callback_data: {callback_data}")
 
-    # Проверяем наличие callback_data в словаре
-    action = CALLBACK_ACTIONS.get(callback_data)
+    # Ищем действие по префиксу callback_data (без ID заказа)
+    action = next((v for k, v in CALLBACK_ACTIONS.items() if callback_data.startswith(k)), None)
+
     if action:
         try:
             # Вызываем функцию напрямую из словаря
