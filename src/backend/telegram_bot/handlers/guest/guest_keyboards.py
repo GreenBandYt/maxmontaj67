@@ -16,7 +16,7 @@ def generate_email_error_keyboard():
     keyboard = [
         [InlineKeyboardButton("🔁 Повторить ввод имени", callback_data="repeat_name")],
         [InlineKeyboardButton("✍️ Зарегистрироваться", callback_data="register_user")],
-        [InlineKeyboardButton("📞 Связаться с администратором", callback_data="contact_admin")],
+        [InlineKeyboardButton("📞 Написать администратору", callback_data="contact_admin")],
     ]
     return InlineKeyboardMarkup(keyboard)
 

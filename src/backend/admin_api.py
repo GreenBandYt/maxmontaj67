@@ -835,7 +835,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 @admin_bp.route('/create_order', methods=['GET', 'POST'])
 def create_order():
     """Создание нового заказа с записью в pending_orders."""
@@ -861,8 +860,8 @@ def create_order():
 
                 # Вставка в orders
                 cursor.execute("""
-                    INSERT INTO orders (short_description, description, price, deadline_at, customer_address, customer_id, status, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, 'Ожидает', NOW())
+                    INSERT INTO orders (short_description, description, price, deadline_at, customer_address, customer_id, status, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'Ожидает', NOW(), NOW())
                 """, (short_description, description, price, deadline_at, customer_address, customer_id))
 
                 order_id = cursor.lastrowid  # Получаем ID созданного заказа
@@ -873,8 +872,8 @@ def create_order():
 
                 # Вставка в pending_orders
                 cursor.execute("""
-                    INSERT INTO pending_orders (order_id, short_description, price, deadline_at, send_to_specialist, send_to_executor, status, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, 'new', NOW())
+                    INSERT INTO pending_orders (order_id, short_description, price, deadline_at, send_to_specialist, send_to_executor, status, created_at, last_notified_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'new', NOW(), NULL)
                 """, (order_id, short_description, price, deadline_at, send_to_specialist, send_to_executor))
 
                 conn.commit()  # Подтверждаем обе вставки
@@ -891,6 +890,7 @@ def create_order():
         logging.error(f"Ошибка при создании заказа: {e}")
         flash("Ошибка сервера.", "error")
         return redirect(url_for("admin.create_order"))
+
 
 @admin_bp.route('/customers/create', methods=['GET', 'POST'])
 def create_customer():

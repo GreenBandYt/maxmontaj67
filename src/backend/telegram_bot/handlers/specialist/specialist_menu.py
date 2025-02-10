@@ -5,6 +5,10 @@ from .specialist_keyboards import specialist_keyboard
 import logging
 import pymysql
 from bot_utils.bot_db_utils import db_connect
+from datetime import datetime, timedelta
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram_bot.bot_utils.messages.notifications import format_order_message  # Переиспользуем функцию
+
 
 
 async def specialist_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -18,23 +22,89 @@ async def specialist_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=specialist_keyboard()  # Клавиатура для специалиста
     )
 
+
 async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Обработка кнопки "📋 Новые задания".
+    Отображение списка новых заданий для специалиста (отдельными сообщениями).
     """
-    await update.message.reply_text("Показать новые задания для специалиста.")
+    telegram_id = update.message.from_user.id
+    logging.info(f"[SPECIALIST] {telegram_id} запросил список новых заданий.")
+
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+        # Получаем новые задания для специалиста
+        cursor.execute("""
+            SELECT * FROM pending_orders
+            WHERE (status = 'new' OR status = 'notified')
+              AND send_to_specialist = 1
+        """)
+        new_orders = cursor.fetchall()
+
+        if not new_orders:
+            await update.message.reply_text("🔔 На данный момент новых заданий нет.")
+            return
+
+        for order in new_orders:
+            # Формируем сообщение и инлайн-кнопки
+            message_text, reply_markup = format_order_message(order, is_repeat=False, role="3")
+            if reply_markup:
+                await update.message.reply_text(message_text, parse_mode="Markdown", reply_markup=reply_markup)
+            else:
+                await update.message.reply_text(message_text, parse_mode="Markdown")
+
 
 async def handle_specialist_current_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработка кнопки "🗂️ Текущие задания".
-    """
-    await update.message.reply_text("Показать текущие задания для специалиста.")
+    telegram_id = update.message.from_user.id
+    logging.info(f"[SPECIALIST] {telegram_id} запросил список текущих заданий.")
+
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+        # Запрос текущих заданий
+        cursor.execute("""
+            SELECT 
+                o.id AS order_id, 
+                o.customer_address, 
+                c.phone AS customer_phone, 
+                o.description, 
+                o.montage_date, 
+                o.deadline_at 
+            FROM 
+                orders o
+            JOIN 
+                customers c ON o.customer_id = c.id
+            WHERE 
+                o.installer_id = (SELECT id FROM users WHERE telegram_id = %s) AND 
+                o.status = 'Выполняется'
+        """, (telegram_id,))
+        current_orders = cursor.fetchall()
+
+        if not current_orders:
+            await update.message.reply_text("🛠️ У вас нет текущих заданий.")
+            return
+
+        # Отправляем сообщение для каждого заказа
+        for order in current_orders:
+            message = f"""
+📋 *Текущий заказ №{order['order_id']}*
+🏠 *Адрес клиента:* {order['customer_address']}
+📞 *Телефон клиента:* {order['customer_phone']}
+📝 *Описание:* {order['description']}
+📅 *Дата монтажа:* {order['montage_date'] or 'Не назначена'}
+⏰ *Дедлайн:* {order['deadline_at']}
+"""
+            reply_markup = create_specialist_buttons(order["order_id"])
+            await update.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+
+
 
 async def handle_specialist_contact_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработка кнопки "✉️ Связаться".
     """
-    await update.message.reply_text("Свяжитесь с администратором, чтобы решить вашу проблему.")
+    await update.message.reply_text("Свяжитесь с администратором, чтобы решить вашу проблему. (Заглушка)")
+
 
 
 async def handle_specialist_accept_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -89,9 +159,7 @@ async def handle_specialist_accept_order(update: Update, context: ContextTypes.D
 
     await query.answer("✅ Вы приняли заказ в работу!", show_alert=True)
     await query.edit_message_reply_markup(None)
-
-
-
+    await query.edit_message_text(f"✅ Заказ #{order_id} принят в работу.")
 
 
 async def handle_specialist_decline_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -105,3 +173,31 @@ async def handle_specialist_decline_order(update: Update, context: ContextTypes.
 
     await query.answer("❌ Вы отказались от заказа.", show_alert=True)
     await query.edit_message_reply_markup(None)  # Убираем кнопки
+
+async def handle_specialist_montage_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Заглушка для меню управления датой монтажа (specialist).
+    """
+    await update.message.reply_text("📅 Меню управления датой монтажа пока в разработке.")
+
+
+async def handle_specialist_complete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Заглушка для меню завершения заказа (specialist).
+    """
+    await update.message.reply_text("✅ Меню завершения заказа пока в разработке.")
+
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+def create_specialist_buttons(order_id):
+    """
+    Создаёт кнопки для текущего задания специалиста.
+    """
+    buttons = [
+        [
+            InlineKeyboardButton("📅 Дата монтажа", callback_data=f"specialist_set_montage_date_{order_id}"),
+            InlineKeyboardButton("✅ Завершение заказа", callback_data=f"specialist_complete_order_{order_id}")
+        ]
+    ]
+    return InlineKeyboardMarkup(buttons)

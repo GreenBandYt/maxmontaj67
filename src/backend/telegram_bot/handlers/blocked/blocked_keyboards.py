@@ -6,7 +6,7 @@ def blocked_keyboard():
     """
     return ReplyKeyboardMarkup(
         [
-            ["📞 Вопрос администратору"]
+            ["📞 Написать администратору"]
         ],
         resize_keyboard=True
     )

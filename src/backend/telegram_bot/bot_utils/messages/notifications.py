@@ -15,6 +15,7 @@ if BASE_DIR not in sys.path:
 
 from telegram_bot.bot_utils.bot_db_utils import db_connect
 
+
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 MOSCOW_TZ = pytz.timezone("Europe/Moscow")
