@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
-
     <title>{% block title %}Default Title{% endblock %}</title>
     <link rel="stylesheet" href="/static/styles/styles.css">
 
-    <!-- Подключение FullCalendar -->
-<!--    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.css" rel="stylesheet">-->
-
+    <!-- Подключение стилей на основе роли -->
     {% if session.get('role') == 'admin' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin.css') }}">
     {% elif session.get('role') == 'dispatcher' %}
@@ -48,18 +45,12 @@
 
         {% if environment == 'development' %}
         <div class="bot-control">
-            <button id="start-bot" class="bot-button">Запустить бота</button>
-            <button id="stop-bot" class="bot-button" style="display:none;">Остановить бота</button>
+            <button id="start-bot" class="bot-button" style="display: {% if bot_running %}none{% else %}block{% endif %};">Запустить бота</button>
+            <button id="stop-bot" class="bot-button" style="display: {% if bot_running %}block{% else %}none{% endif %};">Остановить бота</button>
         </div>
         {% endif %}
     </div>
 </footer>
-
-
-    <!-- Подключение FullCalendar JS -->
-<!--    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.4/main.min.js"></script>-->
-    <!-- Подключение пользовательского скрипта -->
-<!--    <script src="{{ url_for('static', filename='scripts/assign_installer.js') }}"></script>-->
 
     <!-- Скрипт управления ботом -->
     {% if environment == 'development' %}
@@ -67,27 +58,31 @@
         const startBotButton = document.getElementById('start-bot');
         const stopBotButton = document.getElementById('stop-bot');
 
-        startBotButton.addEventListener('click', async () => {
-            const response = await fetch('/bot/start', { method: 'POST' });
-            if (response.ok) {
-                startBotButton.style.display = 'none';
-                stopBotButton.style.display = 'block';
-                alert('Бот успешно запущен!');
-            } else {
-                alert('Ошибка при запуске бота.');
-            }
-        });
+        if (startBotButton) {
+            startBotButton.addEventListener('click', async () => {
+                const response = await fetch('/bot/start', { method: 'POST' });
+                if (response.ok) {
+                    startBotButton.style.display = 'none';
+                    stopBotButton.style.display = 'block';
+                } else {
+                    const result = await response.json();
+                    alert(result.message || 'Ошибка при запуске бота.');
+                }
+            });
+        }
 
-        stopBotButton.addEventListener('click', async () => {
-            const response = await fetch('/bot/stop', { method: 'POST' });
-            if (response.ok) {
-                stopBotButton.style.display = 'none';
-                startBotButton.style.display = 'block';
-                alert('Бот успешно остановлен!');
-            } else {
-                alert('Ошибка при остановке бота.');
-            }
-        });
+        if (stopBotButton) {
+            stopBotButton.addEventListener('click', async () => {
+                const response = await fetch('/bot/stop', { method: 'POST' });
+                if (response.ok) {
+                    stopBotButton.style.display = 'none';
+                    startBotButton.style.display = 'block';
+                } else {
+                    const result = await response.json();
+                    alert(result.message || 'Ошибка при остановке бота.');
+                }
+            });
+        }
     </script>
     {% endif %}
 </body>

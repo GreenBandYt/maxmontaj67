@@ -28,9 +28,14 @@ Session(app)
 @app.context_processor
 def inject_environment():
     """
-    Функция, которая делает переменную environment доступной во всех шаблонах.
+    Функция, которая делает переменные окружения доступными во всех шаблонах.
     """
-    return {'environment': config('FLASK_ENV', default='production')}
+    global bot_running  # Глобальная переменная для состояния бота
+    return {
+        'environment': config('FLASK_ENV', default='production'),
+        'bot_running': bot_running  # Передаём состояние бота в шаблоны
+    }
+
 
 # Проверка переменной окружения
 print(f"Текущая среда: {config('FLASK_ENV', default='production')}")
