@@ -27,53 +27,25 @@ from handlers.specialist.specialist_menu import (
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
 
-
+# Обработчик команды /start
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Обработчик команды /start. Приветствует пользователя, устанавливая состояние согласно INITIAL_STATES для его роли.
-    Независимо от того, что хранится в базе, состояние будет сброшено до начального значения для данной роли.
+    Обработчик команды /start. Приветствует пользователя в зависимости от его роли.
     """
     user_id = update.effective_user.id
     user_name = update.effective_user.first_name
 
     context.user_data['telegram_id'] = user_id
 
-    # Получаем роль и состояние пользователя из БД
-    role_data = await get_user_role_and_state(user_id)
-    role = role_data.get("role", "new_guest")
-    current_state = role_data.get("state", "")
+    # Проверяем роль пользователя из базы
+    role = await get_user_role(user_id)
+    context.user_data['role'] = role  # Сохраняем роль в кэше
 
-    # Определяем ожидаемое начальное состояние для полученной роли согласно словарю INITIAL_STATES
-    expected_state = INITIAL_STATES.get(role, "guest_idle")
+    # Устанавливаем начальное состояние на основе роли
+    initial_state = INITIAL_STATES.get(role, "guest_idle")
+    context.user_data['state'] = initial_state
 
-    # Если состояние в базе не соответствует ожидаемому, сбрасываем его в БД
-    if current_state != expected_state:
-        logging.info(f"Сброс состояния для user_id {user_id}: {current_state} -> {expected_state}")
-        try:
-            conn = db_connect()
-            with conn.cursor() as cursor:
-                query = "UPDATE users SET state = %s WHERE telegram_id = %s"
-                cursor.execute(query, (expected_state, user_id))
-            conn.commit()
-        except Exception as e:
-            logging.error(f"Ошибка обновления состояния в БД: {e}")
-        finally:
-            if conn:
-                conn.close()
-        current_state = expected_state  # локально обновляем состояние
-
-    # Сохраняем актуальные данные в context.user_data
-    context.user_data['role'] = role
-    context.user_data['state'] = current_state
-
-    # Выводим отладочную информацию пользователю
-    await update.message.reply_text(
-        f"⚙️ [На время разработки]\n"
-        f"Роль: {role}\n"
-        f"Состояние: {current_state}\n"
-    )
-
-    # В зависимости от роли вызываем соответствующий обработчик
+    # Обрабатываем роль
     if role == "new_guest":
         await start_guest(update, context)
     elif role == "guest":
@@ -98,49 +70,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Добро пожаловать, {user_name}!\n"
             f"Ваша роль: {role}.\n"
-            f"Состояние: {current_state}\n"
             "Что вы хотите сделать?"
         )
-
-
-async def get_user_role_and_state(user_id: int) -> dict:
-    """
-    Проверяет роль и состояние пользователя по его telegram_id.
-    Возвращает словарь с ключами 'role' и 'state'.
-    Если пользователь не найден, возвращает {'role': 'new_guest', 'state': INITIAL_STATES.get('new_guest', 'guest_idle')}.
-    """
-    logging.info(f"Проверка роли и состояния для user_id: {user_id}")
-    try:
-        conn = db_connect()  # Устанавливаем подключение к базе данных
-        with conn.cursor() as cursor:
-            query = """
-                SELECT r.name AS role, u.state AS state
-                FROM users u
-                JOIN roles r ON u.role = r.id
-                WHERE u.telegram_id = %s
-            """
-            cursor.execute(query, (user_id,))
-            result = cursor.fetchone()
-            if result:
-                try:
-                    # Если драйвер возвращает словарь:
-                    role_value = result["role"]
-                    state_value = result["state"]
-                except (TypeError, KeyError):
-                    # Если результат – кортеж
-                    role_value = result[0]
-                    state_value = result[1]
-                logging.info(f"Получено: роль = {role_value}, состояние = {state_value}")
-                return {"role": role_value, "state": state_value}
-            else:
-                logging.warning(f"Пользователь с user_id {user_id} не найден в базе.")
-                return {"role": "new_guest", "state": INITIAL_STATES.get("new_guest", "guest_idle")}
-    except Exception as e:
-        logging.error(f"Ошибка при получении роли и состояния: {e}")
-        return {"role": "new_guest", "state": INITIAL_STATES.get("new_guest", "guest_idle")}
-    finally:
-        if conn:
-            conn.close()
 
 
 
@@ -274,25 +205,16 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Универсальный обработчик для обработки текста от пользователя.
     """
-    # Получаем текущее состояние пользователя
-    user_state = context.user_data.get("state", None)
-
-    # Если пользователь находится в состоянии, отличном от начального, завершаем обработчик
-    if user_state and user_state not in INITIAL_STATES.values():
-        logging.warning(
-            f"⚠ Попытка доступа к универсальному обработчику из состояния '{user_state}' "
-            f"(роль: {context.user_data.get('role', 'unknown')})."
-        )
-        return  # Завершаем обработчик, так как состояние требует специфической обработки
-
     # Получаем текст сообщения от пользователя
     user_text = update.message.text.strip()
 
     # Проверяем, является ли текст кнопкой
     action = TEXT_ACTIONS.get(user_text)
+
     if action:
         await action(update, context)  # Вызываем функцию напрямую
         return
+
 
     # Проверяем "умные ответы"
     response = get_smart_reply(user_text)
@@ -304,8 +226,6 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Извините, я вас не понял. Попробуйте уточнить запрос или воспользуйтесь кнопками меню. 🤔"
     )
-
-
 
 async def handle_inline_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
