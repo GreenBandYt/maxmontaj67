@@ -4,9 +4,10 @@ from bot_utils.bot_db_utils import db_connect
 from bot_utils.access_control import check_access
 from telegram_bot.dictionaries.states import INITIAL_STATES
 import logging
+import traceback
+
 
 # Обработчик кнопки "📞 Написать администратору"
-@check_access(required_role="all", required_state=None)
 async def handle_user_message_to_admin(update, context):
     """
     Обрабатывает нажатие кнопки "📞 Написать администратору".
@@ -21,21 +22,36 @@ async def handle_user_message_to_admin(update, context):
     logging.info(f"📩 Пользователь {user['first_name']} (@{user['username']}) начал писать администратору.")
     await update.message.reply_text("Введите сообщение для администратора, и мы его передадим.")
 
-    # Устанавливаем локальное состояние
-    context.user_data["state"] = "awaiting_admin_message"
-    context.user_data["user_info"] = user
-    logging.info("🔄 Локальное состояние пользователя изменено на: 'awaiting_admin_message'")
-
     # Обновляем состояние в БД
     try:
         with db_connect() as conn:
             cursor = conn.cursor()
-            query = "UPDATE users SET state = %s WHERE REPLACE(telegram_id, ' ', '') = %s"
-            cursor.execute(query, ("awaiting_admin_message", str(user["id"])))
-        conn.commit()
-        logging.info("✅ Состояние в БД обновлено на 'awaiting_admin_message'")
+            # Логируем SQL-запрос и параметры перед выполнением
+            logging.info(
+                f"Попытка обновления состояния: query='UPDATE users SET state = %s WHERE telegram_id = %s', params=('awaiting_admin_message', {user['id']})")
+
+            query = "UPDATE users SET state = %s WHERE telegram_id = %s"
+            cursor.execute(query, ("awaiting_admin_message", user["id"]))
+            conn.commit()
+            logging.info("✅ Изменения сохранены в базе данных.")
     except Exception as e:
+        # Логируем полный стек ошибки для диагностики
         logging.error(f"❌ Ошибка обновления состояния в БД: {e}")
+        logging.error(f"Стек вызовов: {traceback.format_exc()}")
+        await update.message.reply_text("Произошла ошибка при обновлении состояния. Попробуйте снова.")
+        return
+
+    # Искусственная пауза для гарантии синхронизации (если база работает медленно)
+    import asyncio
+    await asyncio.sleep(2)
+
+    # Устанавливаем локальное состояние
+    context.user_data["state"] = "awaiting_admin_message"
+    context.user_data["user_info"] = user
+    logging.info(f"🔄 Локальное состояние пользователя изменено на: 'awaiting_admin_message'")
+
+    # Лог перед завершением функции
+    logging.info("✅ Обработчик handle_user_message_to_admin завершен.")
 
 
 # Обработчик ввода сообщения для администратора

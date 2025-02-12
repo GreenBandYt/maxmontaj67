@@ -17,6 +17,13 @@ def register_common_handlers(application: Application):
     # Обработка команды /start
     application.add_handler(CommandHandler("start", start_command))
 
+    # Универсальный обработчик для текстовых сообщений
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
+
+    # Регистрируем обработчик инлайн-кнопок
+    application.add_handler(CallbackQueryHandler(handle_inline_buttons))
+
+
     # Обработчик для состояния `awaiting_admin_message`
     application.add_handler(
         MessageHandler(
@@ -25,10 +32,5 @@ def register_common_handlers(application: Application):
         )
     )
 
-    # Универсальный обработчик для текстовых сообщений
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_input))
-
-    # Регистрируем обработчик инлайн-кнопок
-    application.add_handler(CallbackQueryHandler(handle_inline_buttons))
 
     logger.info("Общие обработчики успешно зарегистрированы.")
