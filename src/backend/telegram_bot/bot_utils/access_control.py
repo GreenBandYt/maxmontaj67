@@ -3,6 +3,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from telegram_bot.bot_utils.bot_db_utils import db_connect
 import logging
+import sys
 import inspect
 import ast
 from telegram_bot.dictionaries.states import INITIAL_STATES
@@ -15,9 +16,15 @@ def check_access(required_role=None, required_state=None):
     def decorator(func):
         @wraps(func)
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+            # Синхронизация роли и состояния с базой данных
+            is_synced = await sync_user_role_and_state(update, context)
+            if not is_synced:
+                return
+
             user_role = context.user_data.get("role", "guest")
             user_state = context.user_data.get("state", "guest_idle")
 
+            # Логирование текущего состояния и роли перед проверкой
             logging.info(
                 f"[CHECK ACCESS] Функция: {func.__name__} | Роль пользователя: {user_role}, "
                 f"Состояние пользователя: {user_state} | Требуемая роль: {required_role}, "
@@ -50,6 +57,7 @@ def check_access(required_role=None, required_state=None):
                 )
                 return
 
+            # Если проверки пройдены, вызываем оригинальную функцию
             logging.info(
                 f"[ACCESS GRANTED] Пользователь с ролью '{user_role}' и состоянием '{user_state}' "
                 f"получил доступ к функции '{func.__name__}'."
@@ -62,6 +70,8 @@ def check_access(required_role=None, required_state=None):
 async def sync_user_role_and_state(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Синхронизирует роль и состояние пользователя с базой данных.
+    Извлекает из БД как роль, так и состояние пользователя и обновляет context.user_data.
+    Если в БД поле state пустое или None, подставляется начальное состояние из INITIAL_STATES.
     """
     user_id = update.message.from_user.id
 
@@ -77,32 +87,38 @@ async def sync_user_role_and_state(update: Update, context: ContextTypes.DEFAULT
             cursor.execute(query, (user_id,))
             result = cursor.fetchone()
             if not result:
-                logging.error(f"Пользователь с user_id {user_id} не найден в базе данных.")
+                await update.message.reply_text("⛔ Пользователь не найден в системе.")
                 return False
-
-            db_role = result[0]
-            db_state = result[1]
-
-            # Если поле state в БД пустое, подставляем начальное состояние
-            if db_state is None:
+            # Преобразуем результат в словарь, если это необходимо
+            try:
+                db_role = result["role"]
+                db_state = result["state"]
+            except (TypeError, KeyError):
+                db_role = result[0]
+                db_state = result[1]
+            # Если состояние в БД пустое, подставляем начальное состояние для данной роли
+            if not db_state:
                 db_state = INITIAL_STATES.get(db_role, "guest_idle")
-
     except Exception as e:
         logging.error(f"Ошибка при извлечении роли и состояния из БД: {e}")
+        await update.message.reply_text("❌ Произошла ошибка при синхронизации данных.")
         return False
+    finally:
+        # Не вызываем conn.close(), так как 'with' уже закрывает соединение.
+        pass
 
-    # Проверяем текущую роль и состояние в контексте
+    if not context.user_data:
+        context.user_data.clear()
+
     current_role = context.user_data.get("role", "guest")
-    current_state = context.user_data.get("state", "guest_idle")
-
-    # Обновляем контекст только если данные изменились
+    current_state = context.user_data.get("state", "")
     if current_role != db_role or current_state != db_state:
         context.user_data["role"] = db_role
         context.user_data["state"] = db_state
-        logging.info(f"Роль и состояние пользователя обновлены: роль={db_role}, состояние={db_state}")
-
+        await update.message.reply_text(
+            f"Ваша роль была обновлена: {db_role}. Текущее состояние: {db_state}."
+        )
     return True
-
 
 
 def find_decorated_functions():
