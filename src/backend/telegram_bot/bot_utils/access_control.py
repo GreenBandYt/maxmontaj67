@@ -1,31 +1,37 @@
+# src/backend/telegram_bot/bot_utils/access_control.py
+
 from functools import wraps
 from telegram import Update
 from telegram.ext import ContextTypes
-import sys
-import inspect
-import ast
+from telegram_bot.bot_utils.bot_db_utils import db_connect
+import logging
 
+
+from telegram_bot.bot_utils.db_utils import get_user_role, get_user_state
 
 
 def check_access(required_role=None, required_state=None):
     """
-    Декоратор для проверки роли и состояния пользователя перед выполнением функции.
-
-    :param required_role: Роль, необходимая для доступа к функции.
-    :param required_state: Состояние, необходимое для выполнения функции.
+    Декоратор для проверки роли и состояния пользователя.
     """
     def decorator(func):
         @wraps(func)
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
-            user_role = context.user_data.get("role")
-            user_state = context.user_data.get("state")
+            user_id = update.effective_user.id
+
+            # Получаем роль и состояние из базы данных
+            try:
+                user_role = await get_user_role(user_id)
+                user_state = await get_user_state(user_id)
+            except Exception as e:
+                await update.message.reply_text(f"Ошибка доступа: {e}")
+                return
 
             # Проверяем роль
             if required_role and user_role != required_role:
                 await update.message.reply_text(
                     f"⛔ У вас нет доступа к этой функции.\n"
-                    f"Ваша роль: {user_role}\n"
-                    f"Требуемая роль: {required_role}."
+                    f"Ваша роль: {user_role}, требуемая роль: {required_role}."
                 )
                 return
 
@@ -33,15 +39,62 @@ def check_access(required_role=None, required_state=None):
             if required_state and user_state != required_state:
                 await update.message.reply_text(
                     f"⚠️ Вы не можете выполнить это действие в текущем состоянии.\n"
-                    f"Ваше состояние: {user_state}\n"
-                    f"Требуемое состояние: {required_state}."
+                    f"Ваше состояние: {user_state}, требуемое: {required_state}."
                 )
                 return
 
-            # Если проверки пройдены, вызываем оригинальную функцию
+            # Если проверки пройдены, вызываем функцию
             return await func(update, context, *args, **kwargs)
         return wrapper
     return decorator
+
+
+def check_state(required_state: str):
+
+    """
+    Декоратор для проверки состояния пользователя перед выполнением функции.
+    :param required_state: Необходимое состояние.
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+            user_id = update.effective_user.id
+
+
+            try:
+                # Получаем текущее состояние пользователя из базы данных
+                user_state = await get_user_state(user_id)
+                logging.info(f"🔍 Текущее состояние пользователя: {user_state}, Требуемое: {required_state}")
+
+                if not user_state:
+                    await update.message.reply_text(
+                        "❌ Не удалось определить ваше текущее состояние. Попробуйте позже."
+                    )
+                    return
+
+                # Проверяем, соответствует ли текущее состояние требуемому
+                if user_state != required_state:
+                    await update.message.reply_text(
+                        f"⚠️ Вы не можете выполнить это действие в текущем состоянии.\n"
+                        f"Ваше состояние: {user_state}\n"
+                        f"Требуемое состояние: {required_state}."
+                    )
+                    return
+
+            except Exception as e:
+                logging.error(f"Ошибка при проверке состояния пользователя: {e}")
+                await update.message.reply_text(
+                    "❌ Произошла ошибка при проверке вашего состояния. Обратитесь к администратору."
+                )
+                return
+
+            # Если состояние корректно, вызываем оригинальную функцию
+            return await func(update, context, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+
 
 
 import inspect

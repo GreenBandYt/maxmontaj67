@@ -1,6 +1,9 @@
+# src/backend/telegram_bot/handlers/common.py
+
 import bcrypt
 import logging
 from telegram import Update
+import pymysql
 from telegram.ext import ContextTypes
 from telegram_bot.bot_utils.bot_db_utils import db_connect
 from telegram_bot.handlers.admin.admin_menu import admin_start
@@ -15,6 +18,14 @@ from telegram_bot.dictionaries.callback_actions import CALLBACK_ACTIONS
 from telegram_bot.dictionaries.smart_replies import get_smart_reply
 from telegram_bot.dictionaries.states import INITIAL_STATES
 
+from telegram_bot.bot_utils.access_control import check_access, check_state
+from telegram_bot.bot_utils.db_utils import update_user_state, get_user_state
+from telegram_bot.bot_utils.admin_messaging import (
+    send_message_to_admins,process_admin_message,  handle_reply_button,
+    handle_reply_button, handle_reply_message,
+)
+
+
 from handlers.executor.executor_menu import (
     handle_executor_accept_order,
     handle_executor_decline_order,
@@ -24,87 +35,120 @@ from handlers.specialist.specialist_menu import (
     handle_specialist_decline_order,
 )
 
+
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
 
 # Обработчик команды /start
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Обработчик команды /start. Приветствует пользователя в зависимости от его роли.
+    Обработчик команды /start. Приветствует пользователя в зависимости от его роли
+    и устанавливает начальное состояние.
     """
-    user_id = update.effective_user.id
+    user_id = update.effective_user.id  # Telegram ID пользователя
     user_name = update.effective_user.first_name
 
-    context.user_data['telegram_id'] = user_id
-
-    # Проверяем роль пользователя из базы
-    role = await get_user_role(user_id)
-    context.user_data['role'] = role  # Сохраняем роль в кэше
-
-    # Устанавливаем начальное состояние на основе роли
-    initial_state = INITIAL_STATES.get(role, "guest_idle")
-    context.user_data['state'] = initial_state
-
-    # Обрабатываем роль
-    if role == "new_guest":
-        await start_guest(update, context)
-    elif role == "guest":
-        await update.message.reply_text(
-            f"Привет, {user_name}!\n"
-            "Вы успешно зарегистрированы в системе, но ваша роль пока не активирована.\n"
-            "Ожидайте назначения роли администратором."
-        )
-    elif role == "admin":
-        await admin_start(update, context)
-    elif role == "dispatcher":
-        await dispatcher_start(update, context)
-    elif role == "executor":
-        await executor_start(update, context)
-    elif role == "specialist":
-        await specialist_start(update, context)
-    elif role == "customer":
-        await customer_start(update, context)
-    elif role == "blocked":
-        await blocked_start(update, context)
-    else:
-        await update.message.reply_text(
-            f"Добро пожаловать, {user_name}!\n"
-            f"Ваша роль: {role}.\n"
-            "Что вы хотите сделать?"
-        )
-
-
-
-# Функция определения роли пользователя
-async def get_user_role(user_id: int) -> str:
-    """
-    Проверяет роль пользователя по его telegram_id.
-    Возвращает строку с ролью или 'new_guest', если пользователь отсутствует в базе.
-    """
-    logging.info(f"Проверка роли для user_id: {user_id}")
     try:
-        conn = db_connect()  # Устанавливаем подключение к базе данных
-        with conn.cursor() as cursor:
+        conn = db_connect()
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # Проверяем роль и состояние пользователя
             query = """
-                SELECT r.name AS role
+                SELECT r.name AS role, u.user_state
                 FROM users u
                 JOIN roles r ON u.role = r.id
                 WHERE u.telegram_id = %s
             """
             cursor.execute(query, (user_id,))
-            result = cursor.fetchone()
-            if result:
-                logging.info(f"Роль для user_id {user_id}: {result['role']}")
-                return result['role']
+            user_data = cursor.fetchone()
+
+            if not user_data:
+                # Если пользователь не найден, создаем нового гостя
+                role = "new_guest"
+                initial_state = "guest_idle"
+                cursor.execute("""
+                    INSERT INTO users (telegram_id, name, role, user_state)
+                    VALUES (%s, %s, (SELECT id FROM roles WHERE name = 'guest'), %s)
+                """, (user_id, user_name, initial_state))
+                conn.commit()
             else:
-                logging.warning(f"Пользователь с user_id {user_id} не найден в базе.")
-                return "new_guest"  # Если пользователь не найден, назначаем роль new_guest
+                role = user_data["role"]
+                initial_state = INITIAL_STATES.get(role, "guest_idle")
+
+                # Обновляем состояние в базе данных
+                cursor.execute("""
+                    UPDATE users
+                    SET user_state = %s
+                    WHERE telegram_id = %s
+                """, (initial_state, user_id))
+                conn.commit()
+
+        # Устанавливаем начальное состояние и обрабатываем роль
+        if role == "new_guest":
+            await start_guest(update, context)
+        elif role == "guest":
+            await update.message.reply_text(
+                f"Привет, {user_name}!\n"
+                "Вы успешно зарегистрированы в системе, но ваша роль пока не активирована.\n"
+                "Ожидайте назначения роли администратором."
+            )
+        elif role == "admin":
+            await admin_start(update, context)
+        elif role == "dispatcher":
+            await dispatcher_start(update, context)
+        elif role == "executor":
+            await executor_start(update, context)
+        elif role == "specialist":
+            await specialist_start(update, context)
+        elif role == "customer":
+            await customer_start(update, context)
+        elif role == "blocked":
+            await blocked_start(update, context)
+        else:
+            await update.message.reply_text(
+                f"Добро пожаловать, {user_name}!\n"
+                f"Ваша роль: {role}.\n"
+                "Что вы хотите сделать?"
+            )
+
     except Exception as e:
-        logging.error(f"Ошибка подключения к базе данных: {e}")
-        return "new_guest"  # В случае ошибки возвращаем 'new_guest'
+        logging.error(f"Ошибка при обработке команды /start: {e}")
+        await update.message.reply_text("Произошла ошибка. Попробуйте снова позже.")
     finally:
         if conn:
             conn.close()
+
+
+
+# # Функция определения роли пользователя
+# async def get_user_role(user_id: int) -> str:
+#     """
+#     Проверяет роль пользователя по его telegram_id.
+#     Возвращает строку с ролью или 'new_guest', если пользователь отсутствует в базе.
+#     """
+#     logging.info(f"Проверка роли для user_id: {user_id}")
+#     try:
+#         conn = db_connect()  # Устанавливаем подключение к базе данных
+#         with conn.cursor() as cursor:
+#             query = """
+#                 SELECT r.name AS role
+#                 FROM users u
+#                 JOIN roles r ON u.role = r.id
+#                 WHERE u.telegram_id = %s
+#             """
+#             cursor.execute(query, (user_id,))
+#             result = cursor.fetchone()
+#             if result:
+#                 logging.info(f"Роль для user_id {user_id}: {result['role']}")
+#                 return result['role']
+#             else:
+#                 logging.warning(f"Пользователь с user_id {user_id} не найден в базе.")
+#                 return "new_guest"  # Если пользователь не найден, назначаем роль new_guest
+#     except Exception as e:
+#         logging.error(f"Ошибка подключения к базе данных: {e}")
+#         return "new_guest"  # В случае ошибки возвращаем 'new_guest'
+#     finally:
+#         if conn:
+#             conn.close()
 
 # Функция для проверки имени в базе данных
 async def check_user_name_in_db(user_name: str) -> dict:
@@ -202,9 +246,17 @@ def update_user_telegram_id(user_id: int, telegram_id: int):
         conn.close()
 
 async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info("🛠️ Вызван универсальный обработчик handle_user_input")
     """
     Универсальный обработчик для обработки текста от пользователя.
     """
+    user_id = update.effective_user.id  # Получаем user_id из update
+
+    user_state = await get_user_state(user_id)
+    if user_state == "writing_message":
+        await process_admin_message(update, context)
+        return
+
     # Получаем текст сообщения от пользователя
     user_text = update.message.text.strip()
 
@@ -214,6 +266,7 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action:
         await action(update, context)  # Вызываем функцию напрямую
         return
+
 
 
     # Проверяем "умные ответы"
@@ -256,3 +309,20 @@ async def handle_inline_buttons(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text(
             "Кнопка больше не активна. Попробуйте снова или обратитесь к администратору."
         )
+
+
+
+# @check_access(required_state="guest_idle")  # Для примера, тут может быть любое состояние из INITIAL_STATES
+# async def handle_message_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     """
+#     Обработчик кнопки "📞 Написать администратору".
+#     """
+#     user_id = update.effective_user.id
+#
+#     # Устанавливаем новое состояние
+#     await update_user_state(user_id, "writing_message")
+#     await update.message.reply_text("Напишите текст вашего сообщения для администратора. 📩")
+
+
+
+

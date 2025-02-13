@@ -2,8 +2,10 @@
 
 CALLBACK_ACTIONS = {
     # Для администратора
+    # Привязка префикса callback_data к обработчику
+    "reply_to_": "handle_reply_button",
 
-    # Для диспетчера
+
 
     # Для монтажника
     "executor_accept_order": "handle_executor_accept_order",

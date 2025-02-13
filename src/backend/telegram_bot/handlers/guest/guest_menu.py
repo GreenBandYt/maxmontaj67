@@ -180,76 +180,38 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# Обработчик ввода сообщения для администратора
-async def process_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обрабатывает сообщение, введённое пользователем для администратора.
-    """
-    # Проверяем текущий шаг регистрации
-    if context.user_data.get('registration_step') != "admin_message":
-        return
-
-    # Получаем сообщение пользователя
-    admin_message = update.message.text.strip()
-    user_name = update.effective_user.full_name
-    user_id = update.effective_user.id
-
-    # Логируем сообщение
-    logging.info(f"Сообщение от пользователя {user_name} ({user_id}): {admin_message}")
-
-    # Сохраняем сообщение и отправляем администраторам
-    success = await send_message_to_admins(context, user_name, user_id, admin_message)
-
-    if success:
-        # Подтверждаем отправку сообщения
-        await update.message.reply_text(
-            "Ваше сообщение успешно отправлено администраторам. Ожидайте ответа."
-        )
-        # Убираем шаг регистрации
-        context.user_data.pop('registration_step', None)
-    else:
-        # Уведомляем об ошибке
-        await update.message.reply_text(
-            "К сожалению, произошла ошибка при отправке сообщения администраторам. Попробуйте позже."
-        )
-
-async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, user_name: str, user_id: int, admin_message: str) -> bool:
-    """
-    Отправляет сообщение от пользователя всем администраторам.
-    Возвращает True при успешной отправке, иначе False.
-    """
-    try:
-        # Получаем список telegram_id администраторов
-        conn = db_connect()
-        with conn.cursor() as cursor:
-            query = """
-                SELECT telegram_id FROM users
-                WHERE role = (SELECT id FROM roles WHERE name = 'admin')
-            """
-            cursor.execute(query)
-            admins = cursor.fetchall()
-
-        if not admins:
-            logging.warning("Администраторы не найдены в базе данных.")
-            return False
-
-        # Формируем сообщение
-        message = (
-            f"Пользователь {user_name} (ID: {user_id}) оставил сообщение:\n"
-            f"\"{admin_message}\""
-        )
-
-        # Отправляем сообщение каждому администратору
-        for admin in admins:
-            admin_id = admin['telegram_id']
-            if admin_id:  # Проверяем, что telegram_id не пустой
-                await context.bot.send_message(chat_id=admin_id, text=message)
-
-        logging.info(f"Сообщение успешно отправлено {len(admins)} администраторам.")
-        return True
-    except Exception as e:
-        logging.error(f"Ошибка при отправке сообщения администраторам: {e}")
-        return False
+# # Обработчик ввода сообщения для администратора
+# async def process_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     """
+#     Обрабатывает сообщение, введённое пользователем для администратора.
+#     """
+#     # Проверяем текущий шаг регистрации
+#     if context.user_data.get('registration_step') != "admin_message":
+#         return
+#
+#     # Получаем сообщение пользователя
+#     admin_message = update.message.text.strip()
+#     user_name = update.effective_user.full_name
+#     user_id = update.effective_user.id
+#
+#     # Логируем сообщение
+#     logging.info(f"Сообщение от пользователя {user_name} ({user_id}): {admin_message}")
+#
+#     # Сохраняем сообщение и отправляем администраторам
+#     success = await send_message_to_admins(context, user_name, user_id, admin_message)
+#
+#     if success:
+#         # Подтверждаем отправку сообщения
+#         await update.message.reply_text(
+#             "Ваше сообщение успешно отправлено администраторам. Ожидайте ответа."
+#         )
+#         # Убираем шаг регистрации
+#         context.user_data.pop('registration_step', None)
+#     else:
+#         # Уведомляем об ошибке
+#         await update.message.reply_text(
+#             "К сожалению, произошла ошибка при отправке сообщения администраторам. Попробуйте позже."
+#         )
 
 
 async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
