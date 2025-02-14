@@ -1,4 +1,5 @@
 import pymysql
+import logging
 from telegram_bot.bot_utils.bot_db_utils import db_connect
 
 
@@ -47,6 +48,8 @@ async def update_user_state(user_id: int, new_state: str) -> None:
             cursor = conn.cursor()
             query = "UPDATE users SET user_state = %s WHERE telegram_id = %s"
             cursor.execute(query, (new_state, user_id))
+            logging.info(f"Состояние пользователя {user_id} будет изменено на {new_state}")
+
             conn.commit()
     except Exception as e:
         raise RuntimeError(f"Ошибка обновления состояния пользователя: {e}")

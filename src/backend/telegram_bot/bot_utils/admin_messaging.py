@@ -71,6 +71,7 @@ async def process_admin_message(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, message: str, reply_markup=None):
     logging.info("🛠️ Вызван send_message_to_admins")
+
     """
     Отправляет сообщение всем администраторам.
     """
@@ -101,7 +102,7 @@ async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, message: st
         logging.error(f"Ошибка отправки сообщений администраторам: {e}")
         return False
 
-@check_state(required_state="admin_idle")
+@check_state(required_state="replying_to_user")
 async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("🛠️ Вызван handle_reply_button")
     """
@@ -113,6 +114,7 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     # Извлекаем telegram_id пользователя из callback_data
     user_id = callback_data.split("_")[-1]
+    logging.info(f"Сохраняем ID пользователя {user_id} для ответа в context.user_data['reply_to_user']")
 
     # Сохраняем ID пользователя, которому нужно ответить
     context.user_data["reply_to_user"] = user_id
@@ -120,6 +122,7 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Меняем состояние администратора
     admin_id = update.effective_user.id
     await update_user_state(admin_id, "replying_to_user")
+
 
     # Уведомляем администратора о переходе в режим ответа
     await query.answer("Введите текст ответа пользователю.")
@@ -130,6 +133,8 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
 @check_state(required_state="replying_to_user")
 async def handle_reply_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("🛠️ Вызван handle_reply_message")
+    logging.info(f"ID пользователя для ответа: {context.user_data.get('reply_to_user')}")
+
     """
     Обработчик для отправки ответа пользователю.
     """

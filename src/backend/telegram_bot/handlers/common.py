@@ -118,38 +118,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             conn.close()
 
 
-
-# # Функция определения роли пользователя
-# async def get_user_role(user_id: int) -> str:
-#     """
-#     Проверяет роль пользователя по его telegram_id.
-#     Возвращает строку с ролью или 'new_guest', если пользователь отсутствует в базе.
-#     """
-#     logging.info(f"Проверка роли для user_id: {user_id}")
-#     try:
-#         conn = db_connect()  # Устанавливаем подключение к базе данных
-#         with conn.cursor() as cursor:
-#             query = """
-#                 SELECT r.name AS role
-#                 FROM users u
-#                 JOIN roles r ON u.role = r.id
-#                 WHERE u.telegram_id = %s
-#             """
-#             cursor.execute(query, (user_id,))
-#             result = cursor.fetchone()
-#             if result:
-#                 logging.info(f"Роль для user_id {user_id}: {result['role']}")
-#                 return result['role']
-#             else:
-#                 logging.warning(f"Пользователь с user_id {user_id} не найден в базе.")
-#                 return "new_guest"  # Если пользователь не найден, назначаем роль new_guest
-#     except Exception as e:
-#         logging.error(f"Ошибка подключения к базе данных: {e}")
-#         return "new_guest"  # В случае ошибки возвращаем 'new_guest'
-#     finally:
-#         if conn:
-#             conn.close()
-
 # Функция для проверки имени в базе данных
 async def check_user_name_in_db(user_name: str) -> dict:
     """
@@ -251,11 +219,16 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Универсальный обработчик для обработки текста от пользователя.
     """
     user_id = update.effective_user.id  # Получаем user_id из update
-
     user_state = await get_user_state(user_id)
+
     if user_state == "writing_message":
         await process_admin_message(update, context)
         return
+
+    if user_state == "replying_to_user":
+        await handle_reply_message(update, context)
+        return
+
 
     # Получаем текст сообщения от пользователя
     user_text = update.message.text.strip()
@@ -309,20 +282,3 @@ async def handle_inline_buttons(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text(
             "Кнопка больше не активна. Попробуйте снова или обратитесь к администратору."
         )
-
-
-
-# @check_access(required_state="guest_idle")  # Для примера, тут может быть любое состояние из INITIAL_STATES
-# async def handle_message_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     """
-#     Обработчик кнопки "📞 Написать администратору".
-#     """
-#     user_id = update.effective_user.id
-#
-#     # Устанавливаем новое состояние
-#     await update_user_state(user_id, "writing_message")
-#     await update.message.reply_text("Напишите текст вашего сообщения для администратора. 📩")
-
-
-
-

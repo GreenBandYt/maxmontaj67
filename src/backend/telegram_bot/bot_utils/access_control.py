@@ -50,7 +50,6 @@ def check_access(required_role=None, required_state=None):
 
 
 def check_state(required_state: str):
-
     """
     Декоратор для проверки состояния пользователя перед выполнением функции.
     :param required_state: Необходимое состояние.
@@ -60,21 +59,24 @@ def check_state(required_state: str):
         async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
             user_id = update.effective_user.id
 
-
             try:
                 # Получаем текущее состояние пользователя из базы данных
                 user_state = await get_user_state(user_id)
-                logging.info(f"🔍 Текущее состояние пользователя: {user_state}, Требуемое: {required_state}")
+                logging.info(f"🔍 Проверяем состояние. Текущее: {user_state}, Требуемое: {required_state}")
 
                 if not user_state:
-                    await update.message.reply_text(
+                    # Определяем, куда отправлять ответ
+                    reply_target = update.message or update.callback_query.message
+                    await reply_target.reply_text(
                         "❌ Не удалось определить ваше текущее состояние. Попробуйте позже."
                     )
                     return
 
                 # Проверяем, соответствует ли текущее состояние требуемому
                 if user_state != required_state:
-                    await update.message.reply_text(
+                    # Определяем, куда отправлять ответ
+                    reply_target = update.message or update.callback_query.message
+                    await reply_target.reply_text(
                         f"⚠️ Вы не можете выполнить это действие в текущем состоянии.\n"
                         f"Ваше состояние: {user_state}\n"
                         f"Требуемое состояние: {required_state}."
@@ -83,15 +85,19 @@ def check_state(required_state: str):
 
             except Exception as e:
                 logging.error(f"Ошибка при проверке состояния пользователя: {e}")
-                await update.message.reply_text(
-                    "❌ Произошла ошибка при проверке вашего состояния. Обратитесь к администратору."
-                )
+                # Определяем, куда отправлять ответ
+                reply_target = update.message or update.callback_query.message
+                if reply_target:
+                    await reply_target.reply_text(
+                        "❌ Произошла ошибка при проверке вашего состояния. Обратитесь к администратору."
+                    )
                 return
 
             # Если состояние корректно, вызываем оригинальную функцию
             return await func(update, context, *args, **kwargs)
         return wrapper
     return decorator
+
 
 
 
