@@ -123,6 +123,9 @@ async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE
     admin_id = update.effective_user.id
     await update_user_state(admin_id, "replying_to_user")
 
+    # Добавляем небольшую задержку
+    await asyncio.sleep(1)  # Полсекунды задержки
+
 
     # Уведомляем администратора о переходе в режим ответа
     await query.answer("Введите текст ответа пользователю.")
