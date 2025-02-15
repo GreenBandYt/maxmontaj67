@@ -231,6 +231,10 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_reply_message(update, context)
         return
 
+    if user_state == "specialist_date_input":
+        await handle_specialist_date_input(update, context)
+        return
+
 
     # Получаем текст сообщения от пользователя
     user_text = update.message.text.strip()

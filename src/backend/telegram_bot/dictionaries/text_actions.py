@@ -12,6 +12,7 @@ from telegram_bot.handlers.specialist.specialist_menu import (
     handle_specialist_current_tasks,
     handle_specialist_montage_menu,
     handle_specialist_complete_menu,
+    handle_specialist_date_input,
 
 )
 from telegram_bot.bot_utils.admin_messaging import handle_message_to_admin
