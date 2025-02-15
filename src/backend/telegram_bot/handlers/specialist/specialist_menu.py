@@ -5,11 +5,13 @@ from .specialist_keyboards import specialist_keyboard
 import logging
 import pymysql
 from bot_utils.bot_db_utils import db_connect
+from telegram import ReplyKeyboardMarkup
+
 from datetime import datetime, timedelta
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram_bot.bot_utils.messages.notifications import format_order_message  # Переиспользуем функцию
-
-
+from telegram_bot.bot_utils.access_control import check_access, check_state
+from telegram_bot.bot_utils.db_utils import update_user_state, get_user_role
 
 async def specialist_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -21,7 +23,6 @@ async def specialist_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Что вы хотите сделать?",
         reply_markup=specialist_keyboard()  # Клавиатура для специалиста
     )
-
 
 async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -52,7 +53,6 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
                 await update.message.reply_text(message_text, parse_mode="Markdown", reply_markup=reply_markup)
             else:
                 await update.message.reply_text(message_text, parse_mode="Markdown")
-
 
 async def handle_specialist_current_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = update.message.from_user.id
@@ -97,14 +97,11 @@ async def handle_specialist_current_tasks(update: Update, context: ContextTypes.
             reply_markup = create_specialist_buttons(order["order_id"])
             await update.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
 
-
-
 async def handle_specialist_contact_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработка кнопки "✉️ Связаться".
     """
     await update.message.reply_text("Свяжитесь с администратором, чтобы решить вашу проблему. (Заглушка)")
-
 
 
 async def handle_specialist_accept_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -174,11 +171,14 @@ async def handle_specialist_decline_order(update: Update, context: ContextTypes.
     await query.answer("❌ Вы отказались от заказа.", show_alert=True)
     await query.edit_message_reply_markup(None)  # Убираем кнопки
 
+
+
 async def handle_specialist_montage_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Заглушка для меню управления датой монтажа (specialist).
     """
     await update.message.reply_text("📅 Меню управления датой монтажа пока в разработке.")
+
 
 
 async def handle_specialist_complete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -187,8 +187,6 @@ async def handle_specialist_complete_menu(update: Update, context: ContextTypes.
     """
     await update.message.reply_text("✅ Меню завершения заказа пока в разработке.")
 
-
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 def create_specialist_buttons(order_id):
     """
@@ -201,3 +199,100 @@ def create_specialist_buttons(order_id):
         ]
     ]
     return InlineKeyboardMarkup(buttons)
+
+@check_state(required_state="specialist_idle")
+async def handle_specialist_set_montage_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработчик кнопки "📅 Дата монтажа" для специалиста.
+    Переход в режим "ввода даты монтажа".
+    """
+    query = update.callback_query
+    callback_data = query.data
+    order_id = int(callback_data.split("_")[-1])
+    user_id = update.effective_user.id
+    logging.info(f"[SPECIALIST] {user_id} выбрал настройку даты монтажа для заказа {order_id}")
+
+    # Сохраняем order_id в user_data
+    context.user_data["current_order_id"] = order_id
+
+    # Получаем данные о заказе из базы данных
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("""
+            SELECT 
+                o.customer_address, 
+                c.phone AS customer_phone, 
+                o.montage_date, 
+                o.description
+            FROM 
+                orders o
+            JOIN 
+                customers c ON o.customer_id = c.id
+            WHERE 
+                o.id = %s AND o.installer_id = (SELECT id FROM users WHERE telegram_id = %s)
+        """, (order_id, user_id))
+        order = cursor.fetchone()
+
+    if not order:
+        logging.error(f"[SPECIALIST] Заказ {order_id} не найден или не принадлежит пользователю {user_id}")
+        await query.answer("❌ Ошибка: заказ не найден.", show_alert=True)
+        return
+
+    # Смена состояния
+    await update_user_state(user_id, "specialist_date_input")
+    logging.info(f"[SPECIALIST] Состояние пользователя {user_id} изменено на 'specialist_date_input'")
+
+    # Отправляем сообщение с текущими данными о заказе
+    await query.answer("Переключаемся в режим ввода даты монтажа.", show_alert=False)
+    montage_date = order["montage_date"] or "Не назначена"
+    await query.message.reply_text(
+        f"📋 *Текущий заказ №{order_id}*\n"
+        f"🏠 *Адрес клиента:* {order['customer_address']}\n"
+        f"📞 *Телефон клиента:* {order['customer_phone']}\n"
+        f"📅 *Дата монтажа:* {montage_date}\n"
+        "\nВведите новую дату монтажа в формате: *YYYY-MM-DD*",
+        parse_mode="Markdown",
+        reply_markup=ReplyKeyboardMarkup([["⬅️ Возврат к заказам"]], resize_keyboard=True)
+    )
+
+@check_state("specialist_date_input")
+async def handle_specialist_date_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает ввод даты монтажа от специалиста.
+    """
+    user_id = update.effective_user.id
+    order_id = context.user_data.get("order_id")  # ID заказа сохраняется в user_data при выборе "Дата монтажа"
+    input_text = update.message.text.strip()
+
+    logging.info(f"[SPECIALIST] Пользователь {user_id} вводит дату монтажа для заказа {order_id}: '{input_text}'")
+
+    # Проверяем формат даты
+    try:
+        montage_date = datetime.strptime(input_text, "%Y-%m-%d").date()
+        context.user_data["montage_date"] = montage_date  # Сохраняем дату в user_data
+    except ValueError:
+        logging.warning(f"❌ Неверный формат даты от пользователя {user_id}: '{input_text}'")
+        await update.message.reply_text(
+            "❌ Неверный формат даты. Введите дату в формате YYYY-MM-DD, например: 2025-02-20."
+        )
+        return
+
+    # Отправляем подтверждение с кнопками "Да" и "Нет"
+    confirm_message = (
+        f"Вы уверены, что хотите сохранить дату монтажа: *{montage_date.strftime('%Y-%m-%d')}*?"
+    )
+    confirm_buttons = [
+        [
+            InlineKeyboardButton("✅ Да", callback_data=f"specialist_confirm_date_input_{order_id}"),
+            InlineKeyboardButton("❌ Нет", callback_data=f"specialist_cancel_date_input_{order_id}")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(confirm_buttons)
+
+    await update.message.reply_text(
+        confirm_message,
+        parse_mode="Markdown",
+        reply_markup=reply_markup
+    )
+
+    logging.info(f"✅ Введена дата {montage_date} для заказа {order_id}, ожидается подтверждение.")

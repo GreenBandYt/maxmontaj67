@@ -33,6 +33,8 @@ from handlers.executor.executor_menu import (
 from handlers.specialist.specialist_menu import (
     handle_specialist_accept_order,
     handle_specialist_decline_order,
+    handle_specialist_set_montage_date,
+    handle_specialist_date_input,
 )
 
 
