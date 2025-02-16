@@ -16,7 +16,7 @@ from telegram_bot.handlers.guest.guest_menu import start_guest
 from telegram_bot.dictionaries.text_actions import TEXT_ACTIONS
 from telegram_bot.dictionaries.callback_actions import CALLBACK_ACTIONS
 from telegram_bot.dictionaries.smart_replies import get_smart_reply
-from telegram_bot.dictionaries.states import INITIAL_STATES
+from telegram_bot.dictionaries.states import INITIAL_STATES, STATE_HANDLERS
 
 from telegram_bot.bot_utils.access_control import check_access, check_state
 from telegram_bot.bot_utils.db_utils import update_user_state, get_user_state
@@ -35,6 +35,8 @@ from handlers.specialist.specialist_menu import (
     handle_specialist_decline_order,
     handle_specialist_set_montage_date,
     handle_specialist_date_input,
+    handle_specialist_date_confirm,
+    handle_specialist_cancel_date_input,
 )
 
 
@@ -215,25 +217,36 @@ def update_user_telegram_id(user_id: int, telegram_id: int):
     finally:
         conn.close()
 
+
 async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("🛠️ Вызван универсальный обработчик handle_user_input")
     """
     Универсальный обработчик для обработки текста от пользователя.
     """
     user_id = update.effective_user.id  # Получаем user_id из update
-    user_state = await get_user_state(user_id)
+    user_state = await get_user_state(user_id)  # Получаем текущее состояние пользователя
 
-    if user_state == "writing_message":
-        await process_admin_message(update, context)
-        return
+    # Проверяем, зарегистрирован ли обработчик для текущего состояния
+    if user_state in STATE_HANDLERS:
+        handler_name = STATE_HANDLERS[user_state]
+        try:
+            # Получаем функцию по имени из глобальной области видимости
+            handler = globals().get(handler_name)
+            if callable(handler):
+                logging.info(f"🔍 Состояние пользователя {user_id}: {user_state}. Вызывается обработчик {handler_name}.")
+                await handler(update, context)
+                return
+            else:
+                raise ValueError(f"Обработчик {handler_name} не является вызываемой функцией.")
+        except Exception as e:
+            logging.error(f"❌ Ошибка при вызове обработчика {handler_name} для состояния {user_state}: {e}")
+            await update.message.reply_text(
+                "❌ Произошла ошибка при обработке вашего запроса. Пожалуйста, обратитесь к администратору."
+            )
+            return
 
-    if user_state == "replying_to_user":
-        await handle_reply_message(update, context)
-        return
-
-    if user_state == "specialist_date_input":
-        await handle_specialist_date_input(update, context)
-        return
+    # Если состояние не определено, продолжаем проверку других условий
+    logging.warning(f"⚠️ Неизвестное состояние пользователя {user_id}: {user_state}. Проверяем другие условия.")
 
 
     # Получаем текст сообщения от пользователя
@@ -241,20 +254,20 @@ async def handle_user_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Проверяем, является ли текст кнопкой
     action = TEXT_ACTIONS.get(user_text)
-
     if action:
+        logging.info(f"🔘 Найдено действие для текста '{user_text}': {action.__name__}.")
         await action(update, context)  # Вызываем функцию напрямую
         return
-
-
 
     # Проверяем "умные ответы"
     response = get_smart_reply(user_text)
     if response:
+        logging.info(f"🤖 Умный ответ на '{user_text}': {response}.")
         await update.message.reply_text(response)
         return
 
     # Если ничего не найдено, отправляем сообщение по умолчанию
+    logging.info(f"❓ Пользователь {user_id} отправил непонятный текст: '{user_text}'.")
     await update.message.reply_text(
         "Извините, я вас не понял. Попробуйте уточнить запрос или воспользуйтесь кнопками меню. 🤔"
     )

@@ -13,6 +13,7 @@ from telegram_bot.handlers.specialist.specialist_menu import (
     handle_specialist_montage_menu,
     handle_specialist_complete_menu,
     handle_specialist_date_input,
+    handle_specialist_cancel_date_input,
 
 )
 from telegram_bot.bot_utils.admin_messaging import handle_message_to_admin
@@ -37,7 +38,7 @@ TEXT_ACTIONS = {
     # Действия для специалиста
     "📋 Список новых заданий": handle_specialist_new_tasks,  # Список новых заданий
     "🔄 Текущие задания": handle_specialist_current_tasks,  # Текущие задания
-    "⬅️ Возврат к заказам": handle_specialist_current_tasks,  # Возврат в список текущих заказов
+    "⬅️ В МЕНЮ": handle_specialist_new_tasks,  # Возврат в список текущих заказов
 
     # Дополнительные меню для специалиста
 
@@ -45,7 +46,7 @@ TEXT_ACTIONS = {
     # Действия для исполнителя
     "📋 Новые задания": handle_executor_new_tasks,  # Список новых заданий
     "🔄 Задания в работе": handle_executor_current_tasks,  # Текущие задания
-    "⬅️ Возврат в заказы": handle_executor_current_tasks,  # Возврат в список текущих заказов
+    "⬅️ Возврат в меню": handle_specialist_new_tasks,  # Возврат в список текущих заказов
 
     # Дополнительные меню для исполнителя
 

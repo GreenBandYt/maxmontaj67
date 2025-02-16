@@ -42,6 +42,7 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
         """)
         new_orders = cursor.fetchall()
 
+
         if not new_orders:
             await update.message.reply_text("🔔 На данный момент новых заданий нет.")
             return
@@ -54,8 +55,20 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
             else:
                 await update.message.reply_text(message_text, parse_mode="Markdown")
 
+
 async def handle_specialist_current_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    telegram_id = update.message.from_user.id
+    """
+    Обрабатывает запрос на отображение текущих заданий для специалиста.
+    """
+    # Учитываем, что update может прийти из сообщения или из callback_query
+    if update.message:
+        telegram_id = update.message.from_user.id
+    elif update.callback_query:
+        telegram_id = update.callback_query.from_user.id
+    else:
+        logging.error("⚠ Неподдерживаемый тип update для handle_specialist_current_tasks.")
+        return
+
     logging.info(f"[SPECIALIST] {telegram_id} запросил список текущих заданий.")
 
     with db_connect() as conn:
@@ -81,7 +94,11 @@ async def handle_specialist_current_tasks(update: Update, context: ContextTypes.
         current_orders = cursor.fetchall()
 
         if not current_orders:
-            await update.message.reply_text("🛠️ У вас нет текущих заданий.")
+            # Если вызов из сообщения или callback_query, отправляем сообщение корректно
+            if update.message:
+                await update.message.reply_text("🛠️ У вас нет текущих заданий.")
+            elif update.callback_query:
+                await update.callback_query.message.reply_text("🛠️ У вас нет текущих заданий.")
             return
 
         # Отправляем сообщение для каждого заказа
@@ -95,7 +112,14 @@ async def handle_specialist_current_tasks(update: Update, context: ContextTypes.
 ⏰ *Дедлайн:* {order['deadline_at']}
 """
             reply_markup = create_specialist_buttons(order["order_id"])
-            await update.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+
+            # Если вызов из сообщения или callback_query, отправляем корректно
+            if update.message:
+                await update.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+            elif update.callback_query:
+                await update.callback_query.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+
+
 
 async def handle_specialist_contact_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -213,7 +237,7 @@ async def handle_specialist_set_montage_date(update: Update, context: ContextTyp
     logging.info(f"[SPECIALIST] {user_id} выбрал настройку даты монтажа для заказа {order_id}")
 
     # Сохраняем order_id в user_data
-    context.user_data["current_order_id"] = order_id
+    context.user_data["order_id"] = order_id
 
     # Получаем данные о заказе из базы данных
     with db_connect() as conn:
@@ -296,3 +320,93 @@ async def handle_specialist_date_input(update: Update, context: ContextTypes.DEF
     )
 
     logging.info(f"✅ Введена дата {montage_date} для заказа {order_id}, ожидается подтверждение.")
+
+
+@check_state(required_state="specialist_date_input")
+async def handle_specialist_date_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает подтверждение сохранения даты монтажа от специалиста.
+    """
+    query = update.callback_query
+    callback_data = query.data
+    user_id = update.effective_user.id
+    order_id = context.user_data.get("order_id")
+    montage_date = context.user_data.get("montage_date")
+
+    logging.info(f"[SPECIALIST] Пользователь {user_id} нажал подтверждение: {callback_data}.")
+
+    # Проверяем наличие необходимых данных
+    if not order_id or not montage_date:
+        logging.error(f"[SPECIALIST] order_id или montage_date отсутствуют для пользователя {user_id}.")
+        await query.answer("❌ Ошибка: данные заказа или дата отсутствуют. Попробуйте заново.", show_alert=True)
+        return
+
+    # Обрабатываем подтверждение
+    if callback_data == f"specialist_confirm_date_input_{order_id}":
+        # Сохраняем дату монтажа в БД
+        try:
+            with db_connect() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE orders SET montage_date = %s WHERE id = %s",
+                    (montage_date, order_id)
+                )
+                conn.commit()
+
+            logging.info(f"✅ Дата монтажа {montage_date} сохранена в БД для заказа {order_id}.")
+            await query.answer("✅ Дата монтажа успешно сохранена.", show_alert=False)
+
+            # Отправляем сообщение пользователю
+            await query.edit_message_text(
+                f"✅ Дата монтажа *{montage_date}* успешно сохранена для заказа №{order_id}.",
+                parse_mode="Markdown"
+            )
+
+            # Возвращаем пользователя к списку задач
+            await update_user_state(user_id, "specialist_view_tasks")
+            await handle_specialist_current_tasks(update, context)
+
+        except Exception as e:
+            logging.error(f"❌ Ошибка сохранения даты монтажа для заказа {order_id}: {e}")
+            await query.answer("❌ Ошибка сохранения даты. Попробуйте снова.", show_alert=True)
+
+    elif callback_data == f"specialist_cancel_date_input_{order_id}":
+        # Пользователь отменил сохранение
+        logging.info(f"[SPECIALIST] Пользователь {user_id} отменил сохранение даты для заказа {order_id}.")
+        await query.answer("❌ Изменение даты отменено.", show_alert=False)
+
+        # Возвращаем пользователя в режим ввода даты
+        await update_user_state(user_id, "specialist_date_input")
+        await query.message.reply_text(
+            "Введите новую дату монтажа в формате YYYY-MM-DD или нажмите 'Назад в заказы'.",
+            reply_markup=ReplyKeyboardMarkup([["⬅️ Возврат к заказам"]], resize_keyboard=True)
+        )
+
+    else:
+        logging.warning(f"[SPECIALIST] Неизвестное действие: {callback_data} для пользователя {user_id}.")
+        await query.answer("❌ Неизвестное действие. Попробуйте снова.", show_alert=True)
+
+
+
+
+
+@check_state(required_state="specialist_date_input")
+async def handle_specialist_cancel_date_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает нажатие кнопки "Назад в заказы".
+    Возвращает пользователя к списку текущих задач.
+    """
+    query = update.callback_query
+    user_id = update.effective_user.id
+
+    logging.info(f"[SPECIALIST] Пользователь {user_id} нажал кнопку 'Назад в заказы'.")
+
+    # Меняем состояние пользователя на просмотр задач
+    await update_user_state(user_id, "specialist_idle")
+    logging.info(f"[SPECIALIST] Состояние пользователя {user_id} изменено на 'specialist_idle'.")
+
+    # Уведомляем пользователя, что он возвращен к задачам
+    await query.answer("Возвращаемся к списку заданий.", show_alert=False)
+
+    # Вызываем функцию отображения списка текущих задач
+    await handle_specialist_current_tasks(update, context)

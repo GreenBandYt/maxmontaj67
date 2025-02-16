@@ -18,8 +18,7 @@ CALLBACK_ACTIONS = {
     "specialist_accept_order": "handle_specialist_accept_order",
     "specialist_decline_order": "handle_specialist_decline_order",
     "specialist_set_montage_date": "handle_specialist_set_montage_date",  # Установить/сменить дату монтажа
-    "specialist_date_confirm_yes": "handle_specialist_date_confirm",      # Подтвердить дату монтажа
-    "specialist_date_confirm_no": "handle_specialist_date_confirm",       # Отменить подтверждение
+    "specialist_confirm_date_input": "handle_specialist_date_confirm",      # Подтвердить дату монтажа
     "specialist_cancel_date_input": "handle_specialist_cancel_date_input",  # Отмена ввода даты монтажа
     "specialist_complete_order": "handle_specialist_complete_order",      # Завершить заказ
 
