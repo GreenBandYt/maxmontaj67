@@ -102,7 +102,7 @@ async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, message: st
         logging.error(f"Ошибка отправки сообщений администраторам: {e}")
         return False
 
-@check_state(required_state="replying_to_user")
+@check_state(required_state="admin_idle")
 async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("🛠️ Вызван handle_reply_button")
     """
