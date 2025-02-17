@@ -20,10 +20,11 @@ def specialist_montage_date_keyboard():
     """
     return ReplyKeyboardMarkup(
         [
-            ["⬅️ Возврат к заказам"],
+            ["⬅️ Возврат в меню"],
         ],
         resize_keyboard=True
     )
+
 
 def specialist_complete_order_keyboard():
     """
@@ -32,7 +33,7 @@ def specialist_complete_order_keyboard():
     return ReplyKeyboardMarkup(
         [
             ["📷 Добавить фото", "✅ Завершить"],
-            ["⬅️ Возврат к заказам"]
+            ["⬅️ Возврат в меню"]
         ],
         resize_keyboard=True
     )

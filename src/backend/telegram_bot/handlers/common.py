@@ -37,6 +37,7 @@ from handlers.specialist.specialist_menu import (
     handle_specialist_date_input,
     handle_specialist_date_confirm,
     handle_specialist_cancel_date_input,
+    handle_specialist_return_to_menu,
 )
 
 

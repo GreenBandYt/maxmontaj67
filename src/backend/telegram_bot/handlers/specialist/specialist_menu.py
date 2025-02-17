@@ -44,7 +44,8 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
 
 
         if not new_orders:
-            await update.message.reply_text("🔔 На данный момент новых заданий нет.")
+            await update.message.reply_text("🔔 На данный момент новых заданий нет.",
+                                            reply_markup=specialist_keyboard())  # Обновляем клавиатуру
             return
 
         for order in new_orders:
@@ -276,7 +277,7 @@ async def handle_specialist_set_montage_date(update: Update, context: ContextTyp
         f"📅 *Дата монтажа:* {montage_date}\n"
         "\nВведите новую дату монтажа в формате: *YYYY-MM-DD*",
         parse_mode="Markdown",
-        reply_markup=ReplyKeyboardMarkup([["⬅️ Возврат к заказам"]], resize_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["⬅️ Возврат в меню"]], resize_keyboard=True)
     )
 
 @check_state("specialist_date_input")
@@ -363,7 +364,7 @@ async def handle_specialist_date_confirm(update: Update, context: ContextTypes.D
             )
 
             # Возвращаем пользователя к списку задач
-            await update_user_state(user_id, "specialist_view_tasks")
+            await update_user_state(user_id, "specialist_idle")
             await handle_specialist_current_tasks(update, context)
 
         except Exception as e:
@@ -379,7 +380,7 @@ async def handle_specialist_date_confirm(update: Update, context: ContextTypes.D
         await update_user_state(user_id, "specialist_date_input")
         await query.message.reply_text(
             "Введите новую дату монтажа в формате YYYY-MM-DD или нажмите 'Назад в заказы'.",
-            reply_markup=ReplyKeyboardMarkup([["⬅️ Возврат к заказам"]], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup([["⬅️ Возврат в меню"]], resize_keyboard=True)
         )
 
     else:
@@ -410,3 +411,18 @@ async def handle_specialist_cancel_date_input(update: Update, context: ContextTy
 
     # Вызываем функцию отображения списка текущих задач
     await handle_specialist_current_tasks(update, context)
+
+async def handle_specialist_return_to_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает нажатие кнопки "⬅️ Возврат в меню".
+    Перенаправляет пользователя в список новых заданий.
+    """
+    user_id = update.effective_user.id
+    logging.info(f"[SPECIALIST] Пользователь {user_id} вернулся в меню.")
+
+    # Обновляем состояние пользователя на стандартное
+    await update_user_state(user_id, "specialist_idle")
+
+    # Отправляем список новых заданий
+    await handle_specialist_new_tasks(update, context)
+
