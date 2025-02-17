@@ -394,3 +394,106 @@ async def handle_executor_return_to_menu(update: Update, context: ContextTypes.D
 
     # Отправляем список новых заданий
     await handle_executor_new_tasks(update, context)
+
+
+@check_state(required_state="executor_idle")
+async def handle_executor_complete_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает нажатие кнопки "✅ Закрытие заказа".
+    Проверяет возможность завершения заказа и предлагает подтвердить завершение.
+    """
+    query = update.callback_query
+    callback_data = query.data
+    order_id = int(callback_data.split("_")[-1])
+    user_id = update.effective_user.id
+
+    logging.info(f"[EXECUTOR] Пользователь {user_id} нажал 'Закрытие заказа' для заказа {order_id}.")
+
+    # Получаем данные о заказе
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("""
+            SELECT 
+                o.customer_address, 
+                c.phone AS customer_phone, 
+                o.montage_date, 
+                o.description,
+                o.deadline_at,
+                o.status
+            FROM 
+                orders o
+            JOIN 
+                customers c ON o.customer_id = c.id
+            WHERE 
+                o.id = %s AND o.installer_id = (SELECT id FROM users WHERE telegram_id = %s)
+        """, (order_id, user_id))
+        order = cursor.fetchone()
+
+    # 1️⃣ Ошибка: заказ не найден или принадлежит другому пользователю
+    if not order:
+        logging.error(f"[EXECUTOR] Заказ {order_id} не найден или не принадлежит пользователю {user_id}.")
+        await query.answer("❌ Ошибка: заказ не найден.", show_alert=True)
+
+        # Сообщение пользователю
+        await query.message.reply_text(
+            f"❌ Ошибка: задание №{order_id} не найдено в базе или не принадлежит вам.\n"
+            "Пожалуйста, обновите список заданий и попробуйте снова.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # 2️⃣ Ошибка: заказ уже закрыт
+    if order["status"] == "Завершен":
+        logging.warning(f"[EXECUTOR] Попытка закрыть уже завершенный заказ {order_id}.")
+        await query.answer("⚠️ Этот заказ уже закрыт.", show_alert=True)
+
+        # Сообщение пользователю
+        await query.message.reply_text(
+            f"⚠️ Задание №{order_id} уже завершено. Повторное закрытие невозможно.\n"
+            "Пожалуйста, обновите список заданий.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # 3️⃣ Ошибка: у заказа нет даты выполнения
+    if not order["montage_date"]:
+        logging.warning(f"[EXECUTOR] У заказа {order_id} нет даты выполнения. Закрытие невозможно.")
+        await query.answer("❌ Ошибка: сначала укажите дату выполнения заказа.", show_alert=True)
+
+        # Сообщение пользователю
+        await query.message.reply_text(
+            f"❌ Невозможно завершить задание №{order_id}, так как не указана дата выполнения.\n"
+            "Пожалуйста, сначала установите дату выполнения, затем попробуйте снова.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # ✅ Если нет ошибок, формируем сообщение с деталями заказа
+    message = f"""
+📋 *Текущее задание №{order_id}*
+🏠 *Адрес клиента:* {order['customer_address']}
+📞 *Телефон клиента:* {order['customer_phone']}
+📝 *Описание:* {order['description']}
+📅 *Дата выполнения:* {order['montage_date']}
+⏰ *Дедлайн:* {order['deadline_at']}
+"""
+    reply_markup = close_task_executor_buttons(order_id)
+
+    # Отправляем сообщение с кнопками подтверждения
+    if update.message:
+        await update.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+    elif update.callback_query:
+        await query.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+
+    logging.info(f"📋 Информация о заказе {order_id} отправлена исполнителю {user_id}.")
+
+
+def close_task_executor_buttons(order_id):
+    """
+    Создаёт инлайн-кнопки для подтверждения завершения задания.
+    """
+    buttons = [
+        [InlineKeyboardButton("✅ Подтвердить закрытие", callback_data=f"executor_confirm_complete_{order_id}")],
+        [InlineKeyboardButton("❌ Отмена", callback_data=f"executor_cancel_complete_{order_id}")]
+    ]
+    return InlineKeyboardMarkup(buttons)
