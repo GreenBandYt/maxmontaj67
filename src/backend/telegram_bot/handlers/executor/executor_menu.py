@@ -44,7 +44,8 @@ async def handle_executor_new_tasks(update: Update, context: ContextTypes.DEFAUL
         new_orders = cursor.fetchall()
 
         if not new_orders:
-            await update.message.reply_text("🔔 На данный момент новых заданий нет.")
+            await update.message.reply_text("🔔 На данный момент новых заданий нет.",
+                                            reply_markup=executor_keyboard())
             return
 
         # Отправляем каждое задание отдельным сообщением
