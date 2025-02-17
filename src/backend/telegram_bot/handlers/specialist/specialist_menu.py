@@ -426,3 +426,4 @@ async def handle_specialist_return_to_menu(update: Update, context: ContextTypes
     # Отправляем список новых заданий
     await handle_specialist_new_tasks(update, context)
 
+    # ля ля ля
