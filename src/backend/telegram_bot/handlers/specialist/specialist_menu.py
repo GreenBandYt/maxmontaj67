@@ -1,3 +1,5 @@
+# src/backend/telegram_bot/handlers/specialist/specialist_menu.py
+
 from telegram import Update
 from telegram.ext import ContextTypes
 from .specialist_keyboards import specialist_keyboard
@@ -42,7 +44,6 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
         """)
         new_orders = cursor.fetchall()
 
-
         if not new_orders:
             await update.message.reply_text("🔔 На данный момент новых заданий нет.",
                                             reply_markup=specialist_keyboard())  # Обновляем клавиатуру
@@ -55,7 +56,6 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
                 await update.message.reply_text(message_text, parse_mode="Markdown", reply_markup=reply_markup)
             else:
                 await update.message.reply_text(message_text, parse_mode="Markdown")
-
 
 async def handle_specialist_current_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -120,15 +120,6 @@ async def handle_specialist_current_tasks(update: Update, context: ContextTypes.
             elif update.callback_query:
                 await update.callback_query.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
 
-
-
-async def handle_specialist_contact_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработка кнопки "✉️ Связаться".
-    """
-    await update.message.reply_text("Свяжитесь с администратором, чтобы решить вашу проблему. (Заглушка)")
-
-
 async def handle_specialist_accept_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     order_id = int(query.data.split("_")[-1])
@@ -183,7 +174,6 @@ async def handle_specialist_accept_order(update: Update, context: ContextTypes.D
     await query.edit_message_reply_markup(None)
     await query.edit_message_text(f"✅ Заказ #{order_id} принят в работу.")
 
-
 async def handle_specialist_decline_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработчик для кнопки "❌ Не принимаю" (специалист).
@@ -195,23 +185,6 @@ async def handle_specialist_decline_order(update: Update, context: ContextTypes.
 
     await query.answer("❌ Вы отказались от заказа.", show_alert=True)
     await query.edit_message_reply_markup(None)  # Убираем кнопки
-
-
-
-async def handle_specialist_montage_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Заглушка для меню управления датой монтажа (specialist).
-    """
-    await update.message.reply_text("📅 Меню управления датой монтажа пока в разработке.")
-
-
-
-async def handle_specialist_complete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Заглушка для меню завершения заказа (specialist).
-    """
-    await update.message.reply_text("✅ Меню завершения заказа пока в разработке.")
-
 
 def create_specialist_buttons(order_id):
     """
@@ -322,7 +295,6 @@ async def handle_specialist_date_input(update: Update, context: ContextTypes.DEF
 
     logging.info(f"✅ Введена дата {montage_date} для заказа {order_id}, ожидается подтверждение.")
 
-
 @check_state(required_state="specialist_date_input")
 async def handle_specialist_date_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -386,10 +358,6 @@ async def handle_specialist_date_confirm(update: Update, context: ContextTypes.D
     else:
         logging.warning(f"[SPECIALIST] Неизвестное действие: {callback_data} для пользователя {user_id}.")
         await query.answer("❌ Неизвестное действие. Попробуйте снова.", show_alert=True)
-
-
-
-
 
 @check_state(required_state="specialist_date_input")
 async def handle_specialist_cancel_date_input(update: Update, context: ContextTypes.DEFAULT_TYPE):

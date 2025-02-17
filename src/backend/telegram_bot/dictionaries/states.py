@@ -30,9 +30,13 @@ STATE_HANDLERS = {
     # "dispatcher_check_schedule": handle_dispatcher_check_schedule,
 
     # # Для исполнителей
-    # "executor_view_tasks": handle_executor_view_tasks,
-    # "executor_complete_task": handle_executor_complete_task,
-    # "executor_upload_photo": handle_executor_upload_photo,
+
+    "executor_view_tasks": "handle_executor_view_tasks",
+    "executor_complete_task": "handle_executor_complete_task",
+    "executor_upload_photo": "handle_executor_upload_photo",
+    "executor_date_input": "handle_executor_date_input",
+    "executor_date_confirm": "handle_executor_date_confirm",
+    "executor_cancel_date_input": "handle_executor_cancel_date_input",
 
     # Для специалистов
     "specialist_view_tasks": "handle_specialist_view_tasks",
