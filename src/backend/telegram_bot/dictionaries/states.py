@@ -11,7 +11,51 @@ INITIAL_STATES = {
     "blocked": "blocked_idle",
 }
 
-# Словарь состояний
+
+# Словарь обработчиков состояний
+STATE_HANDLERS = {
+
+    # Общие состояния
+    "writing_message": "process_admin_message",
+    "replying_to_user": "handle_reply_message",
+
+    # # Для гостей
+    # "guest_registration_name_request": handle_guest_registration_name_request,
+    # "guest_registration_email_request": handle_guest_registration_email_request,
+    # "guest_registration_role_request": handle_guest_registration_role_request,
+
+    # # Для диспетчеров
+    # "dispatcher_assign_order_step_1": handle_dispatcher_assign_order_step_1,
+    # "dispatcher_assign_order_step_2": handle_dispatcher_assign_order_step_2,
+    # "dispatcher_check_schedule": handle_dispatcher_check_schedule,
+
+    # # Для исполнителей
+    # "executor_view_tasks": handle_executor_view_tasks,
+    # "executor_complete_task": handle_executor_complete_task,
+    # "executor_upload_photo": handle_executor_upload_photo,
+
+    # Для специалистов
+    "specialist_view_tasks": "handle_specialist_view_tasks",
+    "specialist_complete_task": "handle_specialist_complete_task",
+    "specialist_upload_photo": "handle_specialist_upload_photo",
+    "specialist_date_input": "handle_specialist_date_input",
+    "specialist_date_confirm": "handle_specialist_date_confirm",
+    "specialist_cancel_date_input": "handle_specialist_cancel_date_input",
+
+    # # Для заказчиков
+    # "customer_create_order_step_1": handle_customer_create_order_step_1,
+    # "customer_create_order_step_2": handle_customer_create_order_step_2,
+    # "customer_view_orders": handle_customer_view_orders,
+
+    # Для администраторов
+    "admin_manage_users": "handle_admin_manage_users",
+    "admin_view_analytics": "handle_admin_view_analytics",
+    "admin_edit_order": "handle_admin_edit_order",
+
+    # # Для заблокированных пользователей
+    # "blocked_contact_admin": handle_blocked_contact_admin,
+}
+# Словарь состояний (заготовка)
 STATES = {
     # Состояния гостя
     "guest_idle": "Начальное состояние гостя",
