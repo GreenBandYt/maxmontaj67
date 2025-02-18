@@ -1,3 +1,5 @@
+# src/backend/telegram_bot/handlers/specialist/specialist_menu.py
+
 from telegram import Update
 from telegram.ext import ContextTypes
 from .specialist_keyboards import specialist_keyboard
@@ -42,7 +44,6 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
         """)
         new_orders = cursor.fetchall()
 
-
         if not new_orders:
             await update.message.reply_text("🔔 На данный момент новых заданий нет.",
                                             reply_markup=specialist_keyboard())  # Обновляем клавиатуру
@@ -55,7 +56,6 @@ async def handle_specialist_new_tasks(update: Update, context: ContextTypes.DEFA
                 await update.message.reply_text(message_text, parse_mode="Markdown", reply_markup=reply_markup)
             else:
                 await update.message.reply_text(message_text, parse_mode="Markdown")
-
 
 async def handle_specialist_current_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -120,15 +120,6 @@ async def handle_specialist_current_tasks(update: Update, context: ContextTypes.
             elif update.callback_query:
                 await update.callback_query.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
 
-
-
-async def handle_specialist_contact_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработка кнопки "✉️ Связаться".
-    """
-    await update.message.reply_text("Свяжитесь с администратором, чтобы решить вашу проблему. (Заглушка)")
-
-
 async def handle_specialist_accept_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     order_id = int(query.data.split("_")[-1])
@@ -183,7 +174,6 @@ async def handle_specialist_accept_order(update: Update, context: ContextTypes.D
     await query.edit_message_reply_markup(None)
     await query.edit_message_text(f"✅ Заказ #{order_id} принят в работу.")
 
-
 async def handle_specialist_decline_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработчик для кнопки "❌ Не принимаю" (специалист).
@@ -195,23 +185,6 @@ async def handle_specialist_decline_order(update: Update, context: ContextTypes.
 
     await query.answer("❌ Вы отказались от заказа.", show_alert=True)
     await query.edit_message_reply_markup(None)  # Убираем кнопки
-
-
-
-async def handle_specialist_montage_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Заглушка для меню управления датой монтажа (specialist).
-    """
-    await update.message.reply_text("📅 Меню управления датой монтажа пока в разработке.")
-
-
-
-async def handle_specialist_complete_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Заглушка для меню завершения заказа (specialist).
-    """
-    await update.message.reply_text("✅ Меню завершения заказа пока в разработке.")
-
 
 def create_specialist_buttons(order_id):
     """
@@ -322,7 +295,6 @@ async def handle_specialist_date_input(update: Update, context: ContextTypes.DEF
 
     logging.info(f"✅ Введена дата {montage_date} для заказа {order_id}, ожидается подтверждение.")
 
-
 @check_state(required_state="specialist_date_input")
 async def handle_specialist_date_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -387,10 +359,6 @@ async def handle_specialist_date_confirm(update: Update, context: ContextTypes.D
         logging.warning(f"[SPECIALIST] Неизвестное действие: {callback_data} для пользователя {user_id}.")
         await query.answer("❌ Неизвестное действие. Попробуйте снова.", show_alert=True)
 
-
-
-
-
 @check_state(required_state="specialist_date_input")
 async def handle_specialist_cancel_date_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -426,4 +394,213 @@ async def handle_specialist_return_to_menu(update: Update, context: ContextTypes
     # Отправляем список новых заданий
     await handle_specialist_new_tasks(update, context)
 
+@check_state(required_state="specialist_idle")
+async def handle_specialist_complete_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает нажатие кнопки "✅ Завершение заказа".
+    Проверяет возможность завершения заказа и предлагает подтвердить завершение.
+    """
+    query = update.callback_query
+    callback_data = query.data
+    order_id = int(callback_data.split("_")[-1])
+    user_id = update.effective_user.id
+
+    logging.info(f"[SPECIALIST] Пользователь {user_id} нажал 'Завершение заказа' для заказа {order_id}.")
+
+    # Получаем данные о заказе
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("""
+            SELECT 
+                o.customer_address, 
+                c.phone AS customer_phone, 
+                o.montage_date, 
+                o.description,
+                o.deadline_at,
+                o.status
+            FROM 
+                orders o
+            JOIN 
+                customers c ON o.customer_id = c.id
+            WHERE 
+                o.id = %s AND o.installer_id = (SELECT id FROM users WHERE telegram_id = %s)
+        """, (order_id, user_id))
+        order = cursor.fetchone()
+
+    # 1️⃣ Ошибка: заказ не найден или принадлежит другому пользователю
+    if not order:
+        logging.error(f"[SPECIALIST] Заказ {order_id} не найден или не принадлежит пользователю {user_id}.")
+        await query.answer("❌ Ошибка: заказ не найден.", show_alert=True)
+
+        # Сообщение пользователю
+        await query.message.reply_text(
+            f"❌ Ошибка: задание №{order_id} не найдено в базе или не принадлежит вам.\n"
+            "Пожалуйста, обновите список заданий и попробуйте снова.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # 2️⃣ Ошибка: заказ уже закрыт
+    if order["status"] == "Завершен":
+        logging.warning(f"[SPECIALIST] Попытка закрыть уже завершенный заказ {order_id}.")
+        await query.answer("⚠️ Этот заказ уже закрыт.", show_alert=True)
+
+        # Сообщение пользователю
+        await query.message.reply_text(
+            f"⚠️ Задание №{order_id} уже завершено. Повторное закрытие невозможно.\n"
+            "Пожалуйста, обновите список заданий.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # 3️⃣ Ошибка: у заказа нет даты монтажа
+    if not order["montage_date"]:
+        logging.warning(f"[SPECIALIST] У заказа {order_id} нет даты монтажа. Закрытие невозможно.")
+        await query.answer("❌ Ошибка: сначала укажите дату монтажа.", show_alert=True)
+
+        # Сообщение пользователю
+        await query.message.reply_text(
+            f"❌ Невозможно завершить задание №{order_id}, так как не указана дата монтажа.\n"
+            "Пожалуйста, сначала установите дату монтажа, затем попробуйте снова.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # ✅ Если нет ошибок, формируем сообщение с деталями заказа
+    message = f"""
+📋 *Текущий заказ №{order_id}*
+🏠 *Адрес клиента:* {order['customer_address']}
+📞 *Телефон клиента:* {order['customer_phone']}
+📝 *Описание:* {order['description']}
+📅 *Дата монтажа:* {order['montage_date']}
+⏰ *Дедлайн:* {order['deadline_at']}
+"""
+    reply_markup = close_task_specialist_buttons(order_id)
+
+    # Отправляем сообщение с кнопками подтверждения
+    if update.message:
+        await update.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+    elif update.callback_query:
+        await query.message.reply_text(message, parse_mode="Markdown", reply_markup=reply_markup)
+
+    logging.info(f"📋 Информация о заказе {order_id} отправлена специалисту {user_id}.")
+
+
+def close_task_specialist_buttons(order_id):
+    """
+    Создаёт инлайн-кнопки для подтверждения завершения задания специалиста.
+    """
+    buttons = [
+        [InlineKeyboardButton("✅ Подтвердить завершение", callback_data=f"specialist_confirm_complete_{order_id}")],
+        [InlineKeyboardButton("❌ Отмена", callback_data=f"specialist_cancel_complete_{order_id}")]
+    ]
+    return InlineKeyboardMarkup(buttons)
+
+
+@check_state(required_state="specialist_idle")
+async def handle_specialist_confirm_complete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает подтверждение завершения заказа специалистом.
+    """
+    query = update.callback_query
+    callback_data = query.data
+    order_id = int(callback_data.split("_")[-1])
+    telegram_id = update.effective_user.id
+
+    logging.info(f"[SPECIALIST] Пользователь {telegram_id} подтвердил завершение заказа {order_id}.")
+
+    # Находим user_id по telegram_id
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT id FROM users WHERE telegram_id = %s", (telegram_id,))
+        user = cursor.fetchone()
+
+    if not user:
+        logging.error(f"[SPECIALIST] Ошибка: Telegram ID {telegram_id} не найден в базе users.")
+        await query.answer("❌ Ошибка: ваш аккаунт не зарегистрирован.", show_alert=True)
+        return
+
+    user_id = user["id"]  # Теперь у нас есть ID пользователя из БД
+
+    # Получаем информацию о заказе
+    with db_connect() as conn:
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT status, installer_id FROM orders WHERE id = %s", (order_id,))
+        order = cursor.fetchone()
+
+    # 1️⃣ Ошибка: заказ не найден
+    if not order:
+        logging.error(f"[SPECIALIST] Ошибка: заказ {order_id} не найден в БД.")
+        await query.answer("❌ Ошибка: заказ не найден.", show_alert=True)
+        return
+
+    # 2️⃣ Ошибка: заказ уже закрыт
+    if order["status"] == "Завершен":
+        logging.warning(f"[SPECIALIST] Попытка повторного закрытия заказа {order_id}.")
+        await query.answer("⚠️ Этот заказ уже завершён.", show_alert=True)
+        await query.message.reply_text(
+            f"⚠️ Задание №{order_id} уже завершено ранее.\n"
+            "Обновите список заданий.",
+            parse_mode="Markdown"
+        )
+        return
+
+    # 3️⃣ Ошибка: заказ принадлежит другому пользователю
+    if order["installer_id"] != user_id:
+        logging.error(f"[SPECIALIST] Ошибка: пользователь {user_id} (TG: {telegram_id}) пытается закрыть чужой заказ {order_id}.")
+        await query.answer("❌ Ошибка: этот заказ принадлежит другому пользователю.", show_alert=True)
+        return
+
+    # ✅ Обновляем статус заказа в БД и добавляем дату закрытия
+    try:
+        with db_connect() as conn:
+            cursor = conn.cursor()
+            completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute(
+                "UPDATE orders SET status = 'Завершен', completed_at = %s WHERE id = %s",
+                (completed_at, order_id)
+            )
+            conn.commit()
+
+        logging.info(f"✅ Заказ {order_id} успешно закрыт специалистом {user_id} (TG: {telegram_id}) в {completed_at}.")
+        await query.answer("✅ Заказ успешно завершён.", show_alert=True)
+
+        # Обновляем сообщение в чате
+        await query.edit_message_text(
+            f"✅ Задание №{order_id} успешно завершено.\n"
+            f"📅 Дата завершения: *{completed_at}*\n"
+            "Спасибо за выполненную работу!",
+            parse_mode="Markdown"
+        )
+
+        # Обновляем состояние пользователя
+        await update_user_state(telegram_id, "specialist_idle")
+
+    except Exception as e:
+        logging.error(f"❌ Ошибка при завершении заказа {order_id}: {e}")
+        await query.answer("❌ Ошибка при завершении заказа. Попробуйте снова.", show_alert=True)
+
+
+@check_state(required_state="specialist_idle")
+async def handle_specialist_cancel_complete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает отмену завершения заказа специалистом.
+    """
+    query = update.callback_query
+    callback_data = query.data
+    order_id = int(callback_data.split("_")[-1])
+    user_id = update.effective_user.id
+
+    logging.info(f"[SPECIALIST] Пользователь {user_id} отменил закрытие заказа {order_id}.")
+
+    # Уведомляем пользователя
+    await query.answer("⚠️ Закрытие заказа отменено.", show_alert=False)
+
+    # Обновляем сообщение в чате
+    await query.edit_message_text(
+        f"⚠️ Закрытие задания №{order_id} отменено.\n"
+        "Вы можете снова выбрать действие в меню.",
+        parse_mode="Markdown"
+    )
+=======
     # ля ля ля

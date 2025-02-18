@@ -11,7 +11,7 @@ from telegram_bot.bot_utils.db_utils import update_user_state, get_user_role
 from telegram_bot.dictionaries.states import INITIAL_STATES
 
 
-@check_state(required_state="specialist_idle")  # Для примера, тут может быть любое состояние из INITIAL_STATES
+# @check_state(required_state="specialist_idle")  # Для примера, тут может быть любое состояние из INITIAL_STATES
 async def handle_message_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("🛠️ Вызван Обработчик кнопки 📞 Написать администратору")
     """
@@ -102,7 +102,7 @@ async def send_message_to_admins(context: ContextTypes.DEFAULT_TYPE, message: st
         logging.error(f"Ошибка отправки сообщений администраторам: {e}")
         return False
 
-@check_state(required_state="replying_to_user")
+@check_state(required_state="admin_idle")
 async def handle_reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("🛠️ Вызван handle_reply_button")
     """

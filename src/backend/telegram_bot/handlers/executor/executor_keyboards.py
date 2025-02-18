@@ -20,7 +20,7 @@ def executor_montage_date_keyboard():
     """
     return ReplyKeyboardMarkup(
         [
-            ["⬅️ Возврат в заказы"],
+            ["⬅️ Возврат в меню"],
         ],
         resize_keyboard=True
     )
