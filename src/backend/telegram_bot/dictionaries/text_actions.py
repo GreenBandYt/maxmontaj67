@@ -1,6 +1,6 @@
 # dictionaries/text_actions.py
 
-from telegram_bot.handlers.guest.guest_menu import handle_guest_register, handle_guest_help
+from telegram_bot.handlers.guest.guest_menu import handle_guest_register
 from telegram_bot.handlers.common_helpers import feature_in_development
 
 
@@ -27,8 +27,8 @@ from telegram_bot.bot_utils.admin_messaging import handle_message_to_admin
 
 TEXT_ACTIONS = {
     # Действия для гостя
-    "✍️ Регистрация": feature_in_development,  # handle_guest_register,
-    "🆘 Помощь": handle_guest_help,
+    "✍️ Регистрация": handle_guest_register,  # handle_guest_register,
+
 
     # Действия для администратора
     "📊 Аналитика": feature_in_development,  # "admin_analytics",

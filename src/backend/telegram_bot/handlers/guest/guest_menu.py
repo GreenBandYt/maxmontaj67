@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes, CallbackContext
 from .guest_keyboards import guest_keyboard, generate_email_error_keyboard, generate_admin_message_keyboard
 from telegram_bot.bot_utils.access_control import check_access
+from telegram_bot.bot_utils.db_utils import update_user_state
 
 import logging
 
@@ -10,86 +11,39 @@ async def start_guest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Стартовая страница для гостя.
     """
+    user_id = update.effective_user.id
+    user_name = update.effective_user.first_name
+
+    # ✅ Логирование входа в гостевую зону
+    logging.info(f"[GUEST] Пользователь {user_id} ({user_name}) зашел в гостевую зону.")
+
     await update.message.reply_text(
-        f"Добро пожаловать, {update.effective_user.first_name}!\n"
+        f"Добро пожаловать, {user_name}!\n"
         "Вы находитесь в гостевой зоне. Зарегистрируйтесь, чтобы получить доступ к функционалу.",
         reply_markup=guest_keyboard()  # Клавиатура для гостя
     )
 
 
+@check_access(required_role="new_guest", required_state="guest_idle")
 async def handle_guest_register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработка кнопки "✍️ Регистрация".
     """
-    await update.message.reply_text("Регистрация начата. Пожалуйста, введите ваше имя.")
+    user_id = update.effective_user.id
 
-@check_access(required_role="guest", required_state="guest_idle")
-async def handle_guest_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработка кнопки "🆘 Помощь".
-    """
-    await update.message.reply_text("Гостевая помощь: Вы можете зарегистрироваться или обратиться к администратору.")
+    # ✅ Логирование старта регистрации
+    logging.info(f"[GUEST] Пользователь {user_id} начал регистрацию. Запрашиваем имя.")
 
-async def handle_inline_buttons(update: Update, context: CallbackContext):
-    """
-    Обрабатывает нажатия на Inline-кнопки.
-    """
-    query = update.callback_query
-    await query.answer()
+    # ✅ Меняем состояние пользователя в БД на "registration_name"
+    await update_user_state(user_id, "registration_name")
 
-    if query.data == "repeat_name":
-        # Возвращаем пользователя к шагу ввода имени
-        context.user_data['registration_step'] = "name_request"
-        await query.edit_message_text("Введите ваше имя для идентификации.")
-    elif query.data == "register_user":
-        # Начинаем процесс регистрации
-        context.user_data['registration_step'] = "registration_name"
-        await query.edit_message_text("Пожалуйста, введите своё имя для регистрации.")
-    elif query.data == "contact_admin":
-        # Сообщение для администратора
-        context.user_data['registration_step'] = "admin_message"
-        await query.edit_message_text(
-            "Напишите сообщение для администратора.",
-            reply_markup=generate_admin_message_keyboard()
-        )
-    elif query.data == "return_to_action":
-        # Возвращение к выбору действия
-        context.user_data['registration_step'] = "email_request"
-        await query.edit_message_text(
-            "Email не найден. Пожалуйста, выберите следующее действие:",
-            reply_markup=generate_email_error_keyboard()
-        )
+    # ✅ Сохраняем шаг в context.user_data
+    context.user_data["registration_step"] = "registration_name"
 
-async def process_registration(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Универсальный обработчик для управления регистрацией.
-    Направляет сообщения в зависимости от этапа регистрации.
-    """
-    registration_step = context.user_data.get("registration_step")
+    await update.message.reply_text(
+        "Регистрация начата. Пожалуйста, введите ваше имя."
+    )
 
-    if registration_step == "name_request":
-        # Перенаправляем в обработчик process_name
-        await process_name(update, context)
-    elif registration_step == "email_request":
-        # Перенаправляем в обработчик process_email
-        await process_email(update, context)
-    elif registration_step == "admin_message":
-        # Перенаправляем в обработчик process_admin_message
-        await process_admin_message(update, context)
-    elif registration_step == "registration_name":
-        # Обработка этапа регистрации имени
-        await process_registration_name(update, context)
-    elif registration_step == "registration_password":
-        # Обработка этапа регистрации пароля
-        await process_registration_password(update, context)
-    elif registration_step == "registration_role":
-        # Перенаправляем на этап выбора роли (будет реализовано далее)
-        await process_registration_role(update, context)
-    else:
-        # Если шаг регистрации не установлен, отправляем предупреждение
-        await update.message.reply_text(
-            "Произошла ошибка. Попробуйте снова отправить команду /start."
-        )
 
 
 # Обработчик текстового сообщения для проверки имени пользователя
@@ -136,48 +90,6 @@ async def process_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         context.user_data['registration_step'] = "email_request"  # Устанавливаем шаг регистрации
 
-
-# Обработчик ввода email
-async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обработчик ввода email. Проверяет email в базе данных и завершает регистрацию.
-    """
-    # Проверяем текущий шаг регистрации
-    if context.user_data.get('registration_step') != "email_request":
-        return
-
-    email = update.message.text.strip()  # Получаем текст сообщения
-    user_id = update.effective_user.id
-
-    logging.info(f"Проверка email '{email}' для пользователя {user_id}...")
-
-    # Проверяем email в базе данных
-    user = find_user_by_email(email)
-
-    if user:
-        logging.info(f"Email '{email}' найден. ID пользователя: {user['id']}, роль: {user['role']}")
-
-        # Привязываем telegram_id к пользователю
-        update_user_telegram_id(user['id'], user_id)
-        role = user['role']  # Получаем роль пользователя
-        context.user_data['role'] = role  # Сохраняем роль в кеш
-
-        # Приветствие для найденного пользователя
-        await update.message.reply_text(
-            f"Добро пожаловать, {user['name']}!\n"
-            f"Ваша роль: {role}.\n"
-            "Что вы хотите сделать?"
-        )
-        # Убираем шаг регистрации
-        context.user_data.pop('registration_step', None)
-    else:
-        logging.info(f"Email '{email}' не найден в базе данных.")
-
-        # Email не найден
-        await update.message.reply_text(
-            "Email не найден. Пожалуйста, выберите следующее действие:",
-            reply_markup=generate_email_error_keyboard()  # Показываем инлайн-кнопки
-        )
 
 
 async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -368,3 +280,114 @@ async def notify_admin_about_registration(context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Ошибка при уведомлении администраторов: {e}")
     finally:
         conn.close()
+
+
+
+
+
+async def handle_inline_buttons(update: Update, context: CallbackContext):
+    """
+    Обрабатывает нажатия на Inline-кнопки.
+    """
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "repeat_name":
+        # Возвращаем пользователя к шагу ввода имени
+        context.user_data['registration_step'] = "name_request"
+        await query.edit_message_text("Введите ваше имя для идентификации.")
+    elif query.data == "register_user":
+        # Начинаем процесс регистрации
+        context.user_data['registration_step'] = "registration_name"
+        await query.edit_message_text("Пожалуйста, введите своё имя для регистрации.")
+    elif query.data == "contact_admin":
+        # Сообщение для администратора
+        context.user_data['registration_step'] = "admin_message"
+        await query.edit_message_text(
+            "Напишите сообщение для администратора.",
+            reply_markup=generate_admin_message_keyboard()
+        )
+    elif query.data == "return_to_action":
+        # Возвращение к выбору действия
+        context.user_data['registration_step'] = "email_request"
+        await query.edit_message_text(
+            "Email не найден. Пожалуйста, выберите следующее действие:",
+            reply_markup=generate_email_error_keyboard()
+        )
+
+
+
+async def process_registration(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Универсальный обработчик для управления регистрацией.
+    Направляет сообщения в зависимости от этапа регистрации.
+    """
+    registration_step = context.user_data.get("registration_step")
+
+    if registration_step == "name_request":
+        # Перенаправляем в обработчик process_name
+        await process_name(update, context)
+    elif registration_step == "email_request":
+        # Перенаправляем в обработчик process_email
+        await process_email(update, context)
+    elif registration_step == "admin_message":
+        # Перенаправляем в обработчик process_admin_message
+        await process_admin_message(update, context)
+    elif registration_step == "registration_name":
+        # Обработка этапа регистрации имени
+        await process_registration_name(update, context)
+    elif registration_step == "registration_password":
+        # Обработка этапа регистрации пароля
+        await process_registration_password(update, context)
+    elif registration_step == "registration_role":
+        # Перенаправляем на этап выбора роли (будет реализовано далее)
+        await process_registration_role(update, context)
+    else:
+        # Если шаг регистрации не установлен, отправляем предупреждение
+        await update.message.reply_text(
+            "Произошла ошибка. Попробуйте снова отправить команду /start."
+        )
+
+
+
+# Обработчик ввода email
+async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработчик ввода email. Проверяет email в базе данных и завершает регистрацию.
+    """
+    # Проверяем текущий шаг регистрации
+    if context.user_data.get('registration_step') != "email_request":
+        return
+
+    email = update.message.text.strip()  # Получаем текст сообщения
+    user_id = update.effective_user.id
+
+    logging.info(f"Проверка email '{email}' для пользователя {user_id}...")
+
+    # Проверяем email в базе данных
+    user = find_user_by_email(email)
+
+    if user:
+        logging.info(f"Email '{email}' найден. ID пользователя: {user['id']}, роль: {user['role']}")
+
+        # Привязываем telegram_id к пользователю
+        update_user_telegram_id(user['id'], user_id)
+        role = user['role']  # Получаем роль пользователя
+        context.user_data['role'] = role  # Сохраняем роль в кеш
+
+        # Приветствие для найденного пользователя
+        await update.message.reply_text(
+            f"Добро пожаловать, {user['name']}!\n"
+            f"Ваша роль: {role}.\n"
+            "Что вы хотите сделать?"
+        )
+        # Убираем шаг регистрации
+        context.user_data.pop('registration_step', None)
+    else:
+        logging.info(f"Email '{email}' не найден в базе данных.")
+
+        # Email не найден
+        await update.message.reply_text(
+            "Email не найден. Пожалуйста, выберите следующее действие:",
+            reply_markup=generate_email_error_keyboard()  # Показываем инлайн-кнопки
+        )

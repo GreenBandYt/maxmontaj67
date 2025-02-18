@@ -26,4 +26,7 @@ CALLBACK_ACTIONS = {
     "specialist_cancel_complete": "handle_specialist_cancel_complete",
 
     # Для клиента
+
+    # Для гостя
+
 }

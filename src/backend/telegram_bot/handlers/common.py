@@ -20,6 +20,8 @@ from telegram_bot.dictionaries.states import INITIAL_STATES, STATE_HANDLERS
 
 from telegram_bot.bot_utils.access_control import check_access, check_state
 from telegram_bot.bot_utils.db_utils import update_user_state, get_user_state
+
+
 from telegram_bot.bot_utils.admin_messaging import (
     send_message_to_admins,process_admin_message,  handle_reply_button,
     handle_reply_button, handle_reply_message,
@@ -51,6 +53,11 @@ from handlers.specialist.specialist_menu import (
     handle_specialist_confirm_complete,
     handle_specialist_cancel_complete,
 )
+
+from handlers.guest.guest_menu import (
+    handle_guest_register,
+)
+
 
 
 # Настройка логирования
@@ -84,7 +91,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 initial_state = "guest_idle"
                 cursor.execute("""
                     INSERT INTO users (telegram_id, name, role, user_state)
-                    VALUES (%s, %s, (SELECT id FROM roles WHERE name = 'guest'), %s)
+                    VALUES (%s, %s, (SELECT id FROM roles WHERE name = 'new_guest'), %s)
                 """, (user_id, user_name, initial_state))
                 conn.commit()
             else:
