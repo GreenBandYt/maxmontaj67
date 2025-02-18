@@ -35,6 +35,8 @@ from handlers.executor.executor_menu import (
     handle_executor_cancel_date_input,
     handle_executor_return_to_menu,
     handle_executor_complete_order,
+    handle_executor_confirm_complete,
+    handle_executor_cancel_complete,
 )
 
 from handlers.specialist.specialist_menu import (
@@ -46,6 +48,8 @@ from handlers.specialist.specialist_menu import (
     handle_specialist_cancel_date_input,
     handle_specialist_return_to_menu,
     handle_specialist_complete_order,
+    handle_specialist_confirm_complete,
+    handle_specialist_cancel_complete,
 )
 
 

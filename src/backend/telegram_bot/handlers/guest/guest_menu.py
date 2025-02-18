@@ -180,40 +180,6 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# # Обработчик ввода сообщения для администратора
-# async def process_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     """
-#     Обрабатывает сообщение, введённое пользователем для администратора.
-#     """
-#     # Проверяем текущий шаг регистрации
-#     if context.user_data.get('registration_step') != "admin_message":
-#         return
-#
-#     # Получаем сообщение пользователя
-#     admin_message = update.message.text.strip()
-#     user_name = update.effective_user.full_name
-#     user_id = update.effective_user.id
-#
-#     # Логируем сообщение
-#     logging.info(f"Сообщение от пользователя {user_name} ({user_id}): {admin_message}")
-#
-#     # Сохраняем сообщение и отправляем администраторам
-#     success = await send_message_to_admins(context, user_name, user_id, admin_message)
-#
-#     if success:
-#         # Подтверждаем отправку сообщения
-#         await update.message.reply_text(
-#             "Ваше сообщение успешно отправлено администраторам. Ожидайте ответа."
-#         )
-#         # Убираем шаг регистрации
-#         context.user_data.pop('registration_step', None)
-#     else:
-#         # Уведомляем об ошибке
-#         await update.message.reply_text(
-#             "К сожалению, произошла ошибка при отправке сообщения администраторам. Попробуйте позже."
-#         )
-
-
 async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обрабатывает ввод имени пользователя на этапе регистрации.
