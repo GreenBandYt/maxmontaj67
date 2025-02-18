@@ -1,7 +1,9 @@
+# src/backend/telegram_bot/handlers/guest/guest_menu.py
+
 from telegram import Update
 from telegram.ext import ContextTypes, CallbackContext
-from .guest_keyboards import guest_keyboard, generate_email_error_keyboard, generate_admin_message_keyboard
-from telegram_bot.bot_utils.access_control import check_access
+from .guest_keyboards import guest_keyboard, generate_email_error_keyboard, generate_role_selection_keyboard
+from telegram_bot.bot_utils.access_control import check_access, check_state
 from telegram_bot.bot_utils.db_utils import update_user_state
 
 import logging
@@ -44,6 +46,121 @@ async def handle_guest_register(update: Update, context: ContextTypes.DEFAULT_TY
         "Регистрация начата. Пожалуйста, введите ваше имя."
     )
 
+@check_state(required_state="registration_name")
+async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает ввод имени пользователем.
+    """
+    user_id = update.effective_user.id
+    user_name = update.message.text.strip()  # Получаем имя
+
+    logging.info(f"[GUEST] Пользователь {user_id} ввел имя '{user_name}'. Проверяем уникальность...")
+
+    # Проверяем, занято ли имя
+    if await is_name_taken(user_name):
+        logging.info(f"❌ Имя '{user_name}' уже используется. Запрашиваем другое.")
+        await update.message.reply_text(
+            "Это имя уже занято. Пожалуйста, попробуйте другое."
+        )
+        return
+
+    # ✅ Имя свободно - сохраняем
+    logging.info(f"✅ Имя '{user_name}' свободно. Переход к выбору роли.")
+
+    # Сохраняем имя в context.user_data
+    context.user_data["registration_name"] = user_name
+
+    # Меняем состояние пользователя в БД на "registration_role"
+    await update_user_state(user_id, "registration_role")
+
+    # Отправляем inline-кнопки для выбора роли
+    await update.message.reply_text(
+        "Выберите вашу желаемую роль:",
+        reply_markup=generate_role_selection_keyboard()
+    )
+
+
+@check_access(required_role="new_guest", required_state="registration_role")
+async def handle_guest_role_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает этап выбора роли пользователем во время регистрации.
+    """
+    query = update.callback_query
+    user_id = update.effective_user.id
+
+    logging.info(f"[GUEST] Пользователь {user_id} выбирает роль для регистрации.")
+
+    await query.message.reply_text(
+        "Выберите вашу роль в системе:",
+        reply_markup=generate_role_selection_keyboard()
+    )
+
+    # Сохраняем состояние в context
+    context.user_data["registration_step"] = "registration_role"
+
+@check_access(required_role="new_guest", required_state="registration_role")
+async def handle_guest_choose_executor(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает выбор роли "Исполнитель".
+    """
+    query = update.callback_query
+    user_id = update.effective_user.id
+
+    logging.info(f"[GUEST] Пользователь {user_id} выбрал роль 'Исполнитель'.")
+
+    # Обновляем состояние в контексте
+    context.user_data["registration_role"] = "executor"
+    context.user_data["registration_step"] = "registration_finish"
+
+    await query.edit_message_text(
+        "Вы выбрали роль *Исполнитель*.\n"
+        "Ваши данные отправлены администратору на подтверждение.",
+        parse_mode="Markdown"
+    )
+
+    # Обновляем состояние пользователя в БД
+    await update_user_state(user_id, "registration_finish")
+
+    # Отправляем уведомление администратору
+    await notify_admin_about_registration(update, context)
+
+
+@check_access(required_role="new_guest", required_state="registration_role")
+async def handle_guest_choose_specialist(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает выбор роли "Специалист".
+    """
+    query = update.callback_query
+    await query.answer("Роль 'Специалист' временно недоступна.", show_alert=True)
+
+
+@check_access(required_role="new_guest", required_state="registration_role")
+async def handle_guest_choose_customer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает выбор роли "Заказчик".
+    """
+    query = update.callback_query
+    await query.answer("Роль 'Заказчик' временно недоступна.", show_alert=True)
+
+
+@check_access(required_role="new_guest", required_state="registration_role")
+async def handle_guest_role_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает нажатие кнопки "Назад" при выборе роли.
+    """
+    query = update.callback_query
+    user_id = update.effective_user.id
+
+    logging.info(f"[GUEST] Пользователь {user_id} отменил выбор роли и вернулся назад.")
+
+    # Сбрасываем состояние выбора роли
+    context.user_data.pop("registration_role", None)
+    context.user_data["registration_step"] = "registration_name"
+
+    await query.edit_message_text(
+        "Вы вернулись назад.\n"
+        "Введите ваше имя для регистрации."
+    )
 
 
 # Обработчик текстового сообщения для проверки имени пользователя
@@ -92,30 +209,6 @@ async def process_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Обрабатывает ввод имени пользователя на этапе регистрации.
-    """
-    # Проверяем текущий шаг регистрации
-    if context.user_data.get('registration_step') != "registration_name":
-        return
-
-    user_name = update.message.text.strip()  # Получаем введённое имя
-    logging.info(f"Проверка уникальности имени '{user_name}'...")
-
-    # Проверяем уникальность имени
-    if await is_name_taken(user_name):
-        logging.info(f"Имя '{user_name}' уже занято.")
-        await update.message.reply_text(
-            "Имя уже занято. Попробуйте ввести другое."
-        )
-    else:
-        logging.info(f"Имя '{user_name}' свободно.")
-        context.user_data['registration_name'] = user_name  # Сохраняем имя
-        context.user_data['registration_step'] = "registration_password"  # Переходим на следующий этап
-        await update.message.reply_text(
-            "Придумайте и введите пароль для регистрации."
-        )
 
 async def is_name_taken(name: str) -> bool:
     """
@@ -134,6 +227,8 @@ async def is_name_taken(name: str) -> bool:
         return True  # Если произошла ошибка, возвращаем, что имя занято
     finally:
         conn.close()
+
+
 
 async def process_registration_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -159,6 +254,8 @@ async def process_registration_password(update: Update, context: ContextTypes.DE
         await update.message.reply_text(
             "Введите вашу желаемую роль (например: заказчик, исполнитель, специалист)."
         )
+
+
 
 async def process_registration_role(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -194,6 +291,8 @@ async def process_registration_role(update: Update, context: ContextTypes.DEFAUL
             "Спасибо за регистрацию! Ваши данные успешно сохранены."
         )
 
+
+
 def hash_password(password: str) -> str:
     """
     Генерирует bcrypt-хэш из пароля.
@@ -206,6 +305,8 @@ def hash_password(password: str) -> str:
     except Exception as e:
         logging.error(f"[ERROR] Ошибка при хэшировании пароля: {e}")
         raise Exception("Ошибка при хэшировании пароля. Проверьте входные данные.")
+
+
 
 async def save_user_to_db(context: ContextTypes.DEFAULT_TYPE):
     """
@@ -283,70 +384,6 @@ async def notify_admin_about_registration(context: ContextTypes.DEFAULT_TYPE):
 
 
 
-
-
-async def handle_inline_buttons(update: Update, context: CallbackContext):
-    """
-    Обрабатывает нажатия на Inline-кнопки.
-    """
-    query = update.callback_query
-    await query.answer()
-
-    if query.data == "repeat_name":
-        # Возвращаем пользователя к шагу ввода имени
-        context.user_data['registration_step'] = "name_request"
-        await query.edit_message_text("Введите ваше имя для идентификации.")
-    elif query.data == "register_user":
-        # Начинаем процесс регистрации
-        context.user_data['registration_step'] = "registration_name"
-        await query.edit_message_text("Пожалуйста, введите своё имя для регистрации.")
-    elif query.data == "contact_admin":
-        # Сообщение для администратора
-        context.user_data['registration_step'] = "admin_message"
-        await query.edit_message_text(
-            "Напишите сообщение для администратора.",
-            reply_markup=generate_admin_message_keyboard()
-        )
-    elif query.data == "return_to_action":
-        # Возвращение к выбору действия
-        context.user_data['registration_step'] = "email_request"
-        await query.edit_message_text(
-            "Email не найден. Пожалуйста, выберите следующее действие:",
-            reply_markup=generate_email_error_keyboard()
-        )
-
-
-
-async def process_registration(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Универсальный обработчик для управления регистрацией.
-    Направляет сообщения в зависимости от этапа регистрации.
-    """
-    registration_step = context.user_data.get("registration_step")
-
-    if registration_step == "name_request":
-        # Перенаправляем в обработчик process_name
-        await process_name(update, context)
-    elif registration_step == "email_request":
-        # Перенаправляем в обработчик process_email
-        await process_email(update, context)
-    elif registration_step == "admin_message":
-        # Перенаправляем в обработчик process_admin_message
-        await process_admin_message(update, context)
-    elif registration_step == "registration_name":
-        # Обработка этапа регистрации имени
-        await process_registration_name(update, context)
-    elif registration_step == "registration_password":
-        # Обработка этапа регистрации пароля
-        await process_registration_password(update, context)
-    elif registration_step == "registration_role":
-        # Перенаправляем на этап выбора роли (будет реализовано далее)
-        await process_registration_role(update, context)
-    else:
-        # Если шаг регистрации не установлен, отправляем предупреждение
-        await update.message.reply_text(
-            "Произошла ошибка. Попробуйте снова отправить команду /start."
-        )
 
 
 

@@ -1,3 +1,5 @@
+# src/backend/telegram_bot/handlers/guest/guest_keyboards.py
+
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 def guest_keyboard():
@@ -26,5 +28,17 @@ def generate_admin_message_keyboard():
     """
     keyboard = [
         [InlineKeyboardButton("⬅️ Вернуться к выбору действия", callback_data="return_to_action")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def generate_role_selection_keyboard():
+    """
+    Возвращает Inline-клавиатуру для выбора роли при регистрации.
+    """
+    keyboard = [
+        [InlineKeyboardButton("👷 Исполнитель", callback_data="register_role_executor")],
+        [InlineKeyboardButton("🔧 Специалист (временно недоступно)", callback_data="register_role_specialist", callback_data_disabled=True)],
+        [InlineKeyboardButton("🛒 Заказчик (временно недоступно)", callback_data="register_role_customer", callback_data_disabled=True)],
+        [InlineKeyboardButton("⬅️ Назад", callback_data="register_role_back")],
     ]
     return InlineKeyboardMarkup(keyboard)

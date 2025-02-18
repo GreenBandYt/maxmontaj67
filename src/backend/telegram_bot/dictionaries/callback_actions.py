@@ -28,5 +28,8 @@ CALLBACK_ACTIONS = {
     # Для клиента
 
     # Для гостя
-
+    "register_role_executor": "handle_guest_role_executor",  # Выбор роли: Исполнитель
+    "register_role_specialist": "handle_guest_role_specialist",  # Выбор роли: Специалист
+    "register_role_customer": "handle_guest_role_customer",  # Выбор роли: Заказчик
+    "register_role_back": "handle_guest_role_back"  # Вернуться назад
 }

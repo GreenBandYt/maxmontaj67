@@ -20,7 +20,7 @@ STATE_HANDLERS = {
     "replying_to_user": "handle_reply_message",
 
     # # Для гостей
-    # "registration_name": handle_guest_registration_name_request,
+    "registration_name": "handle_guest_registration_name_request",
     # "guest_registration_email_request": handle_guest_registration_email_request,
     # "guest_registration_role_request": handle_guest_registration_role_request,
 
