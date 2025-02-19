@@ -4,7 +4,10 @@ from telegram import Update
 from telegram.ext import ContextTypes, CallbackContext
 from .guest_keyboards import guest_keyboard, generate_email_error_keyboard, generate_role_selection_keyboard
 from telegram_bot.bot_utils.access_control import check_access, check_state
-from telegram_bot.bot_utils.db_utils import update_user_state
+from telegram_bot.bot_utils.db_utils import update_user_state, get_user_name, update_user_name
+from telegram_bot.bot_utils.bot_db_utils import db_connect
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+
 
 import logging
 
@@ -26,25 +29,81 @@ async def start_guest(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
 @check_access(required_role="new_guest", required_state="guest_idle")
 async def handle_guest_register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Обработка кнопки "✍️ Регистрация".
+    Запрашивает у пользователя подтверждение имени из Telegram или ввод нового имени.
     """
     user_id = update.effective_user.id
+    telegram_name = update.effective_user.first_name
 
     # ✅ Логирование старта регистрации
-    logging.info(f"[GUEST] Пользователь {user_id} начал регистрацию. Запрашиваем имя.")
+    logging.info(f"[GUEST] Пользователь {user_id} начал регистрацию.")
+
+    # ✅ Проверяем, есть ли имя в БД
+    user_name = await get_user_name(user_id)
+
+    if user_name:
+        logging.info(f"[GUEST] Пользователь {user_id} уже имеет имя '{user_name}'. Предлагаем его оставить.")
+    else:
+        user_name = telegram_name
+        logging.info(f"[GUEST] Имя в БД отсутствует. Предлагаем Telegram-имя: '{user_name}'.")
 
     # ✅ Меняем состояние пользователя в БД на "registration_name"
     await update_user_state(user_id, "registration_name")
 
-    # ✅ Сохраняем шаг в context.user_data
-    context.user_data["registration_step"] = "registration_name"
+    # ✅ Сохраняем предложенное имя в context
+    context.user_data["suggested_name"] = user_name
 
+    # ✅ Отправляем сообщение с кнопками
     await update.message.reply_text(
-        "Регистрация начата. Пожалуйста, введите ваше имя."
+        f"Мы получили ваше имя из Telegram: *{user_name}*.\n"
+        "Хотите использовать его?",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("✅ Да, использовать", callback_data="use_name")],
+            [InlineKeyboardButton("❌ Нет, ввести другое", callback_data="enter_name")]
+        ])
     )
+
+@check_state(required_state="registration_name")
+async def handle_use_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обрабатывает нажатие кнопки "✅ Да, использовать".
+    Сохраняет предложенное имя в БД и переходит к выбору роли.
+    """
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    # ✅ Получаем предложенное имя из context
+    suggested_name = context.user_data.get("suggested_name")
+
+    if not suggested_name:
+        logging.error(f"[GUEST] Ошибка: предложенное имя отсутствует для пользователя {user_id}.")
+        await query.edit_message_text("Ошибка: предложенное имя не найдено. Попробуйте ввести имя заново.")
+        return
+
+    logging.info(f"[GUEST] Пользователь {user_id} нажал '✅ Да, использовать'. Сохраняем имя: {suggested_name}")
+
+    # ✅ Обновляем имя пользователя в БД
+    await update_user_name(user_id, suggested_name)
+
+    # ✅ Меняем состояние пользователя в БД на "registration_role"
+    await update_user_state(user_id, "registration_role")
+
+    # ✅ Отправляем пользователю подтверждение
+    await query.edit_message_text(
+        f"Ваше имя сохранено: *{suggested_name}* ✅\n\nТеперь выберите вашу роль:",
+        parse_mode="Markdown",
+        reply_markup=generate_role_selection_keyboard()
+    )
+
+
+
+
+
 
 @check_state(required_state="registration_name")
 async def process_registration_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -209,24 +268,6 @@ async def process_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-
-async def is_name_taken(name: str) -> bool:
-    """
-    Проверяет, занято ли имя в базе данных.
-    Возвращает True, если имя уже существует, иначе False.
-    """
-    try:
-        conn = db_connect()
-        with conn.cursor() as cursor:
-            query = "SELECT COUNT(*) FROM users WHERE name = %s"
-            cursor.execute(query, (name,))
-            result = cursor.fetchone()
-            return result['COUNT(*)'] > 0
-    except Exception as e:
-        logging.error(f"Ошибка при проверке уникальности имени: {e}")
-        return True  # Если произошла ошибка, возвращаем, что имя занято
-    finally:
-        conn.close()
 
 
 

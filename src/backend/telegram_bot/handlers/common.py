@@ -57,7 +57,7 @@ from handlers.specialist.specialist_menu import (
 from handlers.guest.guest_menu import (
     handle_guest_register, handle_guest_choose_executor,
     handle_guest_choose_specialist, handle_guest_choose_customer,
-    handle_guest_role_back,
+    handle_guest_role_back, process_registration_name, handle_use_name,
 )
 
 

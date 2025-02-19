@@ -1,6 +1,15 @@
 # src/backend/telegram_bot/dictionaries/callback_actions.py
 
 CALLBACK_ACTIONS = {
+
+    # Для гостя
+    "use_name": "handle_use_name",  # Подтверждение имени
+    "enter_name": "handle_enter_name",  # Ввести другое имя
+    "register_role_executor": "handle_guest_role_executor",  # Выбор роли: Исполнитель
+    "register_role_specialist": "handle_guest_role_specialist",  # Выбор роли: Специалист
+    "register_role_customer": "handle_guest_role_customer",  # Выбор роли: Заказчик
+    "register_role_back": "handle_guest_role_back",  # Вернуться назад
+
     # Для администратора
     # Привязка префикса callback_data к обработчику
     "reply_to_": "handle_reply_button",
@@ -27,9 +36,5 @@ CALLBACK_ACTIONS = {
 
     # Для клиента
 
-    # Для гостя
-    "register_role_executor": "handle_guest_role_executor",  # Выбор роли: Исполнитель
-    "register_role_specialist": "handle_guest_role_specialist",  # Выбор роли: Специалист
-    "register_role_customer": "handle_guest_role_customer",  # Выбор роли: Заказчик
-    "register_role_back": "handle_guest_role_back"  # Вернуться назад
+
 }

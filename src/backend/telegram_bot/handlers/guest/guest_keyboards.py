@@ -37,8 +37,9 @@ def generate_role_selection_keyboard():
     """
     keyboard = [
         [InlineKeyboardButton("👷 Исполнитель", callback_data="register_role_executor")],
-        [InlineKeyboardButton("🔧 Специалист (временно недоступно)", callback_data="register_role_specialist", callback_data_disabled=True)],
-        [InlineKeyboardButton("🛒 Заказчик (временно недоступно)", callback_data="register_role_customer", callback_data_disabled=True)],
+        [InlineKeyboardButton("🔧 Специалист (временно недоступно)", callback_data="")],  # Оставляем callback_data пустым
+        [InlineKeyboardButton("🛒 Заказчик (временно недоступно)", callback_data="")],  # Оставляем callback_data пустым
         [InlineKeyboardButton("⬅️ Назад", callback_data="register_role_back")],
     ]
     return InlineKeyboardMarkup(keyboard)
+

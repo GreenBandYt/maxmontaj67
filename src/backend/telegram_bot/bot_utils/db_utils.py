@@ -53,3 +53,41 @@ async def update_user_state(user_id: int, new_state: str) -> None:
             conn.commit()
     except Exception as e:
         raise RuntimeError(f"Ошибка обновления состояния пользователя: {e}")
+
+async def get_user_name(user_id: int) -> str:
+    """
+    Получает имя пользователя из базы данных по его Telegram ID.
+    Возвращает имя, если оно есть, иначе None.
+    """
+    try:
+        conn = db_connect()
+        with conn.cursor() as cursor:
+            query = "SELECT name FROM users WHERE telegram_id = %s"
+            cursor.execute(query, (user_id,))
+            result = cursor.fetchone()
+            return result["name"] if result else None
+    except Exception as e:
+        logging.error(f"Ошибка при получении имени пользователя {user_id}: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+async def update_user_name(user_id: int, new_name: str) -> bool:
+    """
+    Обновляет имя пользователя в базе данных.
+    Возвращает True, если обновление прошло успешно, иначе False.
+    """
+    try:
+        conn = db_connect()
+        with conn.cursor() as cursor:
+            query = "UPDATE users SET name = %s WHERE telegram_id = %s"
+            cursor.execute(query, (new_name, user_id))
+            conn.commit()
+        logging.info(f"[DB] Имя пользователя {user_id} обновлено на '{new_name}'")
+        return True
+    except Exception as e:
+        logging.error(f"Ошибка при обновлении имени пользователя {user_id}: {e}")
+        return False
+    finally:
+        conn.close()
